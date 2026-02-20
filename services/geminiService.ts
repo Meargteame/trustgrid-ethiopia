@@ -1,10 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { TrustAnalysisResult } from "../types";
 
-const apiKey = process.env.API_KEY || '';
+// Access via Vite env var
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
 
-export const analyzeTrustContent = async (text: string): Promise<TrustAnalysisResult> => {
+export const analyzeTrustContent = async (text: string): Promise<TrustAnalysisResult> => { // ... (rest of function)
   if (!apiKey) {
     throw new Error("API Key not found");
   }

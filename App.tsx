@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Features } from './components/TrustSignals';
@@ -9,11 +9,31 @@ import { Footer } from './components/Footer';
 import { Dashboard } from './components/Dashboard';
 import { AuthPage } from './components/AuthPage';
 import { CollectionPage } from './components/CollectionPage';
+import { supabase } from './lib/supabase';
 
 type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
+
+  useEffect(() => {
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setCurrentView('dashboard');
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setCurrentView('dashboard');
+      }
+      if (event === 'SIGNED_OUT') {
+        setCurrentView('landing');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleInitiateLogin = () => {
     setCurrentView('auth');
@@ -21,12 +41,12 @@ const App: React.FC = () => {
   };
 
   const handleAuthSuccess = () => {
-    setCurrentView('dashboard');
-    window.scrollTo(0, 0);
+    // Handled by onAuthStateChange
   };
 
-  const handleLogout = () => {
-    setCurrentView('landing');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    // View change handled by onAuthStateChange
     window.scrollTo(0, 0);
   };
 

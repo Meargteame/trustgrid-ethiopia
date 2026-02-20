@@ -1,16 +1,19 @@
 export interface TestimonialData {
   id: string;
-  name: string;
-  role: string;
-  company: string;
+  userId?: string;
+  clientName: string;
+  clientRole?: string;
+  clientCompany?: string;
+  clientEmail?: string;
   text: string;
-  avatarUrl: string;
-  verified: boolean;
+  avatarUrl?: string;
+  videoUrl?: string;
+  verificationMethod: 'manual' | 'email' | 'linkedin';
   status: 'pending' | 'verified' | 'rejected';
-  verificationMethod: 'manual' | 'telegram' | 'linkedin';
-  date: string;
-  style?: 'white' | 'lime' | 'dark';
-  videoUrl?: string; // New: Support for video testimonials
+  sourceUrl?: string;
+  cardStyle?: 'white' | 'lime' | 'dark';
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface TrustAnalysisResult {

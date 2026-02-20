@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-lime: #D4F954;
+  --color-brand-yellow: #FCE676;
+  --color-brand-black: #111111;
+  --color-brand-gray: #F8F9FA;
+
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-ethiopic: 'Noto Sans Ethiopic', sans-serif;
+
+  --shadow-sharp: 0 4px 0 0 #000;
+
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+  --animate-fade-in: fadeIn 0.5s ease-out;
+
+  @keyframes glow {
+    0% { box-shadow: 0 0 5px #FCE676; }
+    100% { box-shadow: 0 0 20px #FCE676, 0 0 10px #FCE676; }
+  }
+  
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  body {
+    @apply antialiased text-brand-black bg-white font-sans;
+  }
+}
+
+/* Custom Utilities that can't be purely theme-based easily */
+@layer utilities {
+  .bg-grid {
+    background-size: 40px 40px;
+    background-image: linear-gradient(to right, #f0f0f0 1px, transparent 1px),
+      linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+  }
+}

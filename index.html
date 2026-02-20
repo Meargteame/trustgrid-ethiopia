@@ -4,47 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TrustGrid Ethiopia - The Wall of Proof</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              brand: {
-                lime: '#D4F954',
-                yellow: '#FCE676',
-                black: '#111111',
-                gray: '#F8F9FA',
-              }
-            },
-            fontFamily: {
-              sans: ['Plus Jakarta Sans', 'sans-serif'],
-              ethiopic: ['Noto Sans Ethiopic', 'sans-serif'],
-            },
-            backgroundImage: {
-              'grid-pattern': "linear-gradient(to right, #f0f0f0 1px, transparent 1px), linear-gradient(to bottom, #f0f0f0 1px, transparent 1px)",
-            },
-            backgroundSize: {
-              'grid-pattern': '40px 40px',
-            },
-            boxShadow: {
-              'sharp': '0 4px 0 0 #000', 
-            },
-            animation: {
-              'glow': 'glow 2s ease-in-out infinite alternate',
-            },
-            keyframes: {
-              glow: {
-                '0%': { boxShadow: '0 0 5px #FCE676' },
-                '100%': { boxShadow: '0 0 20px #FCE676, 0 0 10px #FCE676' },
-              }
-            }
-          },
-        },
-      }
-    </script>
     <style>
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -59,27 +20,8 @@
         z-index: -1;
         border-radius: 50%;
       }
-      /* Custom grid background */
-      .bg-grid {
-        background-size: 50px 50px;
-        background-image:
-          linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-      }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.4",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.42.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.575.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
+  </head>
   <body>
     <div id="root"></div>
   <script type="module" src="/index.tsx"></script>

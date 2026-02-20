@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { Eye, EyeOff, ArrowLeft, Mail, Lock, Building, User } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, Building, User, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface AuthPageProps {
   onLogin: () => void;
@@ -12,14 +13,53 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate network request for demo purposes
-    setTimeout(() => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              company_name: companyName,
+            },
+          },
+        });
+        if (error) throw error;
+        
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+           setSuccessMsg("Account created! Please check your email to verify your account before logging in.");
+           setIsSignUp(false); // Switch to login view
+        } else if (data.session) {
+           onLogin();
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        onLogin();
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Authentication failed');
+    } finally {
       setIsLoading(false);
-      onLogin();
-    }, 1000);
+    }
   };
 
   return (
@@ -51,6 +91,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
             
             <form onSubmit={handleSubmit} className="space-y-5">
               
+              {errorMsg && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  {errorMsg}
+                </div>
+              )}
+
+              {successMsg && (
+                <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg flex items-center gap-2 border border-green-200">
+                  <CheckCircle2 size={16} />
+                  {successMsg}
+                </div>
+              )}
+
               {isSignUp && (
                 <div className="space-y-5 animate-fade-in">
                   <div>
@@ -61,6 +115,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                         type="text" 
                         required 
                         placeholder="e.g. Abebe Bikila"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                         className="w-full pl-11 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors bg-gray-50 focus:bg-white"
                       />
                     </div>
@@ -74,6 +130,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                         type="text" 
                         required 
                         placeholder="e.g. Addis Design Co."
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
                         className="w-full pl-11 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors bg-gray-50 focus:bg-white"
                       />
                     </div>
@@ -89,6 +147,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                     type="email" 
                     required 
                     placeholder="name@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-11 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors bg-gray-50 focus:bg-white"
                   />
                 </div>
@@ -102,6 +162,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                     type={showPassword ? "text" : "password"} 
                     required 
                     placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-11 pr-11 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors bg-gray-50 focus:bg-white"
                   />
                   <button 

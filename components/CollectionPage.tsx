@@ -1,214 +1,259 @@
 import React, { useState, useRef } from 'react';
-import { Button } from './Button';
-import { Camera, Video, Upload, Check, Gift } from 'lucide-react';
+import { ArrowLeft, Video, Mic, Send, Paperclip, X, CheckCircle2, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { analyzeTrustContent } from '../services/geminiService';
 
 interface CollectionPageProps {
-  onBack: () => void;
+   onBack: () => void;
 }
 
 export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
-  const [step, setStep] = useState<'form' | 'success'>('form');
-  const [isRecording, setIsRecording] = useState(false);
-  const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    company: '',
-    text: ''
-  });
+   const [step, setStep] = useState(1);
+   const [isRecording, setIsRecording] = useState(false);
+   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+   const videoRef = useRef<HTMLVideoElement>(null);
+   const streamRef = useRef<MediaStream | null>(null);
+   const [reviewText, setReviewText] = useState('');
+   const [name, setName] = useState('');
+   const [company, setCompany] = useState('');
+   const [isSubmitting, setIsSubmitting] = useState(false);
+   const [showConfetti, setShowConfetti] = useState(false);
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+   // ... (recording logic stays same)
+
+   const startRecording = async () => {
+      try {
+         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+         streamRef.current = stream;
+
+         if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+         }
+
+         const recorder = new MediaRecorder(stream);
+         const chunks: BlobPart[] = [];
+
+         recorder.ondataavailable = (e) => chunks.push(e.data);
+         recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            setVideoBlob(blob);
+            // Turn off camera
+            stream.getTracks().forEach(track => track.stop());
+         };
+
+         recorder.start();
+         setMediaRecorder(recorder);
+         setIsRecording(true);
+      } catch (err) {
+         console.error("Camera access denied", err);
+         alert("Could not access camera. Please allow permissions.");
       }
-      
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      const chunks: BlobPart[] = [];
+   };
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        setVideoBlob(blob);
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Error accessing camera:", err);
-      alert("Could not access camera. Please allow permissions.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
+   const stopRecording = () => {
+      mediaRecorder?.stop();
       setIsRecording(false);
-    }
-  };
+   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulate upload delay
-    setStep('success');
-  };
+   const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!videoBlob && !reviewText) {
+         alert("Please record a video or write a review.");
+         return;
+      }
 
-  if (step === 'success') {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        {/* CSS Confetti */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-           {[...Array(20)].map((_, i) => (
-             <div 
-               key={i} 
-               className="absolute w-3 h-3 bg-brand-lime rounded-full animate-bounce"
-               style={{
-                 left: `${Math.random() * 100}%`,
-                 top: `-20px`,
-                 animationDuration: `${Math.random() * 3 + 2}s`,
-                 animationDelay: `${Math.random() * 2}s`,
-                 backgroundColor: ['#D4F954', '#FCE676', '#000000'][Math.floor(Math.random() * 3)]
-               }}
-             ></div>
-           ))}
-        </div>
+      setIsSubmitting(true);
 
-        <div className="text-center max-w-md w-full animate-fade-in">
-           <div className="w-24 h-24 bg-brand-lime rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-             <Check size={48} className="text-black" />
-           </div>
-           
-           <h1 className="text-3xl font-extrabold mb-4">You're Amazing!</h1>
-           <p className="text-gray-500 mb-8">Thank you for supporting Addis Design Co. Your feedback helps us grow.</p>
-           
-           <div className="bg-black text-white p-6 rounded-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-2 opacity-20">
-                 <Gift size={64} />
-              </div>
-              <p className="text-xs font-bold text-brand-lime uppercase mb-2">A small gift for you</p>
-              <p className="text-2xl font-black mb-1">10% OFF</p>
-              <p className="text-sm text-gray-400 mb-4">Your next project with us.</p>
-              <div className="bg-white/10 p-2 rounded-lg border border-dashed border-gray-600 font-mono text-center">
-                 THANKYOU2026
-              </div>
-           </div>
+      try {
+         // Get current user to link testimonial to (Demo mode: link to self)
+         const { data: { user } } = await supabase.auth.getUser();
+         if (!user) throw new Error("No user found. Please login first.");
 
-           <Button className="mt-8" variant="ghost" onClick={onBack}>Close Window</Button>
-        </div>
-      </div>
-    );
-  }
+         // 1. Analyze with Gemini
+         const analysis = await analyzeTrustContent(reviewText || "Video Review");
 
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <div className="max-w-xl mx-auto bg-white min-h-screen shadow-2xl">
-         
-         <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-20">
-            <div className="flex items-center gap-3">
-               <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=100&h=100" className="w-10 h-10 rounded-full border border-gray-200" />
-               <div>
-                  <p className="text-xs font-bold text-gray-500">Reviewing</p>
-                  <p className="font-bold text-sm">Addis Design Co.</p>
+         // 2. Upload Video (if any)
+         let videoUrl = null;
+         if (videoBlob) {
+            const fileName = `${user.id}/${Date.now()}.webm`;
+            const { error: uploadError } = await supabase.storage
+               .from('videos')
+               .upload(fileName, videoBlob);
+            
+            if (!uploadError) {
+               const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(fileName);
+               videoUrl = publicUrl;
+            } else {
+               console.warn("Video upload failed (bucket might be missing)", uploadError);
+            }
+         }
+
+         // 3. Save to Supabase
+         const { error } = await supabase.from('testimonials').insert({
+            user_id: user.id,
+            name,
+            company,
+            text: reviewText,
+            video_url: videoUrl,
+            score: analysis.score,
+            sentiment: analysis.sentiment,
+            is_verified: analysis.isAuthentic,
+            source: 'web_collection',
+            status: 'pending' // pending manual approval
+         });
+
+         if (error) throw error;
+
+         setStep(3); // Success
+         setShowConfetti(true);
+      } catch (err: any) {
+         console.error(err);
+         alert('Failed to submit review: ' + (err.message || "Unknown error"));
+      } finally {
+         setIsSubmitting(false);
+      }
+   };
+
+   if (step === 3) {
+      return (
+         <div className="min-h-screen bg-brand-lime flex flex-col items-center justify-center p-6 text-center animate-fade-in relative overflow-hidden">
+            {/* Confetti CSS (Simple version) */}
+            {showConfetti && (
+               <div className="absolute inset-0 pointer-events-none">
+                  {[...Array(20)].map((_, i) => (
+                     <div key={i} className="absolute w-2 h-2 bg-white rounded-full animate-ping" style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `${Math.random() * 100}%`,
+                        animationDelay: `${Math.random()}s`,
+                        animationDuration: '1s'
+                     }} />
+                  ))}
                </div>
+            )}
+
+            <div className="bg-white p-8 rounded-[32px] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-2 border-black max-w-sm w-full transform rotate-1 transition-transform hover:rotate-0">
+               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 size={32} className="text-green-600" />
+               </div>
+               <h2 className="text-2xl font-black font-sans mb-2">Thank You!</h2>
+               <p className="text-gray-600 mb-6 text-sm">Your feedback helps us build trust. You are a legend!</p>
+
+               <div className="border border-dashed border-gray-300 p-4 rounded-xl bg-gray-50 mb-6">
+                  <p className="text-xs uppercase font-bold text-gray-400 mb-1">Your 10% Off Coupon</p>
+                  <p className="text-xl font-mono font-bold tracking-widest text-black">THANKYOU2026</p>
+               </div>
+
+               <button onClick={onBack} className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors">
+                  Return Home
+               </button>
             </div>
-            <Button size="sm" variant="ghost" onClick={onBack}>Cancel</Button>
+         </div>
+      );
+   }
+
+   return (
+      <div className="min-h-screen bg-white font-sans">
+         {/* Mobile Header */}
+         <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 flex items-center gap-4 z-50">
+            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+               <ArrowLeft size={20} />
+            </button>
+            <div>
+               <h1 className="text-sm font-bold">Addis Design Co.</h1>
+               <p className="text-[10px] text-gray-500">Collect Reviews</p>
+            </div>
          </div>
 
-         <div className="p-6 pb-20">
-            <h1 className="text-2xl font-extrabold mb-2">How was your experience?</h1>
-            <p className="text-gray-500 text-sm mb-8">It only takes 45 seconds.</p>
+         <div className="max-w-md mx-auto p-4 pb-20">
+            <h2 className="text-2xl font-black mb-2 mt-4">Share you experience</h2>
+            <p className="text-gray-500 text-sm mb-6">Your feedback helps us improve and build trust with future clients.</p>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-               
-               {/* Video Recorder */}
-               <div className="space-y-3">
-                  <label className="flex items-center gap-2 text-sm font-bold">
-                     <Video size={16} /> Record Video (Optional)
-                  </label>
-                  
-                  <div className="border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 overflow-hidden relative min-h-[200px] flex items-center justify-center">
-                     {videoBlob ? (
-                        <div className="w-full text-center p-8">
-                           <div className="w-16 h-16 bg-brand-lime rounded-full flex items-center justify-center mx-auto mb-4 border border-black">
-                              <Check size={24} />
-                           </div>
-                           <p className="font-bold">Video Recorded!</p>
-                           <button type="button" onClick={() => setVideoBlob(null)} className="text-xs text-red-500 underline mt-2">Retake</button>
-                        </div>
-                     ) : isRecording ? (
-                        <div className="relative w-full h-64 bg-black">
-                           <video ref={videoRef} className="w-full h-full object-cover" muted></video>
-                           <div className="absolute bottom-4 left-0 w-full flex justify-center">
-                              <button type="button" onClick={stopRecording} className="bg-red-500 text-white px-6 py-2 rounded-full font-bold animate-pulse">
-                                 Stop Recording
-                              </button>
-                           </div>
-                        </div>
+            {/* Video Recorder */}
+            <div className="bg-black rounded-[24px] overflow-hidden aspect-[4/5] relative mb-6 shadow-xl group">
+               {videoBlob ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                     <p className="text-white font-bold">Video Recorded!</p>
+                     <button
+                        onClick={() => setVideoBlob(null)}
+                        className="absolute top-4 right-4 bg-white/20 p-2 rounded-full hover:bg-white/40"
+                     >
+                        <X size={20} className="text-white" />
+                     </button>
+                  </div>
+               ) : (
+                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-80" />
+               )}
+
+               {!videoBlob && (
+                  <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+                     {!isRecording ? (
+                        <button
+                           onClick={startRecording}
+                           className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-110 transition-transform"
+                        >
+                           <div className="w-12 h-12 bg-red-500 rounded-full" />
+                        </button>
                      ) : (
-                        <div className="text-center p-8">
-                           <button type="button" onClick={startRecording} className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4 text-white hover:scale-110 transition-transform">
-                              <Camera size={24} />
-                           </button>
-                           <p className="text-sm font-bold">Tap to Record</p>
-                           <p className="text-xs text-gray-500 mt-1">Make it personal!</p>
-                        </div>
+                        <button
+                           onClick={stopRecording}
+                           className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-110 transition-transform"
+                        >
+                           <div className="w-6 h-6 bg-red-500 rounded-sm animate-pulse" />
+                        </button>
                      )}
                   </div>
-               </div>
+               )}
 
-               <div className="space-y-3">
-                  <label className="text-sm font-bold">Write a Review</label>
-                  <textarea 
-                     required
-                     className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-black outline-none min-h-[120px]"
-                     placeholder="What did you like most about the service?"
-                     value={formData.text}
-                     onChange={e => setFormData({...formData, text: e.target.value})}
-                  ></textarea>
+               <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2">
+                  <Video size={12} className="text-white" />
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Video Testimonial</span>
+               </div>
+            </div>
+
+            {/* Text Form */}
+            <form onSubmit={handleSubmit} className="space-y-4 animate-slide-up">
+               <div>
+                  <label className="block text-xs font-bold uppercase mb-2">Or write a review</label>
+                  <textarea
+                     className="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-black focus:bg-white transition-all outline-none resize-none text-sm"
+                     rows={4}
+                     placeholder="What did you like most about working with us?"
+                     value={reviewText}
+                     onChange={(e) => setReviewText(e.target.value)}
+                  />
                </div>
 
                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                     <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Your Name</label>
-                     <input 
-                        required
-                        type="text" 
-                        className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-black outline-none"
-                        value={formData.name}
-                        onChange={e => setFormData({...formData, name: e.target.value})}
-                     />
-                  </div>
-                  <div>
-                     <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Company / Role</label>
-                     <input 
-                        required
-                        type="text" 
-                        className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-black outline-none"
-                        value={formData.company}
-                        onChange={e => setFormData({...formData, company: e.target.value})}
-                     />
-                  </div>
+                  <input
+                     type="text"
+                     placeholder="Your Name"
+                     className="w-full p-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-black focus:bg-white transition-all outline-none text-sm"
+                     value={name}
+                     onChange={(e) => setName(e.target.value)}
+                     required
+                  />
+                  <input
+                     type="text"
+                     placeholder="Company / Role"
+                     className="w-full p-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-black focus:bg-white transition-all outline-none text-sm"
+                     value={company}
+                     onChange={(e) => setCompany(e.target.value)}
+                     required
+                  />
                </div>
 
                <div className="pt-4">
-                  <Button fullWidth size="lg" type="submit" className="shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                     Send Review
-                  </Button>
+                  <button
+                     type="submit"
+                     disabled={isSubmitting}
+                     className="w-full bg-brand-lime border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] py-4 rounded-xl font-black text-black hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                     {isSubmitting ? <Loader2 className="animate-spin" /> : <>Submit Feedback <Send size={16} /></>}
+                  </button>
                </div>
-
             </form>
          </div>
       </div>
-    </div>
-  );
+   );
 };
