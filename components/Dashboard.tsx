@@ -42,10 +42,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
    // Settings Form State
    const [profileData, setProfileData] = useState({
-      companyName: 'Addis Design Co.',
-      email: 'contact@addisdesign.et',
-      primaryColor: '#D4F954'
+      companyName: '',
+      email: '',
+      username: '', // Added username
+      primaryColor: '#D4F954',
+      font: 'Plus Jakarta Sans',
+      logoUrl: '' // For future use
    });
+   const [loadingProfile, setLoadingProfile] = useState(true);
 
    // Modal Form State
    const [verificationType, setVerificationType] = useState<'manual' | 'email' | 'linkedin'>('manual');
@@ -63,7 +67,53 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    // Fetch testimonials on mount
    useEffect(() => {
       fetchTestimonials();
+      fetchProfile();
    }, []);
+
+   const fetchProfile = async () => {
+      setLoadingProfile(true);
+      try {
+         const { data: { user } } = await supabase.auth.getUser();
+         if (!user) return;
+
+         // Get profile or create if missing
+         let { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+         if (!data && !error) {
+             // Create default profile if not found
+             const newProfile = { id: user.id, company_name: 'My Company', email: user.email, primary_color: '#D4F954' };
+             const { data: created, error: createError } = await supabase.from('profiles').insert(newProfile).select().single();
+             if (createError) throw createError;
+             data = created;
+         } else if (error && error.code !== 'PGRST116') {
+             // If error is NOT "Row not found", throw it
+             throw error;
+         }
+
+         if (data) {
+             setProfileData({
+                 companyName: data.company_name || 'My Company',
+                 email: data.email || user.email || '',
+                 username: data.username || user.email?.split('@')[0] || '',
+                 primaryColor: data.primary_color || '#D4F954',
+                 font: data.font || 'Plus Jakarta Sans',
+                 logoUrl: data.logo_url || ''
+             });
+         }
+      } catch (err: any) {
+         console.warn("Failed to load profile:", err);
+         // Don't block UI, just warn
+         if (err.message?.includes('relation "profiles" does not exist')) {
+             setSetupRequired(true); 
+         }
+      } finally {
+         setLoadingProfile(false);
+      }
+   };
 
    const fetchTestimonials = async () => {
       setIsLoadingTestimonials(true);
@@ -143,12 +193,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    };
 
    const handleCopyLink = () => {
-      navigator.clipboard.writeText('trustgrid.et/addis-design');
+      const url = window.location.origin + '/embed/' + (profileData.username || '');
+      navigator.clipboard.writeText(url);
       showToast('Link copied to clipboard!');
    };
 
    const handleCopyEmbed = () => {
-      const code = `<iframe src="https://trustgrid.et/embed/addis-design?theme=${activeTheme}" width="100%" height="600" frameborder="0"></iframe>`;
+      const code = `<iframe src="${window.location.origin}/embed/${profileData.username || ''}?theme=${activeTheme}" width="100%" height="600" frameborder="0"></iframe>`;
       navigator.clipboard.writeText(code);
       showToast('Code copied! Ready to paste into your Telegram portfolio or Website.');
    };
@@ -168,6 +219,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
+   const handleVerify = async (id: string) => {
+      try {
+         // Update DB. Ensure status is 'verified' and is_verified boolean is true
+         const { error } = await supabase
+            .from('testimonials')
+            .update({ status: 'verified', is_verified: true })
+            .eq('id', id);
+
+         if (error) throw error;
+
+         // Optimistic Update
+         setTestimonials(testimonials.map(t => 
+             t.id === id ? { ...t, status: 'verified' } : t
+         ));
+         showToast('Proof verified and published!');
+      } catch (err: any) {
+         console.error(err);
+         showToast('Failed to verify proof', 'error');
+         if (err.message?.includes('policies')) setSetupRequired(true);
+      }
+   };
+
+   // handleVerify declaration removed (duplicate)
+
    const handleCustomizeStyle = async (id: string) => {
       const testimonial = testimonials.find(t => t.id === id);
       if (!testimonial) return;
@@ -184,15 +259,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       try {
          const { error } = await supabase
             .from('testimonials')
-            .update({ cardStyle: nextStyle })
+            .update({ card_style: nextStyle }) // Changed to snake_case for DB
             .eq('id', id);
             
          if (error) throw error;
          showToast('Card style updated');
-      } catch (err) {
+      } catch (err: any) {
          console.error('Style update failed', err);
-         showToast('Failed to update style', 'error');
-         // Revert logic omitted for brevity
+         
+         if (err.message?.includes('column "card_style" of relation "testimonials" does not exist')) {
+             setSetupRequired(true); // Trigger schema update alert
+             showToast('Database update required. Please run the SQL.', 'error');
+         } else {
+             showToast('Failed to update style', 'error');
+         }
+         
+         // Revert could happen here
       }
    };
 
@@ -307,9 +389,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
-   const handleSaveSettings = () => {
-      showToast('Profile settings saved successfully!');
+   const handleSaveSettings = async () => {
+      try {
+         const { data: { user } } = await supabase.auth.getUser();
+         if (!user) throw new Error("No user session");
+
+         if (profileData.username && profileData.username.length < 3) {
+            throw new Error("Handle must be at least 3 characters");
+         }
+
+         // Upsert based on ID
+         const { error } = await supabase.from('profiles').upsert({
+             id: user.id || 'default',
+             company_name: profileData.companyName,
+             username: profileData.username || null,
+             email: profileData.email,
+             primary_color: profileData.primaryColor,
+             font: profileData.font,
+             updated_at: new Date().toISOString()
+         });
+
+         if (error) throw error;
+         showToast('Profile settings saved successfully!');
+      } catch (err: any) {
+         console.error("Failed to save settings", err);
+         showToast('Failed to save: ' + (err.message), 'error');
+         if (err.message?.includes('profiles')) setSetupRequired(true);
+      }
    };
+
 
    const handleInviteTeam = () => {
       const email = prompt("Enter team member email:");
@@ -348,16 +456,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    // --- Renderers ---
 
    if (setupRequired) {
-      return (
-         <div className="flex flex-col items-center justify-center min-h-screen bg-white p-6 text-center">
-            <Shield size={64} className="text-red-500 mb-6" />
-            <h1 className="text-3xl font-extrabold mb-4">Database Setup Required</h1>
-            <p className="max-w-md text-gray-600 mb-8">
-               Your Supabase project is connected, but the <b>testimonials</b> table does not exist yet.
-            </p>
-            <div className="bg-gray-100 p-6 rounded-2xl text-left w-full max-w-2xl overflow-auto mb-8 font-mono text-xs">
-               <p className="text-gray-500 mb-2">// Run this in your Supabase SQL Editor:</p>
-               <pre>{`-- 1. Create the table
+      const sqlToRun = `-- 1. Create the table (if missing)
 create table if not exists testimonials (
   id uuid default uuid_generate_v4() primary key,
   user_id uuid references auth.users not null,
@@ -373,8 +472,15 @@ create table if not exists testimonials (
   status text default 'pending'
 );
 
--- 2. Enable RLS
+-- 2. Enable RLS (safe to run multiple times)
 alter table testimonials enable row level security;
+
+-- Drop existing policies to avoid "already exists" errors
+drop policy if exists "Public view" on testimonials;
+drop policy if exists "User insert" on testimonials;
+drop policy if exists "User update" on testimonials;
+drop policy if exists "User delete" on testimonials;
+
 create policy "Public view" on testimonials for select using (true);
 create policy "User insert" on testimonials for insert with check (true);
 create policy "User update" on testimonials for update using (auth.uid() = user_id);
@@ -385,14 +491,66 @@ insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
+drop policy if exists "Public Access" on storage.objects;
+drop policy if exists "User Upload" on storage.objects;
+
 create policy "Public Access" on storage.objects for select using ( bucket_id = 'avatars' );
 create policy "User Upload" on storage.objects for insert with check ( bucket_id = 'avatars' );
 
--- 4. Add avatar_url if missing (safe to run)
-alter table testimonials add column if not exists avatar_url text;`}</pre>
+-- 4. Add avatar_url if missing
+alter table testimonials add column if not exists avatar_url text;
+
+-- 5. Add card_style if missing
+alter table testimonials add column if not exists card_style text default 'white';
+
+-- 6. Create Storage Bucket for Videos
+insert into storage.buckets (id, name, public) 
+values ('videos', 'videos', true)
+on conflict (id) do nothing;
+
+create policy "Public Access Videos" on storage.objects for select using ( bucket_id = 'videos' );
+create policy "User Upload Videos" on storage.objects for insert with check ( bucket_id = 'videos' );
+
+
+-- 7. Create Profiles Table (for company branding/settings)
+create table if not exists profiles (
+  id uuid primary key references auth.users on delete cascade,
+  company_name text,
+  email text,
+  primary_color text default '#D4F954',
+  font text default 'Plus Jakarta Sans',
+  website text,
+  logo_url text, -- For future logo upload
+  updated_at timestamp with time zone default now()
+);
+
+-- 8. Profiles RLS
+alter table profiles enable row level security;
+
+drop policy if exists "Public profiles" on profiles;
+drop policy if exists "User update own profile" on profiles;
+drop policy if exists "User insert own profile" on profiles;
+
+create policy "Public profiles" on profiles for select using (true);
+create policy "User update own profile" on profiles for update using (auth.uid() = id);
+create policy "User insert own profile" on profiles for insert with check (auth.uid() = id);`;
+
+      return (
+         <div className="flex flex-col items-center justify-center min-h-screen bg-white p-6 text-center">
+            <Shield size={64} className="text-red-500 mb-6" />
+            <h1 className="text-3xl font-extrabold mb-4">Database Setup Required</h1>
+            <p className="max-w-md text-gray-600 mb-8">
+               Your Supabase project is connected, but the <b>testimonials</b> table needs updates.
+            </p>
+            <div className="bg-gray-100 p-6 rounded-2xl text-left w-full max-w-2xl overflow-auto mb-8 font-mono text-xs">
+               <p className="text-gray-500 mb-2 font-sans font-bold">Instuctions: Click "Copy SQL" below and paste it into Supabase SQL Editor.</p>
+               <pre>{sqlToRun}</pre>
                <Button 
                   size="sm" 
-                  onClick={() => navigator.clipboard.writeText(`create table if not exists testimonials...`)} // Simplified for UI
+                  onClick={() => {
+                     navigator.clipboard.writeText(sqlToRun);
+                     showToast('SQL copied to clipboard!');
+                  }}
                   className="mt-4"
                >
                   <Copy size={14} className="mr-2" /> Copy SQL
@@ -478,6 +636,16 @@ alter table testimonials add column if not exists avatar_url text;`}</pre>
 
                      {/* Actions Dropdown (Hover) */}
                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-20">
+                        {/* Verify Button (New Feature) */}
+                        {t.status !== 'verified' && (
+                           <button
+                              onClick={() => handleVerify(t.id)}
+                              className={`p-1.5 rounded-lg hover:bg-green-50 hover:text-green-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                              title="Mark as Verified"
+                           >
+                              <CheckCircle2 size={16} />
+                           </button>
+                        )}
                         {/* Share Button (Feature 2) */}
                         <button
                            onClick={() => setShareModalData(t)}
@@ -486,6 +654,7 @@ alter table testimonials add column if not exists avatar_url text;`}</pre>
                         >
                            <Share2 size={16} />
                         </button>
+                        {/* Delete Button */}
                         <button
                            onClick={() => handleDelete(t.id)}
                            className={`p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
@@ -493,6 +662,17 @@ alter table testimonials add column if not exists avatar_url text;`}</pre>
                         >
                            <Trash2 size={16} />
                         </button>
+
+                        {/* Verify Button (New Feature) */}
+                        {t.status === 'pending' && (
+                           <button
+                              onClick={() => handleVerify(t.id)}
+                              className={`p-1.5 rounded-lg hover:bg-green-50 hover:text-green-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                              title="Verify & Publish"
+                           >
+                              <CheckCircle2 size={16} />
+                           </button>
+                        )}
                      </div>
 
                      {/* Status Badge */}
@@ -711,6 +891,19 @@ alter table testimonials add column if not exists avatar_url text;`}</pre>
                      />
                   </div>
                   <div>
+                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Public Handle (slug)</label>
+                     <div className="flex items-center">
+                        <span className="text-gray-400 text-sm bg-gray-100 border border-r-0 border-gray-300 px-3 py-2 rounded-l-xl">trustgrid.et/</span>
+                        <input
+                           type="text"
+                           value={profileData.username || ''}
+                           onChange={(e) => setProfileData({ ...profileData, username: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                           className="w-full px-4 py-2 rounded-r-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
+                           placeholder="company-name"
+                        />
+                     </div>
+                  </div>
+                  <div>
                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contact Email</label>
                      <div className="relative">
                         <Mail size={16} className="absolute left-3 top-3 text-gray-400" />
@@ -791,7 +984,7 @@ alter table testimonials add column if not exists avatar_url text;`}</pre>
 
          {/* Sidebar */}
          <aside className="w-full md:w-80 bg-white border-r border-gray-200 p-6 flex flex-col fixed md:relative h-auto md:h-screen z-20">
-            <div className="flex items-center gap-1 mb-10 cursor-pointer" onClick={onLogout}>
+            <div className="flex items-center gap-1 mb-10 cursor-pointer" onClick={() => setActiveTab('feed')}>
                <span className="font-extrabold text-2xl tracking-tighter text-black">
                   TrustGrid.
                </span>
@@ -812,9 +1005,13 @@ alter table testimonials add column if not exists avatar_url text;`}</pre>
                      <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Your Public Wall</p>
                      <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 mb-2">
                         <LinkIcon size={14} className="text-gray-400" />
-                        <span className="text-xs truncate flex-1 text-gray-600">trustgrid.et/addis-design</span>
+                        <span className="text-xs truncate flex-1 text-gray-600">trustgrid.et/{profileData.username || 'your-handle'}</span>
                      </div>
-                     <Button size="sm" fullWidth variant="secondary" onClick={handleCopyLink} className="text-xs h-8">
+                     <Button size="sm" fullWidth variant="secondary" onClick={() => {
+                        const url = window.location.origin + '/embed/' + (profileData.username || '');
+                        navigator.clipboard.writeText(url);
+                        showToast('Link copied to clipboard!', 'success');
+                     }} className="text-xs h-8">
                         <Copy size={12} className="mr-2" /> Copy Link
                      </Button>
                   </div>
@@ -905,29 +1102,27 @@ alter table testimonials add column if not exists avatar_url text;`}</pre>
                                  LinkedIn
                               </button>
                            </div>
+                        {/* LinkedIn Modal Update */}
                            {verificationType === 'linkedin' && (
                               <div className="bg-[#0a66c2]/5 p-4 rounded-xl border border-[#0a66c2]/20 animate-fade-in">
-                                 <label className="block text-xs font-bold text-[#0a66c2] uppercase mb-2">LinkedIn Smart Import</label>
+                                 <label className="block text-xs font-bold text-[#0a66c2] uppercase mb-2">LinkedIn Profile URL</label>
                                  <div className="flex gap-2">
                                     <input
                                        type="url"
-                                       placeholder="Paste Recommendation URL here..."
+                                       placeholder="https://www.linkedin.com/in/username"
                                        value={formData.linkedinUrl}
                                        onChange={(e) => setFormData({ ...formData, linkedinUrl: e.target.value })}
                                        className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-[#0a66c2]"
                                     />
-                                    <Button
-                                       type="button"
-                                       size="sm"
-                                       onClick={handleSimulateFetch}
-                                       disabled={isFetching}
-                                       className="bg-[#0a66c2] border-[#0a66c2] text-white hover:bg-[#004182]"
-                                    >
-                                       {isFetching ? <Loader2 className="animate-spin w-4 h-4" /> : <RefreshCw size={14} />}
-                                       <span className="ml-2 hidden sm:inline">Fetch</span>
-                                    </Button>
+                                    {/* Removed Simulate Fetch Button for now as requested */}
                                  </div>
-                                 <p className="text-[10px] text-gray-500 mt-2">We will auto-fill the details from the public profile.</p>
+                                 <p className="text-[10px] text-gray-500 mt-2">Paste the client's public profile link manually.</p>
+                              
+                                 {/* Optional: Add instructions about recommendations */}
+                                 <div className="mt-4 text-[10px] text-gray-500 bg-white p-3 rounded border border-gray-200">
+                                     <p className="font-bold mb-1">Tip:</p>
+                                     <p>LinkedIn doesn't provide direct links to single recommendations. Just paste their profile URL so viewers can verify it themselves.</p>
+                                 </div>
                               </div>
                            )}
                            {verificationType === 'email' && (

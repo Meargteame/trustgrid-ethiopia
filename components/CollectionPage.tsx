@@ -98,9 +98,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
             video_url: videoUrl,
             score: analysis.score,
             sentiment: analysis.sentiment,
-            is_verified: analysis.isAuthentic,
-            source: 'web_collection',
-            status: 'pending' // pending manual approval
+            // is_verified: analysis.isAuthentic, // Removed simple bool, use text status
+            status: 'pending',
+            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
          });
 
          if (error) throw error;

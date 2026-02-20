@@ -9,14 +9,27 @@ import { Footer } from './components/Footer';
 import { Dashboard } from './components/Dashboard';
 import { AuthPage } from './components/AuthPage';
 import { CollectionPage } from './components/CollectionPage';
+import { PublicWall } from './components/PublicWall';
 import { supabase } from './lib/supabase';
 
-type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection';
+type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection' | 'public-wall';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
+  const [embedHandle, setEmbedHandle] = useState<string>('');
 
   useEffect(() => {
+    // Check for "Embed" route manually (since we don't have react-router yet)
+    const path = window.location.pathname;
+    if (path.startsWith('/embed/')) {
+       const handle = path.split('/embed/')[1];
+       if (handle) {
+         setEmbedHandle(handle);
+         setCurrentView('public-wall');
+         return; 
+       }
+    }
+
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setCurrentView('dashboard');
@@ -72,6 +85,10 @@ const App: React.FC = () => {
 
   if (currentView === 'collection') {
     return <CollectionPage onBack={handleCloseCollection} />;
+  }
+
+  if (currentView === 'public-wall') {
+    return <PublicWall companyHandle={embedHandle} />;
   }
 
   if (currentView === 'auth') {
