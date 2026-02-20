@@ -341,24 +341,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
          if (error) throw error;
 
-         // Optimistically update local state (need to adapt to local shape)
-         const newItem: TestimonialData = {
-           id: data.id,
-           userId: data.user_id,
-           clientName: data.name,
-           clientCompany: data.company,
-           text: data.text,
-           videoUrl: data.video_url,
-           verificationMethod: verificationType === 'linkedin' ? 'linkedin' : 'manual',
-           status: data.status,
-           createdAt: data.created_at,
-           clientRole: 'Client', // default
-           sourceUrl: '',
-           avatarUrl: data.avatar_url || avatarUrl,
-           cardStyle: 'white'
-         };
-
          if (data) {
+            // Optimistically update local state (need to adapt to local shape)
+             const newItem: TestimonialData = {
+               id: data.id,
+               userId: data.user_id,
+               clientName: data.name,
+               clientCompany: data.company,
+               text: data.text,
+               videoUrl: data.video_url,
+               verificationMethod: verificationType === 'linkedin' ? 'linkedin' : 'manual',
+               status: data.status,
+               createdAt: data.created_at,
+               clientRole: 'Client', // default
+               sourceUrl: '',
+               avatarUrl: data.avatar_url || avatarUrl,
+               cardStyle: 'white'
+             };
+
             setTestimonials([newItem, ...testimonials]);
          }
          
@@ -596,7 +596,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
          <TrustMeter score={calculateTrustScore()} />
 
          {/* AI Summary Header */}
-         <AiSummaryHeader reviewCount={testimonials.length} />
+         <AiSummaryHeader reviews={testimonials.filter(t => t.status === 'verified').map(t => t.text)} />
 
          {/* Masonry Feed */}
          {isLoadingTestimonials ? (
@@ -882,12 +882,13 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                </h3>
                <div className="grid gap-4">
                   <div>
-                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Company Name</label>
+                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Display Name (Company or Personal)</label>
                      <input
                         type="text"
                         value={profileData.companyName}
                         onChange={(e) => setProfileData({ ...profileData, companyName: e.target.value })}
                         className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
+                        placeholder="e.g. Addis Design or Abebe Bikila"
                      />
                   </div>
                   <div>
@@ -993,9 +994,15 @@ create policy "User insert own profile" on profiles for insert with check (auth.
 
             <div className="mb-8">
                <div className="flex items-center gap-3 mb-6">
-                  <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=100&h=100" className="w-12 h-12 rounded-xl border-2 border-gray-100" alt="Profile" />
+                  <div className="w-12 h-12 rounded-full border-2 border-gray-100 bg-gray-200 overflow-hidden flex items-center justify-center font-bold text-gray-500">
+                     {profileData.logoUrl ? (
+                         <img src={profileData.logoUrl} className="w-full h-full object-cover" /> 
+                     ) : (
+                         profileData.companyName ? profileData.companyName.charAt(0).toUpperCase() : 'U'
+                     )}
+                  </div>
                   <div>
-                     <h3 className="font-bold text-sm">{profileData.companyName}</h3>
+                     <h3 className="font-bold text-sm truncate max-w-[150px]">{profileData.companyName || 'Your Name'}</h3>
                      <p className="text-xs text-gray-500">Elite Plan</p>
                   </div>
                </div>
