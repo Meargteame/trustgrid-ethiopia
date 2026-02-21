@@ -12,6 +12,9 @@ alter table testimonials add column if not exists source text default 'manual';
 -- 3. Add profiles columns (for settings)
 alter table profiles add column if not exists email text;
 alter table profiles add column if not exists font text default 'Plus Jakarta Sans';
+alter table profiles add column if not exists username text;
+alter table profiles add column if not exists website text;
+alter table profiles add column if not exists logo_url text;
 
 -- 4. Enable public access for the Collection Form
 create policy "Allow public inserts for testimonials"

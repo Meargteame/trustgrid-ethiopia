@@ -53,17 +53,27 @@ const App: React.FC = () => {
     }
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setCurrentView('dashboard');
-    });
+    // Only check session if we are NOT on a public route
+    if (!path.startsWith('/collect/') && !path.startsWith('/embed/') && !path.startsWith('/verify/')) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) setCurrentView('dashboard');
+        });
+    }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        setCurrentView('dashboard');
-      }
-      if (event === 'SIGNED_OUT') {
-        setCurrentView('landing');
+      // Only redirect on explicit sign-in/out events, not initial load if we are on a public route
+      const isPublicRoute = window.location.pathname.startsWith('/collect/') || 
+                            window.location.pathname.startsWith('/embed/') ||
+                            window.location.pathname.startsWith('/verify/');
+
+      if (!isPublicRoute) {
+          if (event === 'SIGNED_IN' && session) {
+            setCurrentView('dashboard');
+          }
+          if (event === 'SIGNED_OUT') {
+            setCurrentView('landing');
+          }
       }
     });
 

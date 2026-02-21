@@ -17,9 +17,7 @@ import { SocialShareModal } from './SocialShareModal';
 import { EmbedCodeModal } from './EmbedCodeModal';
 import { analyzeTrustContent } from '../services/geminiService';
 
-const INITIAL_TEAM: TeamMember[] = [
-   { id: '1', name: 'Demo User', email: 'demo@trustgrid.et', role: 'Admin', status: 'Active', avatarUrl: 'https://ui-avatars.com/api/?name=Demo+User&background=000&color=fff' },
-];
+const INITIAL_TEAM: TeamMember[] = [];
 
 interface DashboardProps {
    onLogout: () => void;
@@ -79,40 +77,63 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
          const { data: { user } } = await supabase.auth.getUser();
          if (!user) return;
 
-         // Get profile or create if missing
+         // Get profile 
          let { data, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
 
-         if (!data && !error) {
-             // Create default profile if not found
-             const newProfile = { id: user.id, company_name: 'My Company', email: user.email, primary_color: '#D4F954' };
-             const { data: created, error: createError } = await supabase.from('profiles').insert(newProfile).select().single();
-             if (createError) throw createError;
-             data = created;
-         } else if (error && error.code !== 'PGRST116') {
-             // If error is NOT "Row not found", throw it
-             throw error;
+         // Fix: Handle null data correctly even if error is present (PGRST116)
+         if (error && error.code === 'PGRST116') {
+             // Profile not found, create one from Auth Metadata
+             const meta = user.user_metadata || {};
+             // Default username from email if full_name is missing
+             const defaultUsername = meta.full_name ? meta.full_name.replace(/\s+/g, '').toLowerCase() : (user.email?.split('@')[0] || 'user');
+             
+             const newProfile = { 
+                id: user.id, 
+                company_name: meta.company_name || meta.full_name || 'My Brand', // Better fallback
+                email: user.email, 
+                primary_color: '#D4F954',
+                username: defaultUsername
+             };
+             
+             const { data: created, error: createError } = await supabase.from('profiles').insert([newProfile]).select().single();
+             
+             if (!createError && created) {
+                 data = created;
+             } else {
+                 console.error("Error creating profile:", createError);
+                 data = null; // Ensure we fall back to metadata below
+             }
+         } else if (error) {
+             console.error("Error fetching profile:", error);
          }
 
          if (data) {
              setProfileData({
-                 companyName: data.company_name || 'My Company',
+                 companyName: data.company_name || user.user_metadata?.company_name || user.user_metadata?.full_name || 'My Brand',
                  email: data.email || user.email || '',
-                 username: data.username || user.email?.split('@')[0] || '',
+                 username: data.username || user.user_metadata?.full_name?.replace(/\s+/g, '').toLowerCase() || user.email?.split('@')[0] || '',
                  primaryColor: data.primary_color || '#D4F954',
                  font: data.font || 'Plus Jakarta Sans',
                  logoUrl: data.logo_url || ''
              });
+         } else {
+             // Fallback if no profile data found at all and insert failed
+             const meta = user.user_metadata || {};
+             setProfileData({
+                 companyName: meta.company_name || meta.full_name || 'My Brand',
+                 email: user.email || '',
+                 username: meta.full_name ? meta.full_name.replace(/\s+/g, '').toLowerCase() : (user.email?.split('@')[0] || ''),
+                 primaryColor: '#D4F954',
+                 font: 'Plus Jakarta Sans',
+                 logoUrl: ''
+             });
          }
       } catch (err: any) {
-         console.warn("Failed to load profile:", err);
-         // Don't block UI, just warn
-         if (err.message?.includes('relation "profiles" does not exist')) {
-             setSetupRequired(true); 
-         }
+         console.warn("Failed to load profile logic:", err);
       } finally {
          setLoadingProfile(false);
       }
@@ -884,12 +905,31 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                </div>
 
                <div className="space-y-4">
-                  {teamMembers.map(member => (
+                  {/* Real User Entry */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex items-center gap-3">
+                           <div className="w-10 h-10 rounded-full border border-gray-200 bg-black text-white flex items-center justify-center font-bold">
+                              {profileData.companyName ? profileData.companyName.charAt(0).toUpperCase() : 'U'}
+                           </div>
+                           <div>
+                              <p className="text-sm font-bold text-black">{profileData.companyName || 'You'}</p> 
+                              <p className="text-xs text-gray-500">{profileData.email}</p>
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                           <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-black text-white">
+                              Owner
+                           </span>
+                        </div>
+                  </div>
+                  
+                  {/* Demo Team Members (Optional: Remove if confusing) */}
+                  {teamMembers.filter(m => m.id !== '1').map(member => (
                      <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                         <div className="flex items-center gap-3">
                            <img src={member.avatarUrl} className="w-10 h-10 rounded-full border border-gray-200" />
                            <div>
-                              <p className="text-sm font-bold text-black">{member.name} {member.id === '1' && '(You)'}</p>
+                              <p className="text-sm font-bold text-black">{member.name}</p>
                               <p className="text-xs text-gray-500">{member.email}</p>
                            </div>
                         </div>
