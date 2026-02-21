@@ -1,13 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Video, Mic, Send, Paperclip, X, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { analyzeTrustContent } from '../services/geminiService';
 
 interface CollectionPageProps {
+   targetUsername?: string;
    onBack: () => void;
 }
 
-export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
+export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, onBack }) => {
    const [step, setStep] = useState(1);
    const [isRecording, setIsRecording] = useState(false);
    const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
@@ -20,7 +21,54 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [showConfetti, setShowConfetti] = useState(false);
 
-   // ... (recording logic stays same)
+   // Context state
+   const [targetUserId, setTargetUserId] = useState<string | null>(null);
+   const [targetCompanyName, setTargetCompanyName] = useState<string>('');
+   const [loadingProfile, setLoadingProfile] = useState(true);
+
+   // Resolve User ID
+   useEffect(() => {
+      async function resolveUser() {
+         setLoadingProfile(true);
+         try {
+             if (targetUsername) {
+                // Public Link Flow: Look up by username
+                const { data, error } = await supabase
+                   .from('profiles')
+                   .select('id, company_name, full_name')
+                   .eq('username', targetUsername)
+                   .single();
+                
+                if (error || !data) {
+                   console.error("User resolution error", error);
+                   alert("Collection link invalid or user not found.");
+                   onBack();
+                   return;
+                }
+                
+                setTargetUserId(data.id);
+                setTargetCompanyName(data.company_name || data.full_name || targetUsername);
+             } else {
+                // Dashboard Preview Flow: Use current session
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                   setTargetUserId(user.id);
+                   // Fetch profile for company name
+                   const { data } = await supabase.from('profiles').select('company_name').eq('id', user.id).single();
+                   setTargetCompanyName(data?.company_name || "My Company");
+                } else {
+                   // Fallback for dev/demo if auth is skipped
+                   console.warn("No user session found for preview.");
+                }
+             }
+         } catch(e) {
+             console.error(e);
+         } finally {
+             setLoadingProfile(false);
+         }
+      }
+      resolveUser();
+   }, [targetUsername]);
 
    const startRecording = async () => {
       try {
@@ -63,20 +111,21 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
          return;
       }
 
+      if (!targetUserId) {
+         alert("Error: No recipient identified for this review.");
+         return;
+      }
+
       setIsSubmitting(true);
 
       try {
-         // Get current user to link testimonial to (Demo mode: link to self)
-         const { data: { user } } = await supabase.auth.getUser();
-         if (!user) throw new Error("No user found. Please login first.");
-
          // 1. Analyze with Gemini
          const analysis = await analyzeTrustContent(reviewText || "Video Review");
 
          // 2. Upload Video (if any)
          let videoUrl = null;
          if (videoBlob) {
-            const fileName = `${user.id}/${Date.now()}.webm`;
+            const fileName = `${targetUserId}/${Date.now()}.webm`;
             const { error: uploadError } = await supabase.storage
                .from('videos')
                .upload(fileName, videoBlob);
@@ -85,20 +134,19 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
                const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(fileName);
                videoUrl = publicUrl;
             } else {
-               console.warn("Video upload failed (bucket might be missing)", uploadError);
+               console.warn("Video upload failed", uploadError);
             }
          }
 
          // 3. Save to Supabase
          const { error } = await supabase.from('testimonials').insert({
-            user_id: user.id,
+            user_id: targetUserId,
             name,
             company,
             text: reviewText,
             video_url: videoUrl,
             score: analysis.score,
             sentiment: analysis.sentiment,
-            // is_verified: analysis.isAuthentic, // Removed simple bool, use text status
             status: 'pending',
             avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
          });
@@ -114,6 +162,14 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
          setIsSubmitting(false);
       }
    };
+
+   if (loadingProfile) {
+      return (
+         <div className="min-h-screen flex items-center justify-center">
+            <Loader2 className="animate-spin text-gray-400" size={32} />
+         </div>
+      );
+   }
 
    if (step === 3) {
       return (
@@ -137,11 +193,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
                   <CheckCircle2 size={32} className="text-green-600" />
                </div>
                <h2 className="text-2xl font-black font-sans mb-2">Thank You!</h2>
-               <p className="text-gray-600 mb-6 text-sm">Your feedback helps us build trust. You are a legend!</p>
+               <p className="text-gray-600 mb-6 text-sm">Your feedback helps {targetCompanyName} build trust. You are a legend!</p>
 
                <div className="border border-dashed border-gray-300 p-4 rounded-xl bg-gray-50 mb-6">
                   <p className="text-xs uppercase font-bold text-gray-400 mb-1">Your 10% Off Coupon</p>
-                  <p className="text-xl font-mono font-bold tracking-widest text-black">THANKYOU2026</p>
+                  <p className="text-xl font-mono font-bold tracking-widest text-black">TRUST2026</p>
                </div>
 
                <button onClick={onBack} className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors">
@@ -153,14 +209,14 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
    }
 
    return (
-      <div className="min-h-screen bg-white font-sans">
+      <div className="min-h-screen bg-white font-sans text-gray-900">
          {/* Mobile Header */}
          <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 flex items-center gap-4 z-50">
             <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                <ArrowLeft size={20} />
             </button>
             <div>
-               <h1 className="text-sm font-bold">Addis Design Co.</h1>
+               <h1 className="text-sm font-bold">{targetCompanyName || "Addis Design Co."}</h1>
                <p className="text-[10px] text-gray-500">Collect Reviews</p>
             </div>
          </div>
@@ -170,7 +226,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
             <p className="text-gray-500 text-sm mb-6">Your feedback helps us improve and build trust with future clients.</p>
 
             {/* Video Recorder */}
-            <div className="bg-black rounded-[24px] overflow-hidden aspect-[4/5] relative mb-6 shadow-xl group">
+            <div className="bg-black rounded-[24px] overflow-hidden aspect-[4/5] relative mb-6 shadow-xl group border-4 border-white ring-1 ring-gray-200">
                {videoBlob ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                      <p className="text-white font-bold">Video Recorded!</p>
@@ -190,16 +246,18 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ onBack }) => {
                      {!isRecording ? (
                         <button
                            onClick={startRecording}
-                           className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-110 transition-transform"
+                           className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-110 transition-transform bg-transparent"
                         >
-                           <div className="w-12 h-12 bg-red-500 rounded-full" />
+                           <div className="w-12 h-12 bg-red-500 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
                         </button>
                      ) : (
                         <button
                            onClick={stopRecording}
-                           className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-110 transition-transform"
+                           className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-110 transition-transform bg-red-500 animate-pulse"
                         >
-                           <div className="w-6 h-6 bg-red-500 rounded-sm animate-pulse" />
+                           <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
+                              <div className="w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                           </div>
                         </button>
                      )}
                   </div>

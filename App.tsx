@@ -10,22 +10,44 @@ import { Dashboard } from './components/Dashboard';
 import { AuthPage } from './components/AuthPage';
 import { CollectionPage } from './components/CollectionPage';
 import { PublicWall } from './components/PublicWall';
+import { VerificationPage } from './components/VerificationPage';
 import { supabase } from './lib/supabase';
 
-type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection' | 'public-wall';
+type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection' | 'public-wall' | 'verification';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [embedHandle, setEmbedHandle] = useState<string>('');
+  const [collectionHandle, setCollectionHandle] = useState<string>('');
+  const [verificationToken, setVerificationToken] = useState<string>('');
 
   useEffect(() => {
-    // Check for "Embed" route manually (since we don't have react-router yet)
+    // Check for "Embed", "Collect", or "Verify" routes manually
     const path = window.location.pathname;
+    
     if (path.startsWith('/embed/')) {
        const handle = path.split('/embed/')[1];
        if (handle) {
          setEmbedHandle(handle);
          setCurrentView('public-wall');
+         return; 
+       }
+    }
+
+    if (path.startsWith('/collect/')) {
+       const handle = path.split('/collect/')[1];
+       if (handle) {
+         setCollectionHandle(handle);
+         setCurrentView('collection');
+         return; 
+       }
+    }
+
+    if (path.startsWith('/verify/')) {
+       const token = path.split('/verify/')[1];
+       if (token) {
+         setVerificationToken(token);
+         setCurrentView('verification');
          return; 
        }
     }
@@ -84,7 +106,24 @@ const App: React.FC = () => {
   }
 
   if (currentView === 'collection') {
-    return <CollectionPage onBack={handleCloseCollection} />;
+    return (
+      <CollectionPage 
+        targetUsername={collectionHandle} 
+        onBack={() => {
+          if (collectionHandle) {
+             // If accessed via public link, go to landing
+             setCurrentView('landing');
+             window.history.pushState({}, '', '/');
+          } else {
+             handleCloseCollection();
+          }
+        }} 
+      />
+    );
+  }
+
+  if (currentView === 'verification') {
+    return <VerificationPage token={verificationToken} />;
   }
 
   if (currentView === 'public-wall') {

@@ -67,7 +67,3 @@ export const AiSummaryHeader: React.FC<AiSummaryHeaderProps> = ({ reviews }) => 
     </div>
   );
 };
-      </div>
-    </div>
-  );
-};

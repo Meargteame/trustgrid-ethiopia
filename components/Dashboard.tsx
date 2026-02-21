@@ -14,6 +14,8 @@ import { AnalyticsTab } from './AnalyticsTab';
 import { AiSummaryHeader } from './AiSummaryHeader';
 import { TrustMeter } from './TrustMeter';
 import { SocialShareModal } from './SocialShareModal';
+import { EmbedCodeModal } from './EmbedCodeModal';
+import { analyzeTrustContent } from '../services/geminiService';
 
 const INITIAL_TEAM: TeamMember[] = [
    { id: '1', name: 'Demo User', email: 'demo@trustgrid.et', role: 'Admin', status: 'Active', avatarUrl: 'https://ui-avatars.com/api/?name=Demo+User&background=000&color=fff' },
@@ -39,6 +41,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
    // Social Share State
    const [shareModalData, setShareModalData] = useState<TestimonialData | null>(null);
+   const [embedModalId, setEmbedModalId] = useState<string | null>(null);
 
    // Settings Form State
    const [profileData, setProfileData] = useState({
@@ -179,17 +182,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       let score = 0;
       // Base for account setup
       score += 10;
-      // Verified Reviews
-      const verifiedCount = testimonials.filter(t => t.status === 'verified').length;
-      score += (verifiedCount * 5);
-      // Video Reviews
-      const videoCount = testimonials.filter(t => t.videoUrl).length;
-      score += (videoCount * 20);
-      // LinkedIn Connected (Mocked as present if any review is linkedin verified)
-      const hasLinkedin = testimonials.some(t => t.verificationMethod === 'linkedin');
-      if (hasLinkedin) score += 15;
+      
+      const verified = testimonials.filter(t => t.status === 'verified');
+      if (verified.length === 0) return 10;
 
-      return Math.min(100, score);
+      // 1. Average AI Score (50% weight)
+      const aiScores = verified.map(t => t.score || 70); // Default 70 if no score
+      const avgAiScore = aiScores.reduce((a, b) => a + b, 0) / aiScores.length;
+      score += (avgAiScore * 0.5);
+
+      // 2. Volume (10% weight) - Max out at 20 reviews
+      score += Math.min(verified.length * 2, 20);
+
+      // 3. Completeness (video, linkedin) (20% weight)
+      // Video Reviews
+      const videoCount = verified.filter(t => t.videoUrl).length;
+      score += Math.min(videoCount * 5, 20);
+      
+      // LinkedIn Connected
+      const hasLinkedin = verified.some(t => t.verificationMethod === 'linkedin');
+      if (hasLinkedin) score += 10;
+
+      return Math.min(100, Math.round(score));
    };
 
    const handleCopyLink = () => {
@@ -301,36 +315,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
       try {
          const { data: { user } } = await supabase.auth.getUser();
-         // Use a dummy ID if not logged in (for demo/development flexibility)
-         const userId = user?.id || 'demo-user-123';
+         if (!user) throw new Error("Please log in to add proofs.");
 
-         let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=random`;
-
+         // 1. Handle File Upload
+         let avatarUrl = null;
          if (formData.avatarFile) {
-            const fileExt = formData.avatarFile.name.split('.').pop();
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const fileName = `${user.id}/${Date.now()}.png`;
             const { error: uploadError } = await supabase.storage
                .from('avatars')
                .upload(fileName, formData.avatarFile);
-
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage
-               .from('avatars')
-               .getPublicUrl(fileName);
-
-            avatarUrl = publicUrl;
+            
+            if (!uploadError) {
+               const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+               avatarUrl = publicUrl;
+            }
          }
 
+         // 2. Analyze Content (Mock or Real)
+         const analysis = await analyzeTrustContent(formData.text);
+
+         // 3. Prepare Payload
          const payload = {
+            user_id: user.id,
             name: formData.name,
-            // clientEmail: formData.email, // not in schema yet
             text: formData.text,
-            // source: verificationType === 'linkedin' ? 'linkedin' : 'manual', // Removed
-            video_url: verificationType === 'linkedin' ? formData.linkedinUrl : undefined, // using video_url for link
-            status: verificationType === 'email' ? 'pending' : 'verified',
-            user_id: user?.id,
-            avatar_url: avatarUrl
+            avatar_url: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=random`,
+            score: analysis.score,
+            sentiment: analysis.sentiment,
+            status: verificationType === 'email' ? 'pending_verification' : 'verified', // If email, set pending
+            source: verificationType,
+            client_email: verificationType === 'email' ? formData.email : null,
+            // If linkedin, store URL in video_url for now or add a column
+            video_url: verificationType === 'linkedin' ? formData.linkedinUrl : null 
          };
 
          const { data, error } = await supabase
@@ -341,35 +357,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
          if (error) throw error;
 
-         if (data) {
-            // Optimistically update local state (need to adapt to local shape)
-             const newItem: TestimonialData = {
-               id: data.id,
-               userId: data.user_id,
-               clientName: data.name,
-               clientCompany: data.company,
-               text: data.text,
-               videoUrl: data.video_url,
-               verificationMethod: verificationType === 'linkedin' ? 'linkedin' : 'manual',
-               status: data.status,
-               createdAt: data.created_at,
-               clientRole: 'Client', // default
-               sourceUrl: '',
-               avatarUrl: data.avatar_url || avatarUrl,
-               cardStyle: 'white'
-             };
+         // 4. Handle Real Email Sending via Client
+         if (verificationType === 'email' && data) {
+             const verifyLink = `${window.location.origin}/verify/${data.verification_token}`;
+             const subject = encodeURIComponent(`Verify your review for ${profileData.companyName || 'Addis Design Co.'}`);
+             const body = encodeURIComponent(
+`Hi ${formData.name},
 
-            setTestimonials([newItem, ...testimonials]);
-         }
-         
-         setIsModalOpen(false);
-         setFormData({ name: '', email: '', text: '', username: '', linkedinUrl: '', avatarFile: null });
+Thanks for your kind words! 
 
-         if (verificationType === 'email') {
-            showToast('Proof added! Verification email sent to client.', 'success');
+To help us build trust with future clients, could you please verify this review by clicking the link below? 
+It only takes one click.
+
+${verifyLink}
+
+Thanks,
+${profileData.companyName || 'The Team'}
+`
+             );
+             
+             // Open the user's default email client with the pre-filled message
+             window.open(`mailto:${formData.email}?subject=${subject}&body=${body}`, '_blank');
+             
+             showToast('Email draft opened! Please review and send.', 'success');
          } else {
-            showToast('New proof added successfully!');
+             showToast('Proof added successfully!', 'success');
          }
+
+         setIsModalOpen(false);
+         // Refresh list
+         const { data: newList } = await supabase.from('testimonials').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+         if (newList) setTestimonials(newList);
+         
       } catch (error: any) {
          console.error(error);
          if (error.message?.includes('policies')) {
@@ -654,6 +673,16 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                         >
                            <Share2 size={16} />
                         </button>
+                        
+                        {/* Embed Button (New - Utilization) */}
+                        <button
+                           onClick={() => setEmbedModalId(t.id)}
+                           className={`p-1.5 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                           title="Embed on Website"
+                        >
+                           <Code size={16} />
+                        </button>
+
                         {/* Delete Button */}
                         <button
                            onClick={() => handleDelete(t.id)}
@@ -983,6 +1012,11 @@ create policy "User insert own profile" on profiles for insert with check (auth.
             <SocialShareModal testimonial={shareModalData} onClose={() => setShareModalData(null)} />
          )}
 
+         {/* Embed Code Modal */}
+         {embedModalId && (
+            <EmbedCodeModal testimonialId={embedModalId} onClose={() => setEmbedModalId(null)} />
+         )}
+
          {/* Sidebar */}
          <aside className="w-full md:w-80 bg-white border-r border-gray-200 p-6 flex flex-col fixed md:relative h-auto md:h-screen z-20">
             <div className="flex items-center gap-1 mb-10 cursor-pointer" onClick={() => setActiveTab('feed')}>
@@ -1024,12 +1058,22 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   </div>
 
                   {/* Feature: Auto-Magic Collection Link */}
-                  <div className="p-4 bg-brand-lime/10 rounded-xl border border-brand-lime group hover:bg-brand-lime/20 transition-colors cursor-pointer" onClick={onOpenCollection}>
+                  <div className="p-4 bg-brand-lime/10 rounded-xl border border-brand-lime group hover:bg-brand-lime/20 transition-colors cursor-pointer" onClick={() => {
+                        // Logic to copy or open
+                        if (profileData.username) {
+                           const url = window.location.origin + '/collect/' + profileData.username;
+                           navigator.clipboard.writeText(url);
+                           showToast('Collection form link copied!', 'success');
+                           window.open(url, '_blank');
+                        } else {
+                           showToast('Please set a username in Settings first', 'error');
+                        }
+                  }}>
                      <p className="text-xs font-bold text-gray-600 mb-1 uppercase flex items-center gap-2">
-                        <Send size={12} /> Collection Page
+                        <Send size={12} /> Share Collection Form
                      </p>
                      <p className="text-xs text-black font-bold flex items-center gap-1">
-                        Preview your form <ExternalLink size={10} />
+                        Copy link to send to clients <ExternalLink size={10} />
                      </p>
                   </div>
                </div>
@@ -1124,17 +1168,14 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                     {/* Removed Simulate Fetch Button for now as requested */}
                                  </div>
                                  <p className="text-[10px] text-gray-500 mt-2">Paste the client's public profile link manually.</p>
-                              
-                                 {/* Optional: Add instructions about recommendations */}
-                                 <div className="mt-4 text-[10px] text-gray-500 bg-white p-3 rounded border border-gray-200">
-                                     <p className="font-bold mb-1">Tip:</p>
-                                     <p>LinkedIn doesn't provide direct links to single recommendations. Just paste their profile URL so viewers can verify it themselves.</p>
-                                 </div>
                               </div>
                            )}
-                           {verificationType === 'email' && (
-                              <div className="bg-[#0088cc]/5 p-4 rounded-xl border border-[#0088cc]/20 animate-fade-in">
-                                 <label className="block text-xs font-bold text-[#0088cc] uppercase mb-2">Client Email Verification</label>
+                           
+                           {/* Email Input - Always Visible for ALL Types (Requirement: All 3 ways need email) */}
+                           <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+                                    Client Email (For Verification) <span className="text-red-500">*</span>
+                                 </label>
                                  <div className="flex gap-2">
                                     <Mail size={16} className="text-gray-400 mt-3" />
                                     <input
@@ -1142,13 +1183,16 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                        placeholder="client@company.com"
                                        value={formData.email}
                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                       className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-[#0088cc]"
+                                       className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-black"
                                        required
                                     />
                                  </div>
-                                 <p className="text-[10px] text-gray-500 mt-2">We will send a verification link to this email.</p>
-                              </div>
-                           )}
+                                 <p className="text-[10px] text-gray-500 mt-2">
+                                    {verificationType === 'manual' && "We'll send a confirmation link to this email to mark it as Verified."}
+                                    {verificationType === 'email' && "We'll send the verification request here."}
+                                    {verificationType === 'linkedin' && "We'll notify them you've added their LinkedIn review."}
+                                 </p>
+                           </div>
                         </div>
                         <div className="space-y-4 pt-4 border-t border-gray-100">
                            <label className="block text-sm font-bold">Client Details</label>

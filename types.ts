@@ -14,6 +14,8 @@ export interface TestimonialData {
   cardStyle?: 'white' | 'lime' | 'dark';
   createdAt: string;
   updatedAt?: string;
+  score?: number; // AI Trust Score (0-100)
+  sentiment?: 'Positive' | 'Neutral' | 'Negative'; // AI Sentiment
 }
 
 export interface TrustAnalysisResult {

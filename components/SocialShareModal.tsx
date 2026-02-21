@@ -1,5 +1,7 @@
 import React, { useRef } from 'react';
-import { X, Download, Share2, Instagram, Linkedin } from 'lucide-react';
+import { X, Share2, Instagram, Linkedin, Download } from 'lucide-react';
+import { toPng } from 'html-to-image';
+import download from 'downloadjs';
 import { TestimonialData } from '../types';
 import { Button } from './Button';
 
@@ -10,20 +12,20 @@ interface SocialShareModalProps {
 
 export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial, onClose }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [generating, setGenerating] = React.useState(false);
 
-  const handleDownload = () => {
-    // In a real app, use html-to-image here. 
-    // For MVP, we simulate the action.
-    const btn = document.getElementById('download-btn');
-    if(btn) {
-        btn.innerHTML = `<span class="flex items-center gap-2"><div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> Generatng...</span>`;
-        setTimeout(() => {
-            // Note: This string injection of <Check /> won't render a React component, 
-            // but for the purpose of this mock interaction we leave the logic as provided 
-            // while fixing the TypeScript errors.
-            btn.innerHTML = `<span class="flex items-center gap-2">Saved to Device</span>`;
-            setTimeout(onClose, 1000);
-        }, 1500);
+  const handleDownload = async () => {
+    if (cardRef.current) {
+        setGenerating(true);
+        try {
+            const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 2 });
+            download(dataUrl, 'trust-signal.png');
+        } catch (err) {
+            console.error('oops, something went wrong!', err);
+            alert("Failed to generate image. Please try again.");
+        } finally {
+            setGenerating(false);
+        }
     }
   };
 
@@ -122,8 +124,14 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial,
               </div>
            </div>
 
-           <Button id="download-btn" onClick={handleDownload} fullWidth className="mt-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <Download size={18} className="mr-2" /> Download Image
+           <Button 
+              id="download-btn" 
+              onClick={handleDownload} 
+              fullWidth 
+              className="mt-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+              disabled={generating}
+           >
+              {generating ? 'Generating...' : <><Download size={18} className="mr-2" /> Download Image</>}
            </Button>
         </div>
 
