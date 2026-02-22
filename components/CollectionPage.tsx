@@ -35,19 +35,41 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                 // Public Link Flow: Look up by username
                 const { data, error } = await supabase
                    .from('profiles')
-                   .select('id, company_name, full_name')
+                   .select('id, company_name, full_name, username')
                    .eq('username', targetUsername)
                    .single();
                 
-                if (error || !data) {
-                   console.error("User resolution error", error);
-                   alert("Collection link invalid or user not found.");
-                   onBack();
-                   return;
+                if (data) {
+                   setTargetUserId(data.id);
+                   setTargetCompanyName(data.company_name || data.full_name || targetUsername);
+                } else {
+                   // Fallback: If DB lookup fails, check if it's the logged-in user viewing their own link
+                   const { data: { user } } = await supabase.auth.getUser();
+                   const metaUsername = user?.user_metadata?.full_name?.replace(/\s+/g, '').toLowerCase(); // Best effort match
+                   const profileUsername = user?.email?.split('@')[0];
+
+                   if (user && (targetUsername === metaUsername || targetUsername === profileUsername || targetUsername === user.user_metadata?.username)) {
+                      console.log("Fallback: Matched logged-in user despite missing public profile");
+                      setTargetUserId(user.id);
+                      setTargetCompanyName(user.user_metadata?.company_name || targetUsername);
+                      
+                      // Attempt to self-heal the missing profile
+                      const { error: healError } = await supabase.from('profiles').upsert({
+                          id: user.id,
+                          username: targetUsername,
+                          company_name: user.user_metadata?.company_name || 'My Company',
+                          email: user.email,
+                          primary_color: '#D4F954'
+                      });
+                      if (healError) console.error("Self-heal failed", healError);
+
+                   } else {
+                      console.error("User resolution error", error);
+                      alert("Collection link invalid or user not found. Please ensure the profile is saved in Settings.");
+                      onBack();
+                      return;
+                   }
                 }
-                
-                setTargetUserId(data.id);
-                setTargetCompanyName(data.company_name || data.full_name || targetUsername);
              } else {
                 // Dashboard Preview Flow: Use current session
                 const { data: { user } } = await supabase.auth.getUser();
