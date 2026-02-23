@@ -50,5 +50,3 @@ export interface TeamMember {
 
 export type WidgetTheme = 'modern' | 'dark_mode' | 'minimalist' | 'brand';
 export type WidgetLayout = 'grid' | 'carousel' | 'list' | 'popup';
-
-export type WidgetTheme = 'modern' | 'dark_mode' | 'minimalist';

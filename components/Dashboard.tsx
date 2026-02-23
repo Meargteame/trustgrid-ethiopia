@@ -8,9 +8,10 @@ import {
    Share2, Users, Monitor, Layout, Maximize2, Columns, List, MessageSquare
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Testimonials, TeamMember, WidgetTheme, WidgetLayout } from '../types';
+import { TestimonialData, TeamMember, WidgetTheme, WidgetLayout } from '../types';
 import { VerificationBadge } from './VerificationBadge';
 import { AnalyticsTab } from './AnalyticsTab';
+import { SettingsTab } from './SettingsTab';
 import { AiSummaryHeader } from './AiSummaryHeader';
 import { TrustMeter } from './TrustMeter';
 import { SocialShareModal } from './SocialShareModal';
@@ -286,15 +287,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       const functionUrl = 'https://tyenyntazlfqaoduzpxy.supabase.co/functions/v1/send-email';
       
       try {
-         const { data: { session } } = await supabase.auth.getSession();
-         const res = await fetch(functionUrl, {
+         // FORCE REFRESH SESSION to ensure no stale tokens
+         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+         
+         const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+         
+         if (!anonKey) {
+             console.error("CRITICAL: VITE_SUPABASE_ANON_KEY is missing from environment variables!");
+             showToast('Configuration Error: Internal Anon Key Missing', 'error');
+             return;
+         }
+
+         let token = session?.access_token || anonKey;
+
+         console.log("Attempt 1: Using token type:", session ? "User Session" : "Anon Key");
+         
+         let res = await fetch(functionUrl, {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
-               'Authorization': `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+               'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({
-               to: email,
+               to: email, 
                type: 'invite',
                data: {
                   role: role,
@@ -303,13 +318,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
             })
          });
 
+         // RETRY LOGIC: If 401/Invalid JWT with user token, try Anon Key
+         if (res.status === 401 && session) {
+             console.warn("Session token rejected. Retrying with Anon Key...");
+             token = anonKey;
+             res = await fetch(functionUrl, {
+                method: 'POST',
+                headers: {
+                   'Content-Type': 'application/json',
+                   'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                   to: email, 
+                   type: 'invite',
+                   data: {
+                      role: role,
+                      url: `${window.location.origin}/auth?invite=${role.toLowerCase()}`
+                   }
+                })
+             });
+         }
+
+
          const responseData = await res.json();
-         
+         console.log("Function Response:", responseData); // DEBUG
+
          if (!res.ok) {
             console.error('Email send error:', responseData);
-            showToast('Failed: ' + (responseData.error?.message || JSON.stringify(responseData)), 'error');
+            // Specific handling for common Resend issues
+            const errMsg = responseData.message || (responseData.error && responseData.error.message) || JSON.stringify(responseData.error) || 'Unknown Error';
+            if (errMsg.includes('resend_api_key')) {
+                showToast('Configuration Error: Invalid Resend API Key in Supabase Secrets.', 'error');
+            } else if (errMsg.includes('rate_limit')) {
+                showToast('Rate Limited: Please wait 1 minute before sending again.', 'error');
+            } else {
+                showToast('Failed: ' + errMsg, 'error');
+            }
          } else {
-            showToast(`Invitation sent! ID: ${responseData.id || 'ok'}`);
+            showToast(`Invitation sent! ID: ${responseData.id}`);
          }
 
          setTeamMembers([...teamMembers, {
@@ -526,34 +572,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
-   const handleSaveSettings = async () => {
-      try {
-         const { data: { user } } = await supabase.auth.getUser();
-         if (!user) throw new Error("No user session");
 
-         if (profileData.username && profileData.username.length < 3) {
-            throw new Error("Handle must be at least 3 characters");
-         }
-
-         // Upsert based on ID
-         const { error } = await supabase.from('profiles').upsert({
-             id: user.id || 'default',
-             company_name: profileData.companyName,
-             username: profileData.username || null,
-             email: profileData.email,
-             primary_color: profileData.primaryColor,
-             font: profileData.font,
-             updated_at: new Date().toISOString()
-         });
-
-         if (error) throw error;
-         showToast('Profile settings saved successfully!');
-      } catch (err: any) {
-         console.error("Failed to save settings", err);
-         showToast('Failed to save: ' + (err.message), 'error');
-         if (err.message?.includes('profiles')) setSetupRequired(true);
-      }
-   };
 
 
 
@@ -1231,145 +1250,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
    };
 
    const renderSettings = () => (
-      <div className="max-w-2xl mx-auto animate-fade-in pb-20">
-         <header className="mb-10">
-            <h1 className="text-3xl font-extrabold text-black mb-1">Account Settings</h1>
-            <p className="text-gray-500 text-sm">Manage your brand profile and team access.</p>
-         </header>
-
-         <div className="space-y-8">
-            {/* Team Management Section (Feature 4) */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm">
-               <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                     <Users size={20} /> Team Members
-                  </h3>
-                  <Button size="sm" onClick={handleInviteTeam} variant="outline" className="text-xs">
-                     + Invite Member
-                  </Button>
-               </div>
-
-               <div className="space-y-4">
-                  {/* Real User Entry */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-full border border-gray-200 bg-black text-white flex items-center justify-center font-bold">
-                              {profileData.companyName ? profileData.companyName.charAt(0).toUpperCase() : 'U'}
-                           </div>
-                           <div>
-                              <p className="text-sm font-bold text-black">{profileData.companyName || 'You'}</p> 
-                              <p className="text-xs text-gray-500">{profileData.email}</p>
-                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-black text-white">
-                              Owner
-                           </span>
-                        </div>
-                  </div>
-                  
-                  {/* Demo Team Members (Optional: Remove if confusing) */}
-                  {teamMembers.filter(m => m.id !== '1').map(member => (
-                     <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <div className="flex items-center gap-3">
-                           <img src={member.avatarUrl} className="w-10 h-10 rounded-full border border-gray-200" />
-                           <div>
-                              <p className="text-sm font-bold text-black">{member.name}</p>
-                              <p className="text-xs text-gray-500">{member.email}</p>
-                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${member.role === 'Admin' ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'}`}>
-                              {member.role}
-                           </span>
-                           {member.status === 'Pending' && <span className="text-[10px] text-orange-500 font-bold">Pending</span>}
-                        </div>
-                     </div>
-                  ))}
-               </div>
-            </div>
-
-            {/* Profile Section */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm">
-               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <User size={20} /> Profile Details
-               </h3>
-               <div className="grid gap-4">
-                  <div>
-                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Display Name (Company or Personal)</label>
-                     <input
-                        type="text"
-                        value={profileData.companyName}
-                        onChange={(e) => setProfileData({ ...profileData, companyName: e.target.value })}
-                        className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
-                        placeholder="e.g. Addis Design or Abebe Bikila"
-                     />
-                  </div>
-                  <div>
-                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Public Handle (slug)</label>
-                     <div className="flex items-center">
-                        <span className="text-gray-400 text-sm bg-gray-100 border border-r-0 border-gray-300 px-3 py-2 rounded-l-xl">trustgrid.et/</span>
-                        <input
-                           type="text"
-                           value={profileData.username || ''}
-                           onChange={(e) => setProfileData({ ...profileData, username: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                           className="w-full px-4 py-2 rounded-r-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
-                           placeholder="company-name"
-                        />
-                     </div>
-                  </div>
-                  <div>
-                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contact Email</label>
-                     <div className="relative">
-                        <Mail size={16} className="absolute left-3 top-3 text-gray-400" />
-                        <input
-                           type="email"
-                           value={profileData.email}
-                           onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                           className="w-full pl-10 px-4 py-2 rounded-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
-                        />
-                     </div>
-                  </div>
-               </div>
-            </div>
-
-            {/* Branding Section */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm">
-               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Palette size={20} /> Branding
-               </h3>
-               <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Primary Color</label>
-                     <div className="flex gap-2">
-                        {['#D4F954', '#3B82F6', '#A855F7', '#111111'].map((color) => (
-                           <button
-                              key={color}
-                              onClick={() => setProfileData({ ...profileData, primaryColor: color })}
-                              className={`w-8 h-8 rounded-full border border-gray-200 transition-all ${profileData.primaryColor === color ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'}`}
-                              style={{ backgroundColor: color }}
-                           />
-                        ))}
-                     </div>
-                  </div>
-                  <div>
-                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Font</label>
-                     <select className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-black outline-none bg-white">
-                        <option>Plus Jakarta Sans</option>
-                        <option>Inter</option>
-                        <option>Roboto</option>
-                     </select>
-                  </div>
-               </div>
-            </div>
-
-            <div className="flex justify-end">
-               <Button onClick={handleSaveSettings} className="shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <Check size={18} className="mr-2" /> Save Changes
-               </Button>
-            </div>
-         </div>
-      </div>
+      <SettingsTab onProfileUpdate={fetchProfile} />
    );
 
    const renderContent = () => {

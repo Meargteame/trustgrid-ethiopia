@@ -16,8 +16,9 @@ serve(async (req) => {
   try {
     const { to, type, data } = await req.json()
     
-    let subject = ''
-    let html = ''
+
+    let subject = 'TrustGrid Notification' // Default subject
+    let html = '<p>Notification from TrustGrid</p>' // Default HTML
 
     if (type === 'invite') {
         subject = 'You have been invited to join TrustGrid Team'
@@ -82,7 +83,10 @@ serve(async (req) => {
             })
         }
 
-        return new Response(JSON.stringify({ error, message: "Resend API rejected the request" }), {
+        return new Response(JSON.stringify({ 
+            error: error, 
+            message: error.message || "Resend API rejected the request with unknown error." 
+        }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
         })
@@ -103,3 +107,5 @@ serve(async (req) => {
     })
   }
 })
+
+

@@ -41,6 +41,20 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
         setProfile(profileData);
 
+        // -- ANALYTICS TRACKING --
+        // Insert view record
+        if (profileData && profileData.id) {
+           // Fire and forget - don't await to block render
+           const referrer = document.referrer || 'direct';
+           supabase.from('views').insert({
+              wall_id: profileData.id,
+              referrer: referrer
+           }).then(({ error }) => {
+              if (error) console.error("Failed to track view:", error);
+           });
+        }
+        // ------------------------
+
         // 2. Fetch Verified Testimonials
         if (profileData) {
           const { data: testimonialsData, error: testimonialsError } = await supabase

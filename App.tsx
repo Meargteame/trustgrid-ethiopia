@@ -55,24 +55,44 @@ const App: React.FC = () => {
     // Check for existing session
     // Only check session if we are NOT on a public route
     if (!path.startsWith('/collect/') && !path.startsWith('/embed/') && !path.startsWith('/verify/')) {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session) setCurrentView('dashboard');
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+          if (error) {
+              console.error("Error retrieving session:", error);
+          }
+          if (session) {
+              console.log("Existing session found:", session.user.email);
+              setCurrentView('dashboard');
+          } else {
+              console.log("No existing session found.");
+          }
         });
     }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only redirect on explicit sign-in/out events, not initial load if we are on a public route
+      console.log(`Supabase Auth Event: ${event}`);
+      
+      if (session) {
+         console.log("Session Active for:", session.user.email);
+      } else {
+         console.log("No Active Session");
+      }
+
+      // Handle OAuth callback token parsing implicitly done by supabase-js
       const isPublicRoute = window.location.pathname.startsWith('/collect/') || 
                             window.location.pathname.startsWith('/embed/') ||
                             window.location.pathname.startsWith('/verify/');
 
       if (!isPublicRoute) {
+          // Redirect to dashboard on sign in
           if (event === 'SIGNED_IN' && session) {
+            console.log("Redirecting to Dashboard...");
             setCurrentView('dashboard');
           }
+          // Redirect to landing on sign out
           if (event === 'SIGNED_OUT') {
-            setCurrentView('landing');
+             console.log("Redirecting to Landing Page...");
+             setCurrentView('landing');
           }
       }
     });
