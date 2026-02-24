@@ -42,7 +42,15 @@ const App: React.FC = () => {
           }
        }
 
-       const handle = path.split('/embed/')[1];
+       let handle = path.split('/embed/')[1];
+       // Clean up handle (remove trailing slash and query params)
+       if (handle.endsWith('/')) {
+         handle = handle.slice(0, -1);
+       }
+       if (handle.includes('?')) {
+         handle = handle.split('?')[0];
+       }
+
        if (handle) {
          setEmbedHandle(handle);
          setCurrentView('public-wall');
@@ -51,7 +59,15 @@ const App: React.FC = () => {
     }
 
     if (path.startsWith('/collect/')) {
-       const handle = path.split('/collect/')[1];
+       let handle = path.split('/collect/')[1];
+       // Clean up handle
+       if (handle.endsWith('/')) {
+         handle = handle.slice(0, -1);
+       }
+       if (handle.includes('?')) {
+         handle = handle.split('?')[0];
+       }
+       
        if (handle) {
          setCollectionHandle(handle);
          setCurrentView('collection');

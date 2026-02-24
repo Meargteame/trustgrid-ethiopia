@@ -25,13 +25,16 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
   useEffect(() => {
     const fetchMethods = async () => {
+      // Clean handle - remove trailing slash if present
+      const cleanHandle = companyHandle.endsWith('/') ? companyHandle.slice(0, -1) : companyHandle;
+
       try {
         setLoading(true);
         // 1. Fetch Profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('username', companyHandle)
+          .eq('username', cleanHandle)
           .single();
 
         if (profileError) {
