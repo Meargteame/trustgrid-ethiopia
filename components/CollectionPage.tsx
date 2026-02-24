@@ -1,339 +1,560 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Video, Mic, Send, Paperclip, X, CheckCircle2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  ArrowLeft, 
+  Video, 
+  Mic, 
+  Send, 
+  X, 
+  CheckCircle2, 
+  Loader2, 
+  Star, 
+  Camera, 
+  Linkedin,
+  Upload
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { analyzeTrustContent } from '../services/geminiService';
+
+// --- Types ---
+
+interface QuestionConfig {
+  id: string;
+  label: string;
+  type: 'text' | 'textarea' | 'rating';
+  required: boolean;
+  placeholder?: string;
+}
+
+interface FormConfig {
+  title: string;
+  subtitle: string;
+  questions: QuestionConfig[];
+  allow_video: boolean;
+  allow_photo: boolean;
+  allow_linkedin_import: boolean;
+}
+
+interface PublicProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  company_name: string;
+  avatar_url?: string;
+  primary_color: string;
+}
 
 interface CollectionPageProps {
    targetUsername?: string;
    onBack: () => void;
 }
 
+// --- Default Configuration ---
+
+const DEFAULT_CONFIG: FormConfig = {
+  title: 'Share your experience',
+  subtitle: 'Your feedback helps us grow.',
+  questions: [
+    { 
+      id: 'q1', 
+      label: 'What did you like most about working with us?', 
+      type: 'textarea', 
+      required: true, 
+      placeholder: 'Share your thoughts...' 
+    },
+    { 
+      id: 'q2', 
+      label: 'How would you rate our service?', 
+      type: 'rating', 
+      required: true 
+    }
+  ],
+  allow_video: true,
+  allow_photo: true,
+  allow_linkedin_import: true
+};
+
+const DEFAULT_PRIMARY_COLOR = '#D4F954'; // Lime green default
+
 export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, onBack }) => {
-   const [step, setStep] = useState(1);
-   const [isRecording, setIsRecording] = useState(false);
-   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
-   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-   const videoRef = useRef<HTMLVideoElement>(null);
-   const streamRef = useRef<MediaStream | null>(null);
-   const [reviewText, setReviewText] = useState('');
-   const [name, setName] = useState('');
-   const [company, setCompany] = useState('');
-   const [isSubmitting, setIsSubmitting] = useState(false);
-   const [showConfetti, setShowConfetti] = useState(false);
+  // --- State ---
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [config, setConfig] = useState<FormConfig>(DEFAULT_CONFIG);
+  
+  // Form State
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [reviewerName, setReviewerName] = useState('');
+  const [reviewerCompany, setReviewerCompany] = useState('');
+  const [reviewerEmail, setReviewerEmail] = useState('');
+  
+  // Media State
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  
+  // Submission State
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-   // Context state
-   const [targetUserId, setTargetUserId] = useState<string | null>(null);
-   const [targetCompanyName, setTargetCompanyName] = useState<string>('');
-   const [loadingProfile, setLoadingProfile] = useState(true);
+  // --- Initialization ---
 
-   // Resolve User ID
-   useEffect(() => {
-      async function resolveUser() {
-         setLoadingProfile(true);
-         try {
-             if (targetUsername) {
-                // Public Link Flow: Look up by username
-                const { data, error } = await supabase
-                   .from('profiles')
-                   .select('id, company_name, full_name, username')
-                   .eq('username', targetUsername)
-                   .single();
-                
-                if (data) {
-                   setTargetUserId(data.id);
-                   setTargetCompanyName(data.company_name || data.full_name || targetUsername);
-                } else {
-                   // Fallback: If DB lookup fails, check if it's the logged-in user viewing their own link
-                   const { data: { user } } = await supabase.auth.getUser();
-                   const metaUsername = user?.user_metadata?.full_name?.replace(/\s+/g, '').toLowerCase(); // Best effort match
-                   const profileUsername = user?.email?.split('@')[0];
-
-                   if (user && (targetUsername === metaUsername || targetUsername === profileUsername || targetUsername === user.user_metadata?.username)) {
-                      console.log("Fallback: Matched logged-in user despite missing public profile");
-                      setTargetUserId(user.id);
-                      setTargetCompanyName(user.user_metadata?.company_name || targetUsername);
-                      
-                      // Attempt to self-heal the missing profile
-                      const { error: healError } = await supabase.from('profiles').upsert({
-                          id: user.id,
-                          username: targetUsername,
-                          company_name: user.user_metadata?.company_name || 'My Company',
-                          email: user.email,
-                          primary_color: '#D4F954'
-                      });
-                      if (healError) console.error("Self-heal failed", healError);
-
-                   } else {
-                      console.error("User resolution error", error);
-                      alert("Collection link invalid or user not found. Please ensure the profile is saved in Settings.");
-                      onBack();
-                      return;
-                   }
-                }
-             } else {
-                // Dashboard Preview Flow: Use current session
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                   setTargetUserId(user.id);
-                   // Fetch profile for company name
-                   const { data } = await supabase.from('profiles').select('company_name').eq('id', user.id).single();
-                   setTargetCompanyName(data?.company_name || "My Company");
-                } else {
-                   // Fallback for dev/demo if auth is skipped
-                   console.warn("No user session found for preview.");
-                }
-             }
-         } catch(e) {
-             console.error(e);
-         } finally {
-             setLoadingProfile(false);
-         }
+  useEffect(() => {
+    async function init() {
+      if (!targetUsername) {
+        // Preview Mode: Use current logged-in user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          loadDataForUser(user.id);
+        } else {
+          setError("Preview requires login.");
+          setLoading(false);
+        }
+        return;
       }
-      resolveUser();
-   }, [targetUsername]);
 
-   const startRecording = async () => {
+      // Public Mode: Resolve username
       try {
-         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-         streamRef.current = stream;
+        const { data: profiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, company_name, avatar_url, primary_color')
+          .eq('username', targetUsername)
+          .single();
 
-         if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-         }
+        if (profileError || !profiles) {
+          // Fallback: Check if it's the logged-in user viewing their own (during dev/testing)
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && user.user_metadata?.username === targetUsername) {
+             console.log("Fallback to self for preview");
+             loadDataForUser(user.id);
+             return;
+          }
+          setError("User not found.");
+          setLoading(false);
+          return;
+        }
 
-         const recorder = new MediaRecorder(stream);
-         const chunks: BlobPart[] = [];
+        loadDataForUser(profiles.id, profiles);
 
-         recorder.ondataavailable = (e) => chunks.push(e.data);
-         recorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/webm' });
-            setVideoBlob(blob);
-            // Turn off camera
-            stream.getTracks().forEach(track => track.stop());
-         };
-
-         recorder.start();
-         setMediaRecorder(recorder);
-         setIsRecording(true);
       } catch (err) {
-         console.error("Camera access denied", err);
-         alert("Could not access camera. Please allow permissions.");
+        console.error("Error resolving user:", err);
+        setError("Failed to load profile.");
+        setLoading(false);
       }
-   };
+    }
 
-   const stopRecording = () => {
-      mediaRecorder?.stop();
-      setIsRecording(false);
-   };
+    init();
+  }, [targetUsername]);
 
-   const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!videoBlob && !reviewText) {
-         alert("Please record a video or write a review.");
-         return;
+  // Helper to load config and profile
+  async function loadDataForUser(userId: string, knownProfile?: any) {
+    try {
+      // 1. Get Profile (if not already fetched)
+      let profileData = knownProfile;
+      if (!profileData) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, company_name, avatar_url, primary_color')
+          .eq('id', userId)
+          .single();
+        profileData = data;
+      }
+      
+      if (profileData) {
+        setProfile(profileData);
       }
 
-      if (!targetUserId) {
-         alert("Error: No recipient identified for this review.");
-         return;
+      // 2. Get Form Config
+      const { data: configData } = await supabase
+        .from('form_configs')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (configData) {
+        // Parse questions if they are stored as JSONB string or object
+        const parsedQuestions = typeof configData.questions === 'string' 
+           ? JSON.parse(configData.questions) 
+           : configData.questions;
+
+        setConfig({
+          title: configData.title || DEFAULT_CONFIG.title,
+          subtitle: configData.subtitle || DEFAULT_CONFIG.subtitle,
+          questions: parsedQuestions || DEFAULT_CONFIG.questions,
+          allow_video: configData.allow_video ?? DEFAULT_CONFIG.allow_video,
+          allow_photo: configData.allow_photo ?? DEFAULT_CONFIG.allow_photo,
+          allow_linkedin_import: configData.allow_linkedin_import ?? DEFAULT_CONFIG.allow_linkedin_import
+        });
       }
 
-      setIsSubmitting(true);
+    } catch (err) {
+      console.error("Error loading user data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-      try {
-         // 1. Analyze with Gemini
-         const analysis = await analyzeTrustContent(reviewText || "Video Review");
+  // --- Handlers ---
 
-         // 2. Upload Video (if any)
-         let videoUrl = null;
-         if (videoBlob) {
-            const fileName = `${targetUserId}/${Date.now()}.webm`;
-            const { error: uploadError } = await supabase.storage
-               .from('videos')
-               .upload(fileName, videoBlob);
-            
-            if (!uploadError) {
-               const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(fileName);
-               videoUrl = publicUrl;
-            } else {
-               console.warn("Video upload failed", uploadError);
-            }
-         }
+  const handleAnswerChange = (questionId: string, value: any) => {
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
+  };
 
-         // 3. Save to Supabase
-         const { error } = await supabase.from('testimonials').insert({
-            user_id: targetUserId,
-            name,
-            company,
-            text: reviewText,
-            video_url: videoUrl,
-            score: analysis.score,
-            sentiment: analysis.sentiment,
-            status: 'pending',
-            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
-         });
-
-         if (error) throw error;
-
-         setStep(3); // Success
-         setShowConfetti(true);
-      } catch (err: any) {
-         console.error(err);
-         alert('Failed to submit review: ' + (err.message || "Unknown error"));
-      } finally {
-         setIsSubmitting(false);
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setMediaStream(stream);
+      setIsRecording(true);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
       }
-   };
 
-   if (loadingProfile) {
-      return (
-         <div className="min-h-screen flex items-center justify-center">
-            <Loader2 className="animate-spin text-gray-400" size={32} />
-         </div>
-      );
-   }
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      const chunks: BlobPart[] = [];
 
-   if (step === 3) {
-      return (
-         <div className="min-h-screen bg-brand-lime flex flex-col items-center justify-center p-6 text-center animate-fade-in relative overflow-hidden">
-            {/* Confetti CSS (Simple version) */}
-            {showConfetti && (
-               <div className="absolute inset-0 pointer-events-none">
-                  {[...Array(20)].map((_, i) => (
-                     <div key={i} className="absolute w-2 h-2 bg-white rounded-full animate-ping" style={{
-                        left: `${Math.random() * 100}%`,
-                        top: `${Math.random() * 100}%`,
-                        animationDelay: `${Math.random()}s`,
-                        animationDuration: '1s'
-                     }} />
-                  ))}
-               </div>
-            )}
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
 
-            <div className="bg-white p-8 rounded-[32px] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-2 border-black max-w-sm w-full transform rotate-1 transition-transform hover:rotate-0">
-               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle2 size={32} className="text-green-600" />
-               </div>
-               <h2 className="text-2xl font-black font-sans mb-2">Thank You!</h2>
-               <p className="text-gray-600 mb-6 text-sm">Your feedback helps {targetCompanyName} build trust. You are a legend!</p>
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        setVideoBlob(blob);
+        setVideoPreview(URL.createObjectURL(blob));
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+        setMediaStream(null);
+        setIsRecording(false);
+      };
 
-               <div className="border border-dashed border-gray-300 p-4 rounded-xl bg-gray-50 mb-6">
-                  <p className="text-xs uppercase font-bold text-gray-400 mb-1">Your 10% Off Coupon</p>
-                  <p className="text-xl font-mono font-bold tracking-widest text-black">TRUST2026</p>
-               </div>
+      mediaRecorder.start();
 
-               <button onClick={onBack} className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors">
-                  Return Home
-               </button>
-            </div>
-         </div>
-      );
-   }
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      alert("Could not access camera/microphone.");
+    }
+  };
 
-   return (
-      <div className="min-h-screen bg-white font-sans text-gray-900">
-         {/* Mobile Header */}
-         <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 flex items-center gap-4 z-50">
-            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-               <ArrowLeft size={20} />
-            </button>
-            <div>
-               <h1 className="text-sm font-bold">{targetCompanyName || "Addis Design Co."}</h1>
-               <p className="text-[10px] text-gray-500">Collect Reviews</p>
-            </div>
-         </div>
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+    }
+  };
 
-         <div className="max-w-md mx-auto p-4 pb-20">
-            <h2 className="text-2xl font-black mb-2 mt-4">Share you experience</h2>
-            <p className="text-gray-500 text-sm mb-6">Your feedback helps us improve and build trust with future clients.</p>
+  const clearVideo = () => {
+    setVideoBlob(null);
+    setVideoPreview(null);
+  };
 
-            {/* Video Recorder */}
-            <div className="bg-black rounded-[24px] overflow-hidden aspect-[4/5] relative mb-6 shadow-xl group border-4 border-white ring-1 ring-gray-200">
-               {videoBlob ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                     <p className="text-white font-bold">Video Recorded!</p>
-                     <button
-                        onClick={() => setVideoBlob(null)}
-                        className="absolute top-4 right-4 bg-white/20 p-2 rounded-full hover:bg-white/40"
-                     >
-                        <X size={20} className="text-white" />
-                     </button>
-                  </div>
-               ) : (
-                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-80" />
-               )}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+    
+    setIsSubmitting(true);
 
-               {!videoBlob && (
-                  <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-                     {!isRecording ? (
-                        <button
-                           onClick={startRecording}
-                           className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-110 transition-transform bg-transparent"
-                        >
-                           <div className="w-12 h-12 bg-red-500 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
-                        </button>
-                     ) : (
-                        <button
-                           onClick={stopRecording}
-                           className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-110 transition-transform bg-red-500 animate-pulse"
-                        >
-                           <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
-                              <div className="w-2 h-2 bg-red-500 rounded-full animate-ping" />
-                           </div>
-                        </button>
-                     )}
-                  </div>
-               )}
+    try {
+      // 1. Upload video if exists
+      let videoUrl = null;
+      if (videoBlob) {
+        const fileName = `${profile.id}/${Date.now()}_testimonial.webm`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('videos')
+          .upload(fileName, videoBlob);
+        
+        if (!uploadError && uploadData) {
+           const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(fileName);
+           videoUrl = publicUrl;
+        }
+      }
 
-               <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2">
-                  <Video size={12} className="text-white" />
-                  <span className="text-[10px] font-bold text-white uppercase tracking-wider">Video Testimonial</span>
-               </div>
-            </div>
+      // 2. Format the textual response
+      const textResponses = config.questions.map(q => {
+         const ans = answers[q.id];
+         if (!ans) return null;
+         if (q.type === 'rating') return null; 
+         return `${q.label}\nAnswer: ${ans}`;
+      }).filter(Boolean).join('\n\n');
 
-            {/* Text Form */}
-            <form onSubmit={handleSubmit} className="space-y-4 animate-slide-up">
-               <div>
-                  <label className="block text-xs font-bold uppercase mb-2">Or write a review</label>
-                  <textarea
-                     className="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-black focus:bg-white transition-all outline-none resize-none text-sm"
-                     rows={4}
-                     placeholder="What did you like most about working with us?"
-                     value={reviewText}
-                     onChange={(e) => setReviewText(e.target.value)}
-                  />
-               </div>
+      const ratingParams = config.questions.find(q => q.type === 'rating');
+      const score = ratingParams ? (answers[ratingParams.id] || 0) * 20 : 0; 
+      
+      const { error: insertError } = await supabase
+        .from('testimonials')
+        .insert({
+          user_id: profile.id,
+          name: reviewerName,
+          company: reviewerCompany,
+          text: textResponses || "Video Testimonial",
+          video_url: videoUrl,
+          score: score,
+          status: 'pending',
+          source: 'web_collection' 
+        });
 
-               <div className="grid grid-cols-2 gap-4">
-                  <input
-                     type="text"
-                     placeholder="Your Name"
-                     className="w-full p-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-black focus:bg-white transition-all outline-none text-sm"
-                     value={name}
-                     onChange={(e) => setName(e.target.value)}
-                     required
-                  />
-                  <input
-                     type="text"
-                     placeholder="Company / Role"
-                     className="w-full p-3 bg-gray-50 rounded-xl border-2 border-transparent focus:border-black focus:bg-white transition-all outline-none text-sm"
-                     value={company}
-                     onChange={(e) => setCompany(e.target.value)}
-                     required
-                  />
-               </div>
+      if (insertError) throw insertError;
 
-               <div className="pt-4">
-                  <button
-                     type="submit"
-                     disabled={isSubmitting}
-                     className="w-full bg-brand-lime border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] py-4 rounded-xl font-black text-black hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                     {isSubmitting ? <Loader2 className="animate-spin" /> : <>Submit Feedback <Send size={16} /></>}
-                  </button>
-               </div>
-            </form>
-         </div>
+      setSubmitted(true);
+
+    } catch (err) {
+      console.error("Submission error:", err);
+      alert("Failed to submit testimonial. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // --- Render ---
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
       </div>
-   );
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-sm p-8 text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Page Not Found</h2>
+          <p className="text-gray-500 mb-6">{error || "This collection page does not exist."}</p>
+          <button onClick={onBack} className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center animate-in fade-in zoom-in duration-300">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-8 h-8 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h2>
+          <p className="text-gray-600 mb-8">
+            Your feedback has been received. We appreciate you taking the time to share your experience.
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="text-gray-500 hover:text-gray-900 font-medium"
+          >
+            Submit another response
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const primaryColor = profile.primary_color || DEFAULT_PRIMARY_COLOR;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header / Branding */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+           <div className="flex items-center gap-3">
+             {profile.avatar_url ? (
+               <img src={profile.avatar_url} alt="Logo" className="w-10 h-10 rounded-full object-cover" />
+             ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold">
+                  {profile.company_name?.charAt(0) || profile.full_name?.charAt(0) || '?'}
+                </div>
+             )}
+             <div>
+               <h1 className="font-semibold text-gray-900">{profile.company_name || profile.full_name}</h1>
+               <p className="text-xs text-gray-500">Video Testimonials</p>
+             </div>
+           </div>
+           {onBack && (
+              <button 
+                onClick={onBack} 
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                title="Exit Preview"
+              >
+                  <X className="w-5 h-5" />
+              </button>
+           )}
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">{config.title}</h2>
+          <p className="text-lg text-gray-600">{config.subtitle}</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          
+          {/* Dynamic Questions */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
+            {config.questions.map((q) => (
+              <div key={q.id} className="p-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  {q.label} {q.required && <span className="text-red-500">*</span>}
+                </label>
+                
+                {q.type === 'textarea' && (
+                  <textarea
+                    required={q.required}
+                    rows={4}
+                    placeholder={q.placeholder}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all outline-none resize-none"
+                    style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
+                    value={answers[q.id] || ''}
+                    onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                  />
+                )}
+
+                {q.type === 'text' && (
+                  <input
+                    type="text"
+                    required={q.required}
+                    placeholder={q.placeholder}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all outline-none"
+                    style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
+                    value={answers[q.id] || ''}
+                    onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                  />
+                )}
+
+                {q.type === 'rating' && (
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => handleAnswerChange(q.id, star)}
+                        className="transition-transform hover:scale-110 focus:outline-none"
+                      >
+                        <Star 
+                          className={`w-8 h-8 ${(answers[q.id] || 0) >= star ? 'fill-current' : 'text-gray-200'}`}
+                          style={{ 
+                            color: (answers[q.id] || 0) >= star ? '#FBBF24' : undefined,
+                            fill: (answers[q.id] || 0) >= star ? '#FBBF24' : 'none' 
+                           }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {config.allow_video && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                <Video className="w-4 h-4" /> Record a Video (Optional)
+              </h3>
+              
+              {!isRecording && !videoPreview ? (
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    className="flex-1 flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all group"
+                  >
+                    <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                      <Camera className="w-6 h-6 text-red-500" />
+                    </div>
+                    <span className="font-medium text-gray-600">Record Video</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
+                  {isRecording ? (
+                    <>
+                      <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4">
+                        <div className="px-3 py-1 bg-red-500 text-white text-xs font-medium rounded-full animate-pulse">
+                          Recording...
+                        </div>
+                        <button
+                          type="button"
+                          onClick={stopRecording}
+                          className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="w-4 h-4 bg-red-500 rounded-sm" />
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <video src={videoPreview!} controls className="w-full h-full" />
+                      <button
+                        type="button"
+                        onClick={clearVideo}
+                        className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 backdrop-blur-sm transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">About You</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={reviewerName}
+                  onChange={(e) => setReviewerName(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-opacity-50 focus:border-transparent outline-none"
+                  style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Company / Role</label>
+                <input
+                  type="text"
+                  value={reviewerCompany}
+                  onChange={(e) => setReviewerCompany(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-opacity-50 focus:border-transparent outline-none"
+                  style={{ '--tw-ring-color': primaryColor } as React.CSSProperties}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-4 rounded-xl text-black font-semibold shadow-lg hover:shadow-xl transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: primaryColor }}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  Send Feedback
+                  <Send className="w-5 h-5" />
+                </>
+              )}
+            </button>
+            <p className="text-center text-xs text-gray-400 mt-4">
+               Powered by TrustGrid
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };

@@ -1,3 +1,23 @@
+
+export interface FormConfig {
+  id: string;
+  userId: string;
+  title: string;
+  subtitle: string;
+  questions: QuestionConfig[];
+  allowVideo: boolean;
+  allowPhoto: boolean;
+  allowLinkedinImport: boolean;
+}
+
+export interface QuestionConfig {
+  id: string;
+  label: string;
+  type: 'text' | 'textarea' | 'rating';
+  required: boolean;
+  placeholder?: string;
+}
+
 export interface TestimonialData {
   id: string;
   userId?: string;
@@ -19,12 +39,13 @@ export interface TestimonialData {
 }
 
 export interface TrustAnalysisResult {
-  score: number;
-  sentiment: 'Positive' | 'Neutral' | 'Negative';
-  keywords: string[];
-  reasoning: string;
-  isAuthentic: boolean;
-}
+    score: number;
+    sentiment: 'Positive' | 'Neutral' | 'Negative';
+    keywords: string[];
+    proofPoints: string[]; // Key claims/metrics identified
+    reasoning: string;
+    isAuthentic: boolean;
+  }
 
 export enum AnalysisStatus {
   IDLE = 'IDLE',

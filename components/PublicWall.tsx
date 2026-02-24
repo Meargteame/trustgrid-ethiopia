@@ -11,6 +11,7 @@ interface CompanyProfile {
   id: string;
   company_name: string;
   avatar_url: string;
+  logo_url?: string;
   primary_color: string;
   username: string;
   full_name: string;
@@ -142,10 +143,12 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                 className="w-24 h-24 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-3xl font-bold text-white overflow-hidden"
                 style={{ backgroundColor: profile.primary_color || '#000' }}
               >
-                 {profile.avatar_url ? (
+                 {profile.logo_url ? (
+                   <img src={profile.logo_url} alt={profile.company_name} className="w-full h-full object-cover" />
+                 ) : profile.avatar_url ? (
                    <img src={profile.avatar_url} alt={profile.company_name} className="w-full h-full object-cover" />
                  ) : (
-                   profile.company_name?.substring(0, 1).toUpperCase() || 'C'
+                   (profile.company_name || profile.full_name || 'C').substring(0, 1).toUpperCase()
                  )}
               </div>
               <div className="absolute bottom-0 right-0 bg-brand-green text-black p-1.5 rounded-full border-2 border-white" title="Verified Pro">
@@ -237,20 +240,17 @@ const TestimonialCard: React.FC<{ testimonial: TestimonialData; primaryColor?: s
 
          {/* Content */}
          <div className="grow relative z-10">
-             {testimonial.videoUrl ? (
-                <div className="mb-4 rounded-lg overflow-hidden bg-black aspect-video relative group cursor-pointer border border-gray-200 shadow-inner" 
-                   onClick={() => window.open(testimonial.videoUrl, '_blank')}
-                >
-                   <video src={testimonial.videoUrl} className="w-full h-full object-cover opacity-80" />
-                   <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/50">
-                         <Play className="w-5 h-5 fill-white text-white ml-1" />
-                      </div>
-                   </div>
+             {testimonial.videoUrl && (
+                <div className="mb-4 rounded-lg overflow-hidden bg-black relative group border border-gray-200 shadow-inner" style={{ aspectRatio: '16/9' }}>
+                   <video 
+                      src={testimonial.videoUrl} 
+                      controls 
+                      className="w-full h-full object-contain"
+                   />
                 </div>
-             ) : null}
+             )}
              
-             <p className={`text-base leading-relaxed ${textColor} line-clamp-6 italic`}>
+             <p className={`text-base leading-relaxed ${textColor} mt-4`}>
                "{testimonial.text}"
              </p>
          </div>

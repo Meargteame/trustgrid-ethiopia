@@ -1,9 +1,11 @@
-import { GoogleGenAI, Type } from "@google/genai";
+﻿import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { TrustAnalysisResult } from "../types";
 
 // Access via Vite env var
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+
+// Initialize the Google Generative AI client
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 export interface AiSummaryResult {
   summary: string;
@@ -11,14 +13,20 @@ export interface AiSummaryResult {
   overallSentiment: 'Positive' | 'Neutral' | 'Mixed';
 }
 
+/**
+ * Summarizes a batch of reviews to generate an overall business reputation card.
+ */
 export const generateTrustSummary = async (reviews: string[]): Promise<AiSummaryResult> => {
-   if (!apiKey) {
+   // Fallback Mock Data
+   const mockSummary: AiSummaryResult = {
+      summary: "Based on verified reviews, this business consistently delivers quality results with a focus on communication and speed.",
+      keyStrengths: ["Reliability", "Good Communication", "Quality Work"],
+      overallSentiment: "Positive"
+   };
+
+   if (!apiKey || !genAI) {
       console.warn("API Key missing, returning mock summary");
-      return {
-         summary: "Based on verified reviews, this business consistently delivers quality results with a focus on communication and speed.",
-         keyStrengths: ["Reliability", "Good Communication", "Quality Work"],
-         overallSentiment: "Positive"
-      };
+      return mockSummary;
    }
    
    if (reviews.length === 0) {
@@ -30,86 +38,113 @@ export const generateTrustSummary = async (reviews: string[]): Promise<AiSummary
    }
 
    try {
-      const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash", // Updated to latest stable or preview
-      contents: `
-         Analyze these ${reviews.length} customer reviews and provide a summary of the business reputation.
-         Reviews: ${JSON.stringify(reviews)}
-      `,
-      config: {
-         responseMimeType: "application/json",
-         responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-            summary: { type: Type.STRING, description: "A concise 1-2 sentence summary of what clients love about this business. Start with 'Clients praise...' or similar." },
-            keyStrengths: { 
-               type: Type.ARRAY, 
-               items: { type: Type.STRING },
-               description: "3-4 short keyword phrases (max 2 words each) highlight strengths. e.g. 'Fast Delivery'"
-            },
-            overallSentiment: { type: Type.STRING, enum: ["Positive", "Neutral", "Mixed"] }
-            },
-            required: ["summary", "keyStrengths", "overallSentiment"]
+      // Use 1.5 Flash for speed and broader access
+      const model = genAI.getGenerativeModel({
+         model: "gemini-1.5-flash", 
+         generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+               type: SchemaType.OBJECT,
+               properties: {
+                  summary: { type: SchemaType.STRING, description: "A concise 1-2 sentence summary of what clients love about this business." },
+                  keyStrengths: { 
+                     type: SchemaType.ARRAY, 
+                     items: { type: SchemaType.STRING },
+                  },
+                  overallSentiment: { type: SchemaType.STRING, enum: ["Positive", "Neutral", "Mixed"] }
+               },
+               required: ["summary", "keyStrengths", "overallSentiment"]
+            }
          }
-      }
       });
 
-      const jsonText = response.text;
-      if (!jsonText) throw new Error("No response");
+      const prompt = `Analyze these ${reviews.length} customer reviews and provide a summary of the business reputation. Reviews: ${JSON.stringify(reviews)}`;
+      const result = await model.generateContent(prompt);
+      const output = result.response.text();
       
-      return JSON.parse(jsonText) as AiSummaryResult;
+      return JSON.parse(output) as AiSummaryResult;
    } catch (error) {
       console.error("Summary Generation Failed:", error);
-      return {
-         summary: "Based on verified reviews, this business demonstrates strong performance and client satisfaction.",
-         keyStrengths: ["Professionalism", "Quality", "Service"],
-         overallSentiment: "Positive"
-      };
+      return mockSummary;
    }
 }
 
-export const analyzeTrustContent = async (text: string): Promise<TrustAnalysisResult> => { // ... (rest of function)
-  if (!apiKey) {
-    throw new Error("API Key not found");
-  }
+/**
+ * Analyzes a SINGLE testimonial to detect spam, sentiment, and trust score.
+ */
+export const analyzeTrustContent = async (text: string): Promise<TrustAnalysisResult> => {
+   
+   const getFallbackResult = (inputText: string = ''): TrustAnalysisResult => {
+      const safeText = inputText || '';
+      // Simple heuristic: longer text might imply more detailed/trustworthy content
+      // Base score 60, add 1 point per 10 characters, max 95.
+      const lengthScore = Math.min(60 + Math.floor(safeText.length / 10), 95);
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Analyze the following business testimonial text for authenticity and trust markers. Text: "${text}"`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            score: { type: Type.INTEGER, description: "A trust score between 0 and 100" },
-            sentiment: { type: Type.STRING, enum: ["Positive", "Neutral", "Negative"] },
-            keywords: { 
-              type: Type.ARRAY, 
-              items: { type: Type.STRING },
-              description: "Key trust-building words found in the text"
-            },
-            reasoning: { type: Type.STRING, description: "Short explanation of the score" },
-            isAuthentic: { type: Type.BOOLEAN, description: "Whether the text appears to be a genuine human review" }
-          },
-          required: ["score", "sentiment", "keywords", "reasoning", "isAuthentic"]
-        }
-      }
-    });
+      return {
+         score: lengthScore,
+         sentiment: 'Neutral',
+         keywords: ['Pending Analysis'], 
+         reasoning: `Analysis unavailable (API Key missing). Estimated score based on text length.`,
+         isAuthentic: true, 
+         // Ensure fallback matches interface
+         is_authentic: true 
+      } as any;
+   };
 
-    const jsonText = response.text;
-    if (!jsonText) throw new Error("No response from Gemini");
-    
-    return JSON.parse(jsonText) as TrustAnalysisResult;
-  } catch (error) {
-    console.error("Gemini Analysis Failed:", error);
-    // Fallback mock response for demo resilience if API fails or key is missing
-    return {
-      score: 88,
-      sentiment: 'Positive',
-      keywords: ['Professional', 'Verified', 'Timely'],
-      reasoning: "The text contains specific details about the service provided, which is a strong indicator of authenticity.",
-      isAuthentic: true
-    };
-  }
+   if (!apiKey || !genAI) {
+      console.warn("API Key missing, returning mock analysis");
+      return getFallbackResult(text);
+   }
+
+   try {
+      const model = genAI.getGenerativeModel({
+         model: "gemini-1.5-flash",
+         generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+               type: SchemaType.OBJECT,
+               properties: {
+                  score: { type: SchemaType.NUMBER, description: "Trust score 0-100 based on detail, specificity, and tone. Higher is better." },
+                  sentiment: { type: SchemaType.STRING, enum: ["Positive", "Neutral", "Negative"] },
+                  keywords: { 
+                     type: SchemaType.ARRAY, 
+                     items: { type: SchemaType.STRING },
+                  },
+                  reasoning: { type: SchemaType.STRING },
+                  isAuthentic: { type: SchemaType.BOOLEAN }
+               },
+               required: ["score", "sentiment", "keywords", "reasoning", "isAuthentic"]
+            }
+         }
+      });
+
+      const prompt = `Analyze this testimonial for trust and authenticity.
+      
+      Review Text: "${text}"`;
+
+      const result = await model.generateContent(prompt);
+      const output = result.response.text();
+      
+      const parsed = JSON.parse(output);
+      
+      // Map back to our exact Typescript interface if needed
+      return {
+          score: parsed.score,
+          sentiment: parsed.sentiment,
+          keywords: parsed.keywords,
+          reasoning: parsed.reasoning,
+          isAuthentic: parsed.isAuthentic
+      };
+
+   } catch (error) {
+      console.error("Gemini Analysis Failed:", error);
+      const fallback = getFallbackResult(text);
+      return {
+         ...fallback,
+         reasoning: "AI Analysis failed due to an error. Score estimated."
+      };
+   }
 };
+
+// Alias specifically for consumers expecting this name
+export const analyzeSingleTestimonial = analyzeTrustContent;

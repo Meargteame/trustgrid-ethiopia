@@ -12,6 +12,7 @@ import { TestimonialData, TeamMember, WidgetTheme, WidgetLayout } from '../types
 import { VerificationBadge } from './VerificationBadge';
 import { AnalyticsTab } from './AnalyticsTab';
 import { SettingsTab } from './SettingsTab';
+import { FormBuilderTab } from './FormBuilderTab';
 import { AiSummaryHeader } from './AiSummaryHeader';
 import { TrustMeter } from './TrustMeter';
 import { SocialShareModal } from './SocialShareModal';
@@ -32,8 +33,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    const [teamMembers, setTeamMembers] = useState<TeamMember[]>(INITIAL_TEAM);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-   const [activeTab, setActiveTab] = useState<'feed' | 'analytics' | 'widgets' | 'settings'>('feed');
-   const [filter, setFilter] = useState<'all' | 'verified' | 'pending'>('all');
+   const [activeTab, setActiveTab] = useState<'feed' | 'analytics' | 'widgets' | 'collection' | 'settings'>('feed');
+   const [feedTab, setFeedTab] = useState<'inbox' | 'published'>('published');
    const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
    const [setupRequired, setSetupRequired] = useState(false);
 
@@ -67,6 +68,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
    // Settings Form State
    const [profileData, setProfileData] = useState({
+      id: '',
       companyName: '',
       email: '',
       username: '', // Added username
@@ -137,6 +139,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
          if (data) {
              setProfileData({
+                 id: data.id,
                  companyName: data.company_name || user.user_metadata?.company_name || user.user_metadata?.full_name || 'My Brand',
                  email: data.email || user.email || '',
                  username: data.username || user.user_metadata?.full_name?.replace(/\s+/g, '').toLowerCase() || user.email?.split('@')[0] || '',
@@ -148,6 +151,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
              // Fallback if no profile data found at all and insert failed
              const meta = user.user_metadata || {};
              setProfileData({
+                 id: user.id,
                  companyName: meta.company_name || meta.full_name || 'My Brand',
                  email: user.email || '',
                  username: meta.full_name ? meta.full_name.replace(/\s+/g, '').toLowerCase() : (user.email?.split('@')[0] || ''),
@@ -387,25 +391,103 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
-   const handleVerify = async (id: string) => {
+   const handleApprove = async (id: string) => {
       try {
-         // Update DB. Ensure status is 'verified' and is_verified boolean is true
+         showToast('Verifying and analyzing...', 'success');
+         
+         const testimonial = testimonials.find(t => t.id === id);
+         let analysisUpdates = {};
+
+         // Trigger AI Analysis if text exists and not already scored
+         if (testimonial?.text && !testimonial.score) {
+             try {
+                // Use analyzeTrustContent instead of analyzeSingleTestimonial
+                 const analysis = await analyzeTrustContent(testimonial.text);
+                 analysisUpdates = {
+                     score: analysis.score,
+                     sentiment: analysis.sentiment
+                 };
+             } catch (aiError) {
+                 console.warn("AI Analysis failed during verification", aiError);
+             }
+         }
+
+         // Update DB
          const { error } = await supabase
             .from('testimonials')
-            .update({ status: 'verified', is_verified: true })
+            .update({ 
+                status: 'verified', 
+                is_verified: true,
+                ...analysisUpdates 
+            })
             .eq('id', id);
 
          if (error) throw error;
 
          // Optimistic Update
          setTestimonials(testimonials.map(t => 
-             t.id === id ? { ...t, status: 'verified' } : t
+             t.id === id ? { 
+                 ...t, 
+                 status: 'verified',
+                 ...analysisUpdates
+             } : t
          ));
+         
          showToast('Proof verified and published!');
       } catch (err: any) {
          console.error(err);
          showToast('Failed to verify proof', 'error');
          if (err.message?.includes('policies')) setSetupRequired(true);
+      }
+   };
+
+   // Analyze existing verified testimonial
+   const handleAnalyze = async (id: string) => {
+      const testimonial = testimonials.find(t => t.id === id);
+      if (!testimonial || !testimonial.text) return;
+
+      showToast('Analyzing with Gemini...', 'success');
+      try {
+         const analysis = await analyzeTrustContent(testimonial.text);
+         
+         const { error } = await supabase
+            .from('testimonials')
+            .update({ 
+               score: analysis.score,
+               sentiment: analysis.sentiment
+            })
+            .eq('id', id);
+
+         if (error) throw error;
+
+         setTestimonials(testimonials.map(t => 
+            t.id === id ? { ...t, score: analysis.score, sentiment: analysis.sentiment } : t
+         ));
+         showToast('Analysis updated!');
+      } catch (err) {
+         console.error(err);
+         showToast('Analysis failed', 'error');
+      }
+   };
+
+   const handleReject = async (id: string) => {
+      if (!window.confirm("Are you sure you want to reject and delete this testimonial? This cannot be undone.")) return;
+       
+      try {
+          const { error } = await supabase
+              .from('testimonials')
+              .delete()
+              .eq('id', id);
+
+          if (error) throw error;
+
+          // Remove from list
+          setTestimonials(testimonials.filter(t => t.id !== id));
+          
+          showToast('Testimonial deleted.');
+      } catch (err: any) {
+          console.error("Reject failed:", err);
+          showToast('Failed to reject testimonial', 'error');
       }
    };
 
@@ -578,8 +660,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
 
    const filteredTestimonials = testimonials.filter(t => {
-      if (filter === 'all') return true;
-      return t.status === filter;
+      if (feedTab === 'inbox') {
+         return t.status === 'pending' || t.status === 'pending_verification';
+      }
+      return t.status === 'verified';
    });
 
    const getCardStyle = (t: TestimonialData) => {
@@ -718,15 +802,23 @@ create policy "User insert own profile" on profiles for insert with check (auth.
             </div>
             <div className="flex items-center gap-3">
                <div className="flex bg-gray-100 p-1 rounded-xl">
-                  {(['all', 'verified', 'pending'] as const).map((f) => (
-                     <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${filter === f ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
-                     >
-                        {f}
-                     </button>
-                  ))}
+                  <button
+                     onClick={() => setFeedTab('published')}
+                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${feedTab === 'published' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
+                  >
+                     Published
+                  </button>
+                  <button
+                     onClick={() => setFeedTab('inbox')}
+                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${feedTab === 'inbox' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
+                  >
+                     Inbox (Pending)
+                     {testimonials.filter(t => t.status === 'pending' || t.status === 'pending_verification').length > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">
+                           {testimonials.filter(t => t.status === 'pending' || t.status === 'pending_verification').length}
+                        </span>
+                     )}
+                  </button>
                </div>
                <Button onClick={() => setIsModalOpen(true)} className="shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <Plus size={18} className="mr-2" /> Add Proof
@@ -767,70 +859,111 @@ create policy "User insert own profile" on profiles for insert with check (auth.
             ) : (
                <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
                   <Shield className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-bold text-gray-900">No proofs match this filter</h3>
-                  <p className="text-gray-500 text-sm cursor-pointer hover:underline" onClick={() => setFilter('all')}>View all proofs</p>
+                  <h3 className="text-lg font-bold text-gray-900">
+                     {feedTab === 'inbox' ? 'No pending proofs' : 'No published proofs'}
+                  </h3>
+                  <p className="text-gray-500 text-sm mb-4">
+                     {feedTab === 'inbox' ? 'All caught up! Check your published proofs.' : 'Approve pending proofs to see them here.'}
+                  </p>
+                  <Button 
+                     variant="outline" 
+                     onClick={() => setFeedTab(feedTab === 'inbox' ? 'published' : 'inbox')}
+                  >
+                     Switch to {feedTab === 'inbox' ? 'Published' : 'Inbox'}
+                  </Button>
                </div>
             )
          ) : (
             <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+
                {filteredTestimonials.map((t) => (
                   <div key={t.id} className={`break-inside-avoid border-2 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 group relative ${getCardStyle(t)}`}>
 
                      {/* Actions Dropdown (Hover) */}
                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-20">
-                        {/* Verify Button (New Feature) */}
-                        {t.status !== 'verified' && (
-                           <button
-                              onClick={() => handleVerify(t.id)}
-                              className={`p-1.5 rounded-lg hover:bg-green-50 hover:text-green-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                              title="Mark as Verified"
-                           >
-                              <CheckCircle2 size={16} />
-                           </button>
-                        )}
-                        {/* Share Button (Feature 2) */}
-                        <button
-                           onClick={() => setShareModalData(t)}
-                           className={`p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                           title="Share to Social"
-                        >
-                           <Share2 size={16} />
-                        </button>
                         
-                        {/* Embed Button (New - Utilization) */}
-                        <button
-                           onClick={() => setEmbedModalId(t.id)}
-                           className={`p-1.5 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                           title="Embed on Website"
-                        >
-                           <Code size={16} />
-                        </button>
+                        {/* PENDING ACTIONS */}
+                        {t.status === 'pending' || t.status === 'pending_verification' ? (
+                           <>
+                              <button
+                                 onClick={() => handleApprove(t.id)}
+                                 className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors shadow-sm"
+                                 title="Approve & Analyze"
+                              >
+                                 <CheckCircle2 size={16} />
+                              </button>
+                              <button
+                                 onClick={() => handleReject(t.id)}
+                                 className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors shadow-sm"
+                                 title="Reject"
+                              >
+                                 <X size={16} />
+                              </button>
+                           </>
+                        ) : (
+                           /* VERIFIED ACTIONS */
+                           <>
+                              <button
+                                 onClick={() => handleAnalyze(t.id)}
+                                 className={`p-1.5 rounded-lg hover:bg-yellow-50 hover:text-yellow-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                                 title="Re-analyze with AI"
+                              >
+                                 <Shield size={16} />
+                              </button>
 
-                        {/* Delete Button */}
-                        <button
-                           onClick={() => handleDelete(t.id)}
-                           className={`p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                           title="Delete"
-                        >
-                           <Trash2 size={16} />
-                        </button>
+                              <button
+                                 onClick={() => setShareModalData(t)}
+                                 className={`p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                                 title="Share to Social"
+                              >
+                                 <Share2 size={16} />
+                              </button>
+                              
+                              <button
+                                 onClick={() => setEmbedModalId(t.id)}
+                                 className={`p-1.5 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                                 title="Embed on Website"
+                              >
+                                 <Code size={16} />
+                              </button>
 
-                        {/* Verify Button (New Feature) */}
-                        {t.status === 'pending' && (
-                           <button
-                              onClick={() => handleVerify(t.id)}
-                              className={`p-1.5 rounded-lg hover:bg-green-50 hover:text-green-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                              title="Verify & Publish"
-                           >
-                              <CheckCircle2 size={16} />
-                           </button>
+                              <button
+                                 onClick={() => handleDelete(t.id)}
+                                 className={`p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                                 title="Delete"
+                              >
+                                 <Trash2 size={16} />
+                              </button>
+                           </>
                         )}
                      </div>
 
                      {/* Status Badge */}
                      <div className="flex justify-between items-start mb-4">
                         <VerificationBadge method={t.verificationMethod} />
+                        {t.score && t.status === 'verified' && (
+                           <div className="bg-black/5 px-2 py-1 rounded text-[10px] font-bold">
+                              Trust Score: {t.score}
+                           </div>
+                        )}
                      </div>
+
+                     {/* Video Player (Mock Supported) */}
+                     {t.videoUrl && t.videoUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+                        <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative group/video">
+                           <video 
+                              src={t.videoUrl} 
+                              controls 
+                              className="w-full h-full object-cover"
+                           />
+                        </div>
+                     ) : t.videoUrl && (
+                        /* Handle simple links or non-video URLs appropriately */
+                        <div className="mb-4 bg-gray-100 rounded-xl p-3 flex items-center gap-2">
+                           <ExternalLink size={16} />
+                           <a href={t.videoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline truncate block">{t.videoUrl}</a>
+                        </div>
+                     )}
 
                      {/* Text Content */}
                      <p className={`text-sm leading-relaxed mb-6 font-medium ${t.cardStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${/[\u1200-\u137F]/.test(t.text) ? 'font-ethiopic' : ''}`}>
@@ -1256,6 +1389,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
    const renderContent = () => {
       switch (activeTab) {
          case 'feed': return renderFeed();
+         case 'collection': return <FormBuilderTab userId={profileData.id} />;
          case 'analytics': return <AnalyticsTab />;
          case 'widgets': return renderWidgetLab();
          case 'settings': return renderSettings();
@@ -1354,6 +1488,12 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'feed' ? 'bg-black text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
                >
                   <LayoutGrid size={18} /> Proof Feed
+               </button>
+               <button
+                  onClick={() => setActiveTab('collection')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'collection' ? 'bg-black text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+               >
+                  <Send size={18} /> Collection Form
                </button>
                <button
                   onClick={() => setActiveTab('analytics')}

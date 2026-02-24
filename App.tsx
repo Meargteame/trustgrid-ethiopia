@@ -11,13 +11,15 @@ import { AuthPage } from './components/AuthPage';
 import { CollectionPage } from './components/CollectionPage';
 import { PublicWall } from './components/PublicWall';
 import { VerificationPage } from './components/VerificationPage';
+import { TestimonialCardEmbed } from './components/TestimonialCardEmbed';
 import { supabase } from './lib/supabase';
 
-type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection' | 'public-wall' | 'verification';
+type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection' | 'public-wall' | 'verification' | 'embed-card';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
   const [embedHandle, setEmbedHandle] = useState<string>('');
+  const [embedCardId, setEmbedCardId] = useState<string>(''); // For single card embed
   const [collectionHandle, setCollectionHandle] = useState<string>('');
   const [verificationToken, setVerificationToken] = useState<string>('');
 
@@ -26,6 +28,20 @@ const App: React.FC = () => {
     const path = window.location.pathname;
     
     if (path.startsWith('/embed/')) {
+       // Check if it's a card embed first: /embed/card/:id
+       if (path.startsWith('/embed/card/')) {
+          let cardId = path.split('/embed/card/')[1];
+          // Remove query params if any
+          if (cardId.includes('?')) {
+             cardId = cardId.split('?')[0];
+          }
+          if (cardId) {
+             setEmbedCardId(cardId);
+             setCurrentView('embed-card'); // New view type will be needed
+             return;
+          }
+       }
+
        const handle = path.split('/embed/')[1];
        if (handle) {
          setEmbedHandle(handle);
@@ -158,6 +174,18 @@ const App: React.FC = () => {
 
   if (currentView === 'public-wall') {
     return <PublicWall companyHandle={embedHandle} />;
+  }
+
+if (currentView === 'embed-card') {
+    // Render just the card centered (or filling the iframe body)
+    // Using h-full to fit within the iframe dimensions without forcing scrollbars if possible
+    return (
+      <div className="h-screen w-screen bg-transparent flex items-center justify-center p-0 sm:p-4">
+         <div className="w-full h-full max-w-md max-h-[400px]">
+            <TestimonialCardEmbed testimonialId={embedCardId} />
+         </div>
+      </div>
+    );
   }
 
   if (currentView === 'auth') {
