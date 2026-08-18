@@ -10,7 +10,8 @@ import {
   Star, 
   Camera, 
   Linkedin,
-  Upload
+  Upload,
+  MessageCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -99,6 +100,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Telegram State
+  const [telegramUser, setTelegramUser] = useState<any>(null);
+  const telegramWrapperRef = useRef<HTMLDivElement>(null);
+
   // --- Initialization ---
 
   useEffect(() => {
@@ -147,6 +152,41 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
     init();
   }, [targetUsername]);
+
+  useEffect(() => {
+    (window as any).onTelegramAuth = async (user: any) => {
+       try {
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-auth`;
+          const res = await fetch(url, {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ action: 'verify_buyer', telegramData: user })
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          
+          setTelegramUser(data.user);
+          if (!reviewerName) {
+            setReviewerName(data.user.first_name + (data.user.last_name ? ` ${data.user.last_name}` : ''));
+          }
+       } catch (err: any) {
+          alert('Telegram verification failed: ' + err.message);
+       }
+    };
+
+    if (telegramWrapperRef.current && !telegramUser) {
+       telegramWrapperRef.current.innerHTML = '';
+       const script = document.createElement('script');
+       script.src = 'https://telegram.org/js/telegram-widget.js?22';
+       script.setAttribute('data-telegram-login', import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'placeholder_bot');
+       script.setAttribute('data-size', 'large');
+       script.setAttribute('data-radius', '12');
+       script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+       script.setAttribute('data-request-access', 'write');
+       script.async = true;
+       telegramWrapperRef.current.appendChild(script);
+    }
+  }, [telegramUser, reviewerName]);
 
   // Helper to load config and profile
   async function loadDataForUser(userId: string, knownProfile?: any) {
@@ -292,16 +332,23 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           video_url: videoUrl,
           score: score,
           status: 'pending',
-          source: 'web_collection' 
+          source: 'web_collection',
+          reviewer_telegram_id: telegramUser?.id?.toString(),
+          reviewer_telegram_username: telegramUser?.username
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        if (insertError.message.includes('unique_review_per_telegram_user') || insertError.code === '23505') {
+            throw new Error("You've already reviewed this business.");
+        }
+        throw insertError;
+      }
 
       setSubmitted(true);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Submission error:", err);
-      alert("Failed to submit testimonial. Please try again.");
+      alert(err.message || "Failed to submit testimonial. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -531,24 +578,35 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           </div>
 
           <div className="pt-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-4 rounded-xl text-black font-semibold shadow-lg hover:shadow-xl transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  Send Feedback
-                  <Send className="w-5 h-5" />
-                </>
-              )}
-            </button>
+            {!telegramUser ? (
+               <div className="bg-blue-50 rounded-xl p-6 border border-blue-100 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mb-4">
+                     <MessageCircle size={24} />
+                  </div>
+                  <h3 className="font-bold text-blue-900 mb-2">Verify to Submit</h3>
+                  <p className="text-sm text-blue-700 mb-6">Please verify your identity with Telegram to submit this review. This helps prevent spam and fake reviews.</p>
+                  <div ref={telegramWrapperRef}></div>
+               </div>
+            ) : (
+               <button
+                 type="submit"
+                 disabled={isSubmitting}
+                 className="w-full py-4 rounded-xl text-black font-semibold shadow-lg hover:shadow-xl transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                 style={{ backgroundColor: primaryColor }}
+               >
+                 {isSubmitting ? (
+                   <>
+                     <Loader2 className="w-5 h-5 animate-spin" />
+                     Sending...
+                   </>
+                 ) : (
+                   <>
+                     Send Feedback
+                     <Send className="w-5 h-5" />
+                   </>
+                 )}
+               </button>
+            )}
             <p className="text-center text-xs text-gray-400 mt-4">
                Powered by TrustGrid
             </p>

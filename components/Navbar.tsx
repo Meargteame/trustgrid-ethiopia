@@ -29,8 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin }) => {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <button onClick={onLogin} className="font-bold text-sm hover:underline">Login</button>
-            <Button variant="primary" size="sm" onClick={onLogin}>Sign up free</Button>
+            <Button variant="primary" size="sm" onClick={onLogin}>Login with Telegram</Button>
           </div>
 
           {/* Mobile menu button */}
@@ -53,8 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin }) => {
             <a href="#demo" className="block text-lg font-bold text-gray-900" onClick={() => setIsOpen(false)}>AI Demo</a>
             <a href="#testimonials" className="block text-lg font-bold text-gray-900" onClick={() => setIsOpen(false)}>Reviews</a>
             <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
-              <Button fullWidth variant="outline" onClick={onLogin}>Login</Button>
-              <Button fullWidth variant="primary" onClick={onLogin}>Sign up free</Button>
+              <Button fullWidth variant="primary" onClick={onLogin}>Login with Telegram</Button>
             </div>
           </div>
         </div>

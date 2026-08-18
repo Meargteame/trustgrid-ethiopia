@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { CheckCircle2, Linkedin, User, Info, X, Clock, Mail } from 'lucide-react';
 
 interface VerificationBadgeProps {
-  method: 'manual' | 'email' | 'linkedin';
+  method: 'manual' | 'email' | 'linkedin' | 'telegram';
   isVerified?: boolean;
+  telegramUsername?: string;
 }
 
-export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ method, isVerified = true }) => {
+export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ method, isVerified = true, telegramUsername }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleInfo = (e: React.MouseEvent) => {
@@ -15,6 +16,16 @@ export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ method, is
   };
 
   const BadgeContent = () => {
+    if (method === 'telegram') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg text-[10px] font-bold text-blue-700 shadow-sm cursor-pointer hover:bg-blue-100 transition-colors" onClick={toggleInfo}>
+          <CheckCircle2 size={12} className="text-blue-500" />
+          VERIFIED VIA TELEGRAM {telegramUsername ? `@${telegramUsername}` : ''}
+          <Info size={10} className="ml-1 opacity-70" />
+        </span>
+      );
+    }
+
     if (method === 'linkedin') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0a66c2] border border-[#004182] rounded-lg text-[10px] font-bold text-white shadow-sm cursor-pointer hover:bg-[#004182] transition-colors" onClick={toggleInfo}>
@@ -69,6 +80,7 @@ export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ method, is
           </div>
 
           <p className="text-xs leading-relaxed text-gray-300">
+            {method === 'telegram' && "This identity was verified via Telegram Login. The reviewer's Telegram account has been authenticated."}
             {method === 'linkedin' && "This identity was cryptographically verified via LinkedIn OAuth. The employment history and profile are authentic."}
             {method === 'email' && !isVerified && "The client has been emailed but hasn't clicked the verification link yet."}
             {method === 'email' && isVerified && "Verified via email confirmation. The client clicked a secure link sent to their work email."}

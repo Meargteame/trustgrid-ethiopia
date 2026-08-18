@@ -28,7 +28,7 @@ export interface TestimonialData {
   text: string;
   avatarUrl?: string;
   videoUrl?: string;
-  verificationMethod: 'manual' | 'email' | 'linkedin';
+  verificationMethod: 'manual' | 'email' | 'linkedin' | 'telegram';
   status: 'pending' | 'verified' | 'rejected';
   sourceUrl?: string;
   cardStyle?: 'white' | 'lime' | 'dark';
@@ -36,6 +36,7 @@ export interface TestimonialData {
   updatedAt?: string;
   score?: number; // AI Trust Score (0-100)
   sentiment?: 'Positive' | 'Neutral' | 'Negative'; // AI Sentiment
+  reviewerTelegramUsername?: string;
 }
 
 export interface TrustAnalysisResult {
@@ -71,3 +72,21 @@ export interface TeamMember {
 
 export type WidgetTheme = 'modern' | 'dark_mode' | 'minimalist' | 'brand';
 export type WidgetLayout = 'grid' | 'carousel' | 'list' | 'popup';
+
+export interface WidgetConfig {
+  id?: string;
+  user_id?: string;
+  layout: WidgetLayout;
+  theme: WidgetTheme;
+  columns: number;
+  gap: string;
+  border_radius: string;
+  shadow: string;
+  font: 'inter' | 'serif' | 'mono';
+  header_title: string;
+  show_rating: boolean;
+  show_date: boolean;
+  show_avatar: boolean;
+  min_rating: number;
+  cards_to_show: number;
+}

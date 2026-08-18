@@ -37,6 +37,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    const [feedTab, setFeedTab] = useState<'inbox' | 'published'>('published');
    const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
    const [setupRequired, setSetupRequired] = useState(false);
+   const [isSavingWidget, setIsSavingWidget] = useState(false);
 
    // Widget Lab State
    const [configTab, setConfigTab] = useState<'layout' | 'style' | 'content'>('layout');
@@ -95,6 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    useEffect(() => {
       fetchTestimonials();
       fetchProfile();
+      fetchWidgetConfig();
    }, []);
 
    const fetchProfile = async () => {
@@ -167,6 +169,82 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
+   const fetchWidgetConfig = async () => {
+      try {
+         const { data: { user } } = await supabase.auth.getUser();
+         if (!user) return;
+
+         const { data, error } = await supabase
+            .from('widget_configs')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+         if (error && error.code !== 'PGRST116') {
+             console.error("Error fetching widget config:", error);
+         }
+
+         if (data) {
+             setWidgetConfig({
+                 layout: data.layout as WidgetLayout,
+                 theme: data.theme as WidgetTheme,
+                 columns: data.columns,
+                 gap: data.gap,
+                 borderRadius: data.border_radius,
+                 shadow: data.shadow,
+                 font: data.font,
+                 headerTitle: data.header_title,
+                 showRating: data.show_rating,
+                 showDate: data.show_date,
+                 showAvatar: data.show_avatar,
+                 minRating: data.min_rating,
+                 cardsToShow: data.cards_to_show,
+                 filterTag: 'all' // not in DB right now
+             });
+         }
+      } catch (err) {
+         console.warn("Failed to load widget config:", err);
+      }
+   };
+
+   const saveWidgetConfig = async () => {
+      setIsSavingWidget(true);
+      try {
+         const { data: { user } } = await supabase.auth.getUser();
+         if (!user) return;
+
+         const configToSave = {
+            user_id: user.id,
+            layout: widgetConfig.layout,
+            theme: widgetConfig.theme,
+            columns: widgetConfig.columns,
+            gap: widgetConfig.gap,
+            border_radius: widgetConfig.borderRadius,
+            shadow: widgetConfig.shadow,
+            font: widgetConfig.font,
+            header_title: widgetConfig.headerTitle,
+            show_rating: widgetConfig.showRating,
+            show_date: widgetConfig.showDate,
+            show_avatar: widgetConfig.showAvatar,
+            min_rating: widgetConfig.minRating,
+            cards_to_show: widgetConfig.cardsToShow
+         };
+
+         // Upsert based on user_id
+         const { error } = await supabase
+            .from('widget_configs')
+            .upsert(configToSave, { onConflict: 'user_id' });
+
+         if (error) throw error;
+         showToast('Widget configuration saved successfully!', 'success');
+      } catch (err: any) {
+         console.error('Failed to save widget config:', err);
+         showToast(`Error saving config: ${err.message}`, 'error');
+      } finally {
+         setIsSavingWidget(false);
+      }
+   };
+
    const fetchTestimonials = async () => {
       setIsLoadingTestimonials(true);
       try {
@@ -188,7 +266,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
             clientCompany: item.company,
             text: item.text,
             videoUrl: item.video_url,
-            verificationMethod: item.is_verified ? 'email' : 'manual', // simplified mapping
+            verificationMethod: item.reviewer_telegram_id ? 'telegram' : (item.is_verified ? 'email' : 'manual'),
+            reviewerTelegramUsername: item.reviewer_telegram_username,
             status: (item.status === 'approved' ? 'verified' : item.status) as any,
             createdAt: item.created_at,
             // mock missing fields for now
@@ -288,7 +367,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    
    const handleSendInvite = async (email: string, role: string) => {
       // Direct call to Edge Function URL
-      const functionUrl = 'https://tyenyntazlfqaoduzpxy.supabase.co/functions/v1/send-email';
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`;
       
       try {
          // FORCE REFRESH SESSION to ensure no stale tokens
@@ -587,7 +666,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
              const verifyLink = `${window.location.origin}/verify/${data.verification_token}`;
              
              // Direct call to Edge Function URL
-             const functionUrl = 'https://tyenyntazlfqaoduzpxy.supabase.co/functions/v1/send-email';
+             const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`;
              const { data: { session } } = await supabase.auth.getSession();
              
              const emailRes = await fetch(functionUrl, {
@@ -1067,9 +1146,15 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      Build your perfect wall of love
                   </p>
                </div>
-               <Button onClick={handleCopyEmbed} className="bg-black text-white hover:bg-gray-800 shadow-lg">
-                  <Code size={16} className="mr-2" /> Get Embed Code
-               </Button>
+               <div className="flex items-center gap-3">
+                   <Button onClick={saveWidgetConfig} disabled={isSavingWidget} variant="outline" className="border-gray-200">
+                      {isSavingWidget ? <Loader2 size={16} className="animate-spin mr-2" /> : <Settings size={16} className="mr-2" />}
+                      {isSavingWidget ? 'Saving...' : 'Save Configuration'}
+                   </Button>
+                   <Button onClick={handleCopyEmbed} className="bg-black text-white hover:bg-gray-800 shadow-lg">
+                      <Code size={16} className="mr-2" /> Get Embed Code
+                   </Button>
+               </div>
             </header>
 
             <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">

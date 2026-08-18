@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { TestimonialData } from '../types';
+import { TestimonialData, WidgetConfig } from '../types';
 import { CheckCircle2, Star, Quote, Search, Share2, Play } from 'lucide-react';
 
 interface PublicWallProps {
@@ -20,6 +20,7 @@ interface CompanyProfile {
 export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [testimonials, setTestimonials] = useState<TestimonialData[]>([]);
+  const [widgetConfig, setWidgetConfig] = useState<WidgetConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,8 +60,34 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
         }
         // ------------------------
 
-        // 2. Fetch Verified Testimonials
+        // 2. Fetch Widget Config & Verified Testimonials
         if (profileData) {
+          const { data: config } = await supabase
+            .from('widget_configs')
+            .select('*')
+            .eq('user_id', profileData.id)
+            .single();
+
+          let currentConfig = null;
+          if (config) {
+             currentConfig = {
+                 layout: config.layout,
+                 theme: config.theme,
+                 columns: config.columns,
+                 gap: config.gap,
+                 border_radius: config.border_radius,
+                 shadow: config.shadow,
+                 font: config.font,
+                 header_title: config.header_title,
+                 show_rating: config.show_rating,
+                 show_date: config.show_date,
+                 show_avatar: config.show_avatar,
+                 min_rating: config.min_rating,
+                 cards_to_show: config.cards_to_show
+             } as WidgetConfig;
+             setWidgetConfig(currentConfig);
+          }
+
           const { data: testimonialsData, error: testimonialsError } = await supabase
             .from('testimonials')
             .select('*')
@@ -80,7 +107,8 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                 videoUrl: t.video_url,
                 avatarUrl: t.avatar_url,
                 cardStyle: t.card_style,
-                verificationMethod: t.is_verified ? 'linkedin' : 'manual', // simplification based on available data
+                verificationMethod: t.reviewer_telegram_id ? 'telegram' : (t.is_verified ? 'linkedin' : 'manual'),
+                reviewerTelegramUsername: t.reviewer_telegram_username,
                 status: t.status,
                 createdAt: t.created_at,
                 sourceUrl: t.source,
@@ -88,7 +116,16 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                 sentiment: t.sentiment,
                 score: t.score
              }));
-             setTestimonials(mappedData);
+             
+             // Apply widget filters
+             const minRatingRequired = currentConfig?.min_rating || 0;
+             const maxCards = currentConfig?.cards_to_show || 50;
+             
+             const filtered = mappedData
+               .filter(t => (t.score || 100) >= (minRatingRequired * 20)) // approximate 1-5 to 0-100 scale
+               .slice(0, maxCards);
+
+             setTestimonials(filtered);
           }
         }
       } catch (err: any) {
@@ -120,8 +157,47 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
     );
   }
 
+  // Apply Styles based on WidgetConfig
+  let previewClass = "bg-white";
+  let textClass = "text-black font-sans";
+  let cardClass = "bg-white border border-gray-100 shadow-sm rounded-xl";
+  
+  if (widgetConfig) {
+      const { theme, borderRadius, shadow, font } = widgetConfig;
+      
+      if (theme === 'dark_mode') {
+         previewClass = "bg-black border-2 border-blue-900";
+         cardClass = "bg-gray-900 border border-gray-800 text-white";
+         textClass = "text-white";
+      } else if (theme === 'minimalist') {
+         previewClass = "bg-gray-50";
+         cardClass = "bg-white border-0 shadow-none";
+         textClass = "text-gray-800";
+      } else if (theme === 'brand') {
+         previewClass = "bg-brand-lime/5 border-2 border-brand-lime";
+         cardClass = "bg-white border-2 border-brand-lime shadow-brutal";
+         textClass = "text-black";
+      }
+
+      const radiusMap = { 'none': 'rounded-none', 'sm': 'rounded-md', 'md': 'rounded-xl', 'full': 'rounded-3xl' };
+      cardClass = cardClass.replace('rounded-xl', '');
+      cardClass += ` ${radiusMap[borderRadius as keyof typeof radiusMap] || 'rounded-xl'}`;
+
+      const shadowMap = { 'none': 'shadow-none', 'sm': 'shadow-sm', 'card': 'shadow-md', 'strong': 'shadow-xl' };
+      cardClass = cardClass.replace('shadow-sm', '');
+      cardClass += ` ${shadowMap[shadow as keyof typeof shadowMap] || 'shadow-md'}`;
+
+      const fontMap = { 'inter': 'font-sans', 'serif': 'font-serif', 'mono': 'font-mono' };
+      textClass = textClass.replace('font-sans', '');
+      textClass += ` ${fontMap[font as keyof typeof fontMap] || 'font-sans'}`;
+  }
+
+  const layout = widgetConfig?.layout || 'grid';
+  const columns = widgetConfig?.columns || 3;
+  const gap = widgetConfig?.gap === 'tight' ? '2' : widgetConfig?.gap === 'loose' ? '8' : '4';
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+    <div className={`min-h-screen font-sans flex flex-col ${previewClass}`}>
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -129,7 +205,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
               <span className="text-brand-green">
                  <CheckCircle2 className="w-6 h-6 fill-current" />
               </span>
-              <span className="font-bold text-xl tracking-tight">TrustGrid<span className="text-brand-green">.PRO</span></span>
+              <span className="font-bold text-xl tracking-tight text-gray-900">TrustGrid<span className="text-brand-green">.PRO</span></span>
            </div>
            
            <a href="/" className="text-sm font-medium text-gray-500 hover:text-black hover:underline">
@@ -139,7 +215,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       </header>
       
       {/* Profile Hero */}
-      <div className="bg-white border-b border-gray-200 pb-12 pt-16">
+      <div className="pb-12 pt-16">
          <div className="max-w-4xl mx-auto px-4 text-center">
             <div className="relative inline-block mb-6">
               <div 
@@ -159,116 +235,90 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
               </div>
             </div>
             
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
+            <h1 className={`text-4xl font-extrabold mb-2 tracking-tight ${textClass}`}>
                {profile.company_name || profile.full_name}
             </h1>
-            <p className="text-lg text-gray-500 font-medium max-w-2xl mx-auto mb-8">
+            <p className={`text-lg font-medium max-w-2xl mx-auto mb-8 opacity-70 ${textClass}`}>
                See what verified clients are saying about our work.
             </p>
-
-            <div className="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-800">
-               <Star className="w-4 h-4 text-yellow-500 fill-current mr-2" />
-               {testimonials.length} Verified Reviews
-            </div>
          </div>
       </div>
 
-      {/* Testimonials Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      {/* Wall Content */}
+      <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+         {widgetConfig?.header_title && (
+            <div className={`text-center mb-10 ${textClass}`}>
+               <h2 className="text-2xl font-bold mb-2">{widgetConfig.header_title}</h2>
+               <div className="w-12 h-1 bg-brand-lime mx-auto rounded-full"></div>
+            </div>
+         )}
+
          {testimonials.length === 0 ? (
-            <div className="text-center py-20 text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
-               <p className="text-lg">No verified testimonials yet.</p>
+            <div className="text-center py-20 opacity-50 border-2 border-dashed border-gray-400 rounded-2xl mx-auto max-w-2xl">
+               <p className={`text-lg ${textClass}`}>No verified testimonials available.</p>
             </div>
          ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {testimonials.map((t) => (
-                  <TestimonialCard key={t.id} testimonial={t} primaryColor={profile.primary_color} />
-                ))}
-             </div>
+            <div className={`w-full transition-all duration-500 ${
+               layout === 'grid' 
+                  ? `grid grid-cols-1 md:grid-cols-${columns} gap-${gap}` 
+                  : 'flex flex-col gap-4 max-w-2xl mx-auto'
+            }`}>
+               {testimonials.map((item) => (
+                  <div key={item.id} className={`p-6 transition-all duration-300 flex flex-col h-full ${cardClass} ${layout === 'carousel' ? 'min-w-[300px]' : 'w-full'} hover:-translate-y-1 hover:shadow-lg`}>
+                     <div className="flex justify-between items-start mb-4">
+                        {widgetConfig?.show_rating !== false && (
+                           <div className="flex gap-0.5 text-yellow-400 text-xs">
+                              {[1,2,3,4,5].map(i => <span key={i} style={{color: '#FBBF24'}}>★</span>)}
+                           </div>
+                        )}
+                        {widgetConfig?.show_date !== false && item.createdAt && (
+                           <div className={`text-[10px] uppercase font-bold tracking-wider opacity-40 ${textClass}`}>
+                              {new Date(item.createdAt).toLocaleDateString()}
+                           </div>
+                        )}
+                     </div>
+
+                     <p className={`text-base leading-relaxed mb-6 flex-1 opacity-90 ${textClass}`}>
+                        "{item.text}"
+                     </p>
+
+                     <div className="flex items-center gap-3 pt-4 border-t border-gray-500/10 mt-auto">
+                        {widgetConfig?.show_avatar !== false && (
+                           <img 
+                              src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}`} 
+                              className="w-10 h-10 rounded-full object-cover bg-gray-200 border border-gray-100" 
+                              alt={item.clientName}
+                           />
+                        )}
+                        <div>
+                           <p className={`text-sm font-bold ${layout === 'popup' ? 'text-xs' : ''} ${textClass}`}>{item.clientName}</p>
+                           {item.clientCompany && <p className={`text-xs opacity-60 ${textClass}`}>{item.clientCompany}</p>}
+                        </div>
+                        <div className="ml-auto">
+                           {item.verificationMethod === 'telegram' ? (
+                              <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full border border-blue-100" title="Identity Verified">
+                                 <CheckCircle2 size={12} className="text-blue-500" />
+                                 <span className="text-[9px] font-bold text-blue-700 uppercase tracking-wide">
+                                    Telegram {item.reviewerTelegramUsername ? `@${item.reviewerTelegramUsername}` : ''}
+                                 </span>
+                              </div>
+                           ) : (
+                              <div className="w-6 h-6 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center" title="Verified Client">
+                                 <CheckCircle2 size={12} />
+                              </div>
+                           )}
+                        </div>
+                     </div>
+                  </div>
+               ))}
+            </div>
          )}
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-8 text-center text-gray-500 text-sm">
+      <footer className="bg-white border-t border-gray-200 py-8 text-center text-gray-500 text-sm mt-auto">
          <p>Verified by <a href="/" className="text-brand-black hover:underline font-semibold">TrustGrid.PRO</a></p>
       </footer>
     </div>
   );
-};
-
-const TestimonialCard: React.FC<{ testimonial: TestimonialData; primaryColor?: string }> = ({ testimonial, primaryColor }) => {
-   const isDark = testimonial.cardStyle === 'dark';
-   const isLime = testimonial.cardStyle === 'lime';
-   
-   let cardClass = "relative p-6 rounded-2xl border transition-all duration-300 hover:shadow-lg flex flex-col h-full ";
-   
-   if (isDark) {
-      cardClass += "bg-gray-900 border-gray-800 text-white shadow-xl";
-   } else if (isLime) {
-      cardClass += "bg-brand-lime border-brand-lime text-gray-900 shadow-md";
-   } else {
-      cardClass += "bg-white border-gray-200 text-gray-900 shadow-sm";
-   }
-
-   const textColor = isDark ? "text-gray-300" : "text-gray-600";
-   const headingColor = isDark ? "text-white" : "text-gray-900";
-
-   return (
-      <div className={cardClass}>
-         {/* Trust Badge at top right */}
-         <div className="absolute top-4 right-4 text-gray-400 opacity-50">
-            <Quote className="w-8 h-8" />
-         </div>
-
-         {/* Author Header */}
-         <div className="flex items-center space-x-4 mb-6 relative z-10">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
-               {testimonial.avatarUrl ? (
-                  <img src={testimonial.avatarUrl} alt={testimonial.clientName} className="w-full h-full object-cover" />
-               ) : (
-                  <div className="w-full h-full flex items-center justify-center font-bold text-gray-400 text-xl">
-                     {testimonial.clientName.substring(0, 1)}
-                  </div>
-               )}
-            </div>
-            <div>
-               <h3 className={`font-bold text-lg ${headingColor}`}>{testimonial.clientName}</h3>
-               {testimonial.clientCompany && (
-                  <p className={`text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                     {testimonial.clientCompany}
-                  </p>
-               )}
-            </div>
-         </div>
-
-         {/* Content */}
-         <div className="grow relative z-10">
-             {testimonial.videoUrl && (
-                <div className="mb-4 rounded-lg overflow-hidden bg-black relative group border border-gray-200 shadow-inner" style={{ aspectRatio: '16/9' }}>
-                   <video 
-                      src={testimonial.videoUrl} 
-                      controls 
-                      className="w-full h-full object-contain"
-                   />
-                </div>
-             )}
-             
-             <p className={`text-base leading-relaxed ${textColor} mt-4`}>
-               "{testimonial.text}"
-             </p>
-         </div>
-
-         {/* Footer / Meta */}
-         <div className={`mt-6 pt-4 border-t ${isDark ? 'border-gray-800' : 'border-gray-100'} flex items-center justify-between`}>
-             <div className="flex items-center space-x-1.5 text-xs font-medium text-emerald-600">
-                <CheckCircle2 className="w-4 h-4 fill-emerald-100 text-emerald-600" />
-                <span>Verified Client</span>
-             </div>
-             
-             <button className={`p-2 rounded-full hover:bg-black/5 transition-colors ${isDark ? 'text-gray-600 hover:text-white' : 'text-gray-300 hover:text-gray-600'}`}>
-                <Share2 className="w-4 h-4" />
-             </button>
-         </div>
-      </div>
-   );
 };
