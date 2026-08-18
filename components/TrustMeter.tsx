@@ -30,24 +30,23 @@ export const TrustMeter: React.FC<TrustMeterProps> = ({ score }) => {
             <circle
               cx="64"
               cy="64"
-              r={radius}
-              stroke="#333"
-              strokeWidth="8"
+              r={56}
+              stroke="#f3f4f6"
+              strokeWidth="12"
               fill="transparent"
-              className="scale-[2] origin-center"
             />
             {/* Progress Circle */}
             <circle
               cx="64"
               cy="64"
-              r={radius}
+              r={56}
               stroke={getColor()}
-              strokeWidth="8"
+              strokeWidth="12"
               fill="transparent"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
+              strokeDasharray={2 * Math.PI * 56}
+              strokeDashoffset={(2 * Math.PI * 56) - (score / 100) * (2 * Math.PI * 56)}
               strokeLinecap="round"
-              className="scale-[2] origin-center transition-all duration-1000 ease-out"
+              className="transition-all duration-1000 ease-out"
             />
          </svg>
          <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -69,17 +68,17 @@ export const TrustMeter: React.FC<TrustMeterProps> = ({ score }) => {
          {/* Tips */}
          {score < 100 ? (
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-               <p className="text-xs font-bold text-brand-lime uppercase mb-3 flex items-center gap-2">
+               <p className="text-xs font-bold text-green-700 uppercase mb-3 flex items-center gap-2">
                   <TrendingUp size={14} /> Tips to Improve
                </p>
                <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                     <span className="flex items-center gap-2"><Video size={14} className="text-gray-400" /> Add a Video Testimonial</span>
-                     <span className="font-bold text-brand-lime">+10 pts</span>
+                     <span className="flex items-center gap-2"><Video size={14} className="text-gray-500" /> Add a Video Testimonial</span>
+                     <span className="font-bold text-green-600">+10 pts</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                     <span className="flex items-center gap-2"><CheckCircle2 size={14} className="text-gray-400" /> Use Telegram Verification</span>
-                     <span className="font-bold text-brand-lime">+20 pts</span>
+                     <span className="flex items-center gap-2"><CheckCircle2 size={14} className="text-gray-500" /> Use Telegram Verification</span>
+                     <span className="font-bold text-green-600">+20 pts</span>
                   </div>
                </div>
             </div>
