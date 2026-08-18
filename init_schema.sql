@@ -42,6 +42,7 @@ create table testimonials (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   name text not null,          -- Reviewer Name
   company text,                -- Reviewer Company
+  avatar_url text,             -- Reviewer Avatar
   text text,                   -- Review Text
   video_url text,              -- URL to video if uploaded
   score int,                   -- AI Trust Score

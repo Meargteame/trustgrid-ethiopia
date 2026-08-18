@@ -78,7 +78,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    const [loadingProfile, setLoadingProfile] = useState(true);
 
    // Modal Form State
-   const [verificationType, setVerificationType] = useState<'manual' | 'email' | 'linkedin'>('manual');
+   
    const [isFetching, setIsFetching] = useState(false);
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [formData, setFormData] = useState({
@@ -857,7 +857,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      You don't have any proofs yet. Add a testimonial manually or share your collection page link with clients.
                   </p>
                   <div className="flex gap-4">
-                     <Button onClick={() => setIsModalOpen(true)}>
+                     <Button onClick={() => { setIsModalOpen(true); setVerificationType('manual'); }}>
                         <Plus size={16} className="mr-2" /> Add Manually
                      </Button>
                      <Button variant="outline" onClick={() => showToast('LinkedIn import coming soon!', 'success')}>
@@ -1405,7 +1405,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
    }
 
    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans relative">
+      <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans">
          {/* Toast Notification */}
          {toast && (
             <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] flex items-center gap-2 animate-fade-in ${toast.type === 'success' ? 'bg-black text-white' : 'bg-red-500 text-white'}`}>
@@ -1428,7 +1428,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
          )}
 
          {/* Sidebar */}
-         <aside className="w-full md:w-80 bg-white border-r border-gray-200 p-6 flex flex-col fixed md:sticky top-0 h-auto md:h-screen z-20 overflow-y-auto">
+         <aside className="w-full md:w-80 bg-white border-r border-gray-200 p-6 flex flex-col fixed md:relative h-auto md:h-screen z-20">
             <div className="flex items-center gap-1 mb-10 cursor-pointer" onClick={() => setActiveTab('feed')}>
                <span className="font-extrabold text-2xl tracking-tighter text-black">
                   TrustGrid.
@@ -1534,27 +1534,137 @@ create policy "User insert own profile" on profiles for insert with check (auth.
 
          {/* Add Testimonial Modal (Reused) */}
          {isModalOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                 <div className="bg-white rounded-[2rem] border-2 border-black w-full max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col">
-                    <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                       <h2 className="text-xl font-extrabold">Import Proof</h2>
-                       <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                          <X size={20} />
-                       </button>
-                    </div>
-                    <div className="p-8 text-center space-y-6">
-                        <div className="w-16 h-16 bg-[#0a66c2]/10 text-[#0a66c2] rounded-full flex items-center justify-center mx-auto">
-                            <Linkedin size={32} />
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+               <div className="bg-white rounded-[2rem] border-2 border-black w-full max-w-lg shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col max-h-[90vh]">
+                  <div className="flex justify-between items-center p-6 border-b border-gray-100">
+                     <h2 className="text-xl font-extrabold">Add New Proof</h2>
+                     <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <X size={20} />
+                     </button>
+                  </div>
+                  <div className="p-6 overflow-y-auto">
+                     <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-4">
+                           <label className="block text-sm font-bold">Verification Source</label>
+                           <div className="grid grid-cols-3 gap-2">
+                              <button
+                                 type="button"
+                                 onClick={() => setVerificationType('manual')}
+                                 className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${verificationType === 'manual' ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                              >
+                                 Manual
+                              </button>
+                              <button
+                                 type="button"
+                                 onClick={() => setVerificationType('email')}
+                                 className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${verificationType === 'email' ? 'border-[#0088cc] bg-[#0088cc] text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                              >
+                                 Client Email
+                              </button>
+                              <button
+                                 type="button"
+                                 onClick={() => setVerificationType('linkedin')}
+                                 className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${verificationType === 'linkedin' ? 'border-[#0a66c2] bg-[#0a66c2] text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                              >
+                                 LinkedIn
+                              </button>
+                           </div>
+                        {/* LinkedIn Modal Update */}
+                           {verificationType === 'linkedin' && (
+                              <div className="bg-[#0a66c2]/5 p-4 rounded-xl border border-[#0a66c2]/20 animate-fade-in">
+                                 <label className="block text-xs font-bold text-[#0a66c2] uppercase mb-2">LinkedIn Profile URL</label>
+                                 <div className="flex gap-2">
+                                    <input
+                                       type="url"
+                                       placeholder="https://www.linkedin.com/in/username"
+                                       value={formData.linkedinUrl}
+                                       onChange={(e) => setFormData({ ...formData, linkedinUrl: e.target.value })}
+                                       className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-[#0a66c2]"
+                                    />
+                                    {/* Removed Simulate Fetch Button for now as requested */}
+                                 </div>
+                                 <p className="text-[10px] text-gray-500 mt-2">Paste the client's public profile link manually.</p>
+                              </div>
+                           )}
+                           
+                           {/* Email Input - Always Visible for ALL Types (Requirement: All 3 ways need email) */}
+                           <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+                                    Client Email (For Verification) <span className="text-red-500">*</span>
+                                 </label>
+                                 <div className="flex gap-2">
+                                    <Mail size={16} className="text-gray-400 mt-3" />
+                                    <input
+                                       type="email"
+                                       placeholder="client@company.com"
+                                       value={formData.email}
+                                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                       className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-black"
+                                       required
+                                    />
+                                 </div>
+                                 <p className="text-[10px] text-gray-500 mt-2">
+                                    {verificationType === 'manual' && "We'll send a confirmation link to this email to mark it as Verified."}
+                                    {verificationType === 'email' && "We'll send the verification request here."}
+                                    {verificationType === 'linkedin' && "We'll notify them you've added their LinkedIn review."}
+                                 </p>
+                           </div>
                         </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">Import from LinkedIn</h3>
-                            <p className="text-sm text-gray-500">This feature is coming soon! For now, please use your public Collection Form to gather verified Telegram testimonials.</p>
+                        <div className="space-y-4 pt-4 border-t border-gray-100">
+                           <label className="block text-sm font-bold">Client Details</label>
+                           <input
+                              type="text"
+                              placeholder="Client Name"
+                              required
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors"
+                           />
+                           <textarea
+                              placeholder="Paste their review or testimonial here..."
+                              required
+                              rows={3}
+                              value={formData.text}
+                              onChange={(e) => setFormData({ ...formData, text: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors resize-none"
+                           />
+                           <div className="flex items-center gap-4">
+                              <label className="w-16 h-16 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-black transition-colors relative overflow-hidden">
+                                 {formData.avatarFile ? (
+                                     <img src={URL.createObjectURL(formData.avatarFile)} alt="Preview" className="w-full h-full object-cover" />
+                                 ) : (
+                                     <ImageIcon size={20} className="text-gray-400" />
+                                 )}
+                                 <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                       if (e.target.files?.[0]) {
+                                          setFormData({ ...formData, avatarFile: e.target.files[0] });
+                                       }
+                                    }}
+                                 />
+                              </label>
+                              <div className="text-xs text-gray-500">
+                                 <p className="font-bold text-black">Client Photo</p>
+                                 <p>Recommended: 400x400px</p>
+                              </div>
+                              {formData.avatarFile && (
+                                 <button type="button" onClick={() => setFormData({...formData, avatarFile: null})} className="text-xs text-red-500 underline">Remove</button>
+                              )}
+                           </div>
                         </div>
-                        <Button className="w-full" onClick={() => setIsModalOpen(false)}>Got it</Button>
-                    </div>
-                 </div>
-              </div>
-           )}
+                        <div className="pt-4">
+                           <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
+                              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Add to Wall'}
+                           </Button>
+                        </div>
+                     </form>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 };
