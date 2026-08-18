@@ -1563,7 +1563,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                </button>
             </nav>
 
-            <Button variant="ghost" onClick={onLogout} className="mt-auto justify-start px-4 text-red-500 hover:text-red-600 hover:bg-red-50">
+            <Button variant="ghost" onClick={onLogout} className="mt-auto justify-start px-4 text-gray-500 hover:text-gray-800 hover:bg-gray-100">
                <LogOut size={18} className="mr-2" /> Log Out
             </Button>
          </aside>
