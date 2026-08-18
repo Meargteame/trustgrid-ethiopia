@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const [embedCardId, setEmbedCardId] = useState<string>(''); // For single card embed
   const [collectionHandle, setCollectionHandle] = useState<string>('');
   const [verificationToken, setVerificationToken] = useState<string>('');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     // Check for "Embed", "Collect", or "Verify" routes manually
@@ -140,12 +141,18 @@ const App: React.FC = () => {
     // Handled by onAuthStateChange
   };
 
-  const handleLogout = async () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      await supabase.auth.signOut();
-      // View change handled by onAuthStateChange
-      window.scrollTo(0, 0);
-    }
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutConfirm(false);
+    await supabase.auth.signOut();
+    window.scrollTo(0, 0);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
 
   const handleBackToHome = () => {
@@ -165,7 +172,33 @@ const App: React.FC = () => {
 
   // Render Logic
   if (currentView === 'dashboard') {
-    return <Dashboard onLogout={handleLogout} onOpenCollection={handleOpenCollection} />;
+    return (
+      <>
+        <Dashboard onLogout={handleLogout} onOpenCollection={handleOpenCollection} />
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-[2rem] border-2 border-black w-full max-w-sm shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col p-8 text-center relative animate-slide-up">
+              <h3 className="text-2xl font-black mb-4">Log Out?</h3>
+              <p className="text-gray-500 font-medium mb-8">Are you sure you want to securely log out of your account?</p>
+              <div className="flex gap-4">
+                <button 
+                  onClick={cancelLogout}
+                  className="flex-1 py-3 px-4 rounded-xl font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmLogout}
+                  className="flex-1 py-3 px-4 rounded-xl font-bold bg-black text-white hover:bg-gray-900 transition-colors shadow-lg"
+                >
+                  Yes, Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
 
   if (currentView === 'collection') {
