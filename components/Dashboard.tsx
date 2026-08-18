@@ -830,9 +830,13 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      )}
                   </button>
                </div>
-               <Button onClick={() => setIsModalOpen(true)} className="shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <Plus size={18} className="mr-2" /> Add Proof
-               </Button>
+               <Button onClick={() => {
+                     const url = window.location.origin + '/collect/' + (profileData.username || '');
+                     navigator.clipboard.writeText(url);
+                     showToast('Collection link copied!', 'success');
+                 }} className="shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <LinkIcon size={18} className="mr-2" /> Get Proofs
+                 </Button>
             </div>
          </header>
 
@@ -856,14 +860,15 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   <p className="text-gray-500 max-w-md mb-8">
                      You don't have any proofs yet. Add a testimonial manually or share your collection page link with clients.
                   </p>
-                  <div className="flex gap-4">
-                     <Button onClick={() => setIsModalOpen(true)}>
-                        <Plus size={16} className="mr-2" /> Add Manually
-                     </Button>
-                     <Button variant="outline" onClick={() => showToast('LinkedIn import coming soon!', 'success')}>
-                        <RefreshCw size={16} className="mr-2" /> Import from LinkedIn
-                     </Button>
-                  </div>
+                  <div className="flex justify-center w-full">
+                       <Button onClick={() => {
+                          const url = window.location.origin + '/collect/' + (profileData.username || '');
+                          navigator.clipboard.writeText(url);
+                          showToast('Collection link copied!', 'success');
+                       }}>
+                          <Copy size={16} className="mr-2" /> Copy Collection Link
+                       </Button>
+                    </div>
                </div>
             ) : (
                <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
@@ -1533,28 +1538,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
          </main>
 
          {/* Add Testimonial Modal (Reused) */}
-         {isModalOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                 <div className="bg-white rounded-[2rem] border-2 border-black w-full max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col">
-                    <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                       <h2 className="text-xl font-extrabold">Import Proof</h2>
-                       <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                          <X size={20} />
-                       </button>
-                    </div>
-                    <div className="p-8 text-center space-y-6">
-                        <div className="w-16 h-16 bg-[#0a66c2]/10 text-[#0a66c2] rounded-full flex items-center justify-center mx-auto">
-                            <Linkedin size={32} />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">Import from LinkedIn</h3>
-                            <p className="text-sm text-gray-500">This feature is coming soon! For now, please use your public Collection Form to gather verified Telegram testimonials.</p>
-                        </div>
-                        <Button className="w-full" onClick={() => setIsModalOpen(false)}>Got it</Button>
-                    </div>
-                 </div>
-              </div>
-           )}
+         
       </div>
    );
 };
