@@ -5,7 +5,7 @@ import {
    CheckCircle2, Clock, Send, Link as LinkIcon,
    Image as ImageIcon, X, Palette, User, Mail, Shield,
    Trash2, LogOut, Check, Loader2, RefreshCw, BarChart3, ExternalLink,
-   Share2, Users, Monitor, Layout, Maximize2, Columns, List, MessageSquare
+   Share2, Users, Monitor, Layout, Maximize2, Columns, List, MessageSquare, Linkedin
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TestimonialData, TeamMember, WidgetTheme, WidgetLayout } from '../types';
