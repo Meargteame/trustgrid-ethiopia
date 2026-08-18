@@ -141,9 +141,11 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    // View change handled by onAuthStateChange
-    window.scrollTo(0, 0);
+    if (window.confirm("Are you sure you want to log out?")) {
+      await supabase.auth.signOut();
+      // View change handled by onAuthStateChange
+      window.scrollTo(0, 0);
+    }
   };
 
   const handleBackToHome = () => {
