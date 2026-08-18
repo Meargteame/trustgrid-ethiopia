@@ -41,7 +41,7 @@ export const Features: React.FC = () => {
             </div>
             <h3 className="text-xl font-bold mb-3">Crush your sales goals</h3>
             <p className="text-gray-600 leading-relaxed">
-              Integrate your trust score into Telebirr and LinkedIn to close deals faster.
+              Share your trust score on your website and social profiles to close deals faster.
             </p>
           </div>
 

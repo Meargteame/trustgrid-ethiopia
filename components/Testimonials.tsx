@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Star, Loader2 } from 'lucide-react';
+import { Star, Loader2, Shield } from 'lucide-react';
 import { Button } from './Button';
 import { supabase } from '../lib/supabase';
 
@@ -12,52 +12,14 @@ interface Testimonial {
   status: string;
 }
 
-const STATIC_REVIEWS = [
-  {
-    id: 'static-1',
-    name: "Karan Lynn",
-    text: "I was recommended TrustGrid from a friend and WOW! Giving my clients peace of mind has helped me grow beyond my expectations.",
-    company: "Founder",
-    avatar_url: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=100&h=100",
-    status: 'verified'
-  },
-  {
-    id: 'static-2',
-    name: "Dianne Russell",
-    text: "Such a wonderful platform! Someone who trades regularly but does not have a physical shop, this plan has been a lifesaver.",
-    company: "Housewife",
-    avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=100&h=100",
-    status: 'verified'
-  },
-  {
-    id: 'static-3',
-    name: "Marvin McKinney",
-    text: "After a hiatus from the market I needed some encouragement to help me get my confidence back. TrustGrid provided that.",
-    company: "Student",
-    avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&h=100",
-    status: 'verified'
-  },
-  {
-    id: 'static-4',
-    name: "Ronald Richards",
-    text: "The workouts are fun to do but still make you sweat! I'm so grateful for the two of you for starting this amazing app.",
-    company: "Businessman",
-    avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&h=100",
-    status: 'verified'
-  }
-];
-
 export const Testimonials: React.FC = () => {
-  const [reviews, setReviews] = useState<Testimonial[]>(STATIC_REVIEWS);
+  const [reviews, setReviews] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPublicReviews = async () => {
       try {
         setLoading(true);
-        // Fetch 4 most recent verified reviews from ANY user (public wall concept)
-        // Or strictly from the demo user if we want consistency. 
-        // For now, let's show real verified reviews.
         const { data, error } = await supabase
           .from('testimonials')
           .select('id, name, text, company, avatar_url, status')
@@ -65,7 +27,7 @@ export const Testimonials: React.FC = () => {
           .order('created_at', { ascending: false })
           .limit(4);
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           setReviews(data);
         }
       } catch (err) {
@@ -84,14 +46,13 @@ export const Testimonials: React.FC = () => {
         
         <div className="flex flex-col md:flex-row justify-between items-end mb-12">
           <h2 className="text-3xl md:text-4xl font-extrabold text-black max-w-lg leading-tight">
-            People all over the world use TrustGrid for their business
+            Real reviews from real businesses
           </h2>
-          <Button variant="outline" size="sm" className="mt-4 md:mt-0 rounded-lg">View All Reviews</Button>
         </div>
 
         {loading ? (
            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-gray-400" /></div>
-        ) : (
+        ) : reviews.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {reviews.map((review) => (
               <div key={review.id} className="border border-gray-200 p-6 rounded-2xl hover:shadow-lg transition-shadow bg-white flex flex-col">
@@ -113,6 +74,16 @@ export const Testimonials: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="border-2 border-dashed border-gray-200 rounded-3xl p-16 text-center flex flex-col items-center justify-center">
+            <div className="bg-gray-50 p-4 rounded-full mb-6">
+              <Shield size={32} className="text-gray-300" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Be one of our first verified businesses</h3>
+            <p className="text-gray-500 max-w-md mb-2">
+              TrustGrid is just getting started. Sign up to create your wall of proof and be among the first to build verified trust with your customers.
+            </p>
           </div>
         )}
 

@@ -528,21 +528,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
+   // TODO: LinkedIn import is not implemented. No LinkedIn API integration exists.
+   // This function previously faked data with a setTimeout. Replaced with honest 'coming soon' message.
    const handleSimulateFetch = () => {
-      if (!formData.linkedinUrl) {
-         showToast('Please paste a LinkedIn URL first', 'error');
-         return;
-      }
-      setIsFetching(true);
-      setTimeout(() => {
-         setFormData(prev => ({
-            ...prev,
-            name: 'Dawit Mekonnen',
-            text: 'Working with Addis Design Co. was a game changer for our startup. Highly professional and timely delivery.',
-         }));
-         setIsFetching(false);
-         showToast('Data fetched from LinkedIn!');
-      }, 2000);
+      showToast('LinkedIn import is coming soon! For now, add testimonials manually or via the collection page.', 'error');
    };
 
    const handleSubmit = async (e: React.FormEvent) => {
@@ -845,14 +834,14 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Welcome to TrustGrid!</h3>
                   <p className="text-gray-500 max-w-md mb-8">
-                     You don't have any proofs yet. Start by importing a recommendation from LinkedIn or add one manually.
+                     You don't have any proofs yet. Add a testimonial manually or share your collection page link with clients.
                   </p>
                   <div className="flex gap-4">
-                     <Button onClick={() => { setIsModalOpen(true); setVerificationType('linkedin'); }}>
-                        <RefreshCw size={16} className="mr-2" /> Import from LinkedIn
-                     </Button>
-                     <Button variant="outline" onClick={() => { setIsModalOpen(true); setVerificationType('manual'); }}>
+                     <Button onClick={() => { setIsModalOpen(true); setVerificationType('manual'); }}>
                         <Plus size={16} className="mr-2" /> Add Manually
+                     </Button>
+                     <Button variant="outline" onClick={() => showToast('LinkedIn import coming soon!', 'success')}>
+                        <RefreshCw size={16} className="mr-2" /> Import from LinkedIn
                      </Button>
                   </div>
                </div>

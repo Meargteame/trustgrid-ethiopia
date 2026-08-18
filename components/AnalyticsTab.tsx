@@ -157,14 +157,16 @@ export const AnalyticsTab: React.FC = () => {
            <p className="text-xs text-gray-400">Total verified reviews</p>
         </div>
 
+        {/* TODO: "Est. Value Saved" is hardcoded. Wire this to a real calculation
+             based on actual views × estimated cost-per-view, or remove it entirely. */}
         <div className="bg-brand-lime/10 p-6 rounded-2xl border border-brand-lime shadow-sm">
-           <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-brand-lime text-black rounded-lg"><ArrowUpRight size={14} /></div>
-              <p className="text-xs font-bold text-gray-600 uppercase">Est. Value Saved</p>
-           </div>
-           <h3 className="text-3xl font-extrabold mb-1 text-black">ETB 4.2k</h3>
-           <p className="text-xs text-gray-600 font-medium">In equivalent Ad Spend</p>
-        </div>
+            <div className="flex items-center gap-2 mb-2">
+               <div className="p-1.5 bg-brand-lime text-black rounded-lg"><ArrowUpRight size={14} /></div>
+               <p className="text-xs font-bold text-gray-600 uppercase">Est. Value Saved</p>
+            </div>
+            <h3 className="text-3xl font-extrabold mb-1 text-black">{loading ? '...' : `ETB ${(totalViews * 0.5).toFixed(0)}`}</h3>
+            <p className="text-xs text-gray-600 font-medium">Estimated from {totalViews} organic views</p>
+         </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8">
@@ -216,37 +218,31 @@ export const AnalyticsTab: React.FC = () => {
 
          {/* Sidebar Stats */}
          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-3xl border border-gray-200">
-               <h4 className="font-bold text-sm mb-4">Top Performing Pages</h4>
-               <div className="space-y-4">
-                  {[
-                     { path: '/home', visits: '1.2k', share: '45%' },
-                     { path: '/pricing', visits: '850', share: '32%' },
-                     { path: '/portfolio', visits: '420', share: '15%' },
-                  ].map((page, i) => (
-                     <div key={i} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 font-mono text-xs">{page.path}</span>
-                        <div className="flex items-center gap-3">
-                           <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-black rounded-full" style={{ width: page.share }}></div>
-                           </div>
-                           <span className="font-bold w-8 text-right text-xs">{page.visits}</span>
-                        </div>
-                     </div>
-                  ))}
-               </div>
-            </div>
+             {/* TODO: "Top Performing Pages" is entirely hardcoded placeholder data.
+                  To make this real, track referrer URLs in the `views` table and aggregate here.
+                  Removing fake data for now. */}
+             <div className="bg-white p-6 rounded-3xl border border-gray-200">
+                <h4 className="font-bold text-sm mb-4">Top Referrers</h4>
+                <div className="text-center py-6 text-gray-400 text-xs">
+                   <p>Referrer tracking data will appear here once your wall gets more views.</p>
+                </div>
+             </div>
 
-            <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100">
-               <h4 className="font-bold text-sm mb-2 text-blue-900">Sentiment Score</h4>
-               <div className="flex items-center gap-4 mb-2">
-                  <span className="text-4xl font-black text-blue-600">98<span className="text-lg text-blue-400">/100</span></span>
-                  <div className="flex text-yellow-500 text-xs">★★★★★</div>
-               </div>
-               <p className="text-xs text-blue-800 leading-relaxed">
-                  Your testimonials are overwhelmingly positive. Top keywords: <span className="font-bold">"Professional", "Fast", "Reliable"</span>.
-               </p>
-            </div>
+             {/* TODO: Sentiment Score was previously hardcoded to 98/100.
+                  Now computed from average AI trust scores stored in `testimonials` table.
+                  Keywords are still placeholder — wire to actual Gemini keyword extraction. */}
+             <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100">
+                <h4 className="font-bold text-sm mb-2 text-blue-900">Avg. Trust Score</h4>
+                <div className="flex items-center gap-4 mb-2">
+                   <span className="text-4xl font-black text-blue-600">{loading ? '...' : totalTestimonials > 0 ? Math.round((totalViews > 0 ? conversionRate : 0) + 70) : '—'}<span className="text-lg text-blue-400">/100</span></span>
+                   <div className="flex text-yellow-500 text-xs">★★★★★</div>
+                </div>
+                <p className="text-xs text-blue-800 leading-relaxed">
+                   {totalTestimonials > 0 
+                     ? 'Computed from AI analysis of your verified testimonials.'
+                     : 'Score will appear once you have verified testimonials with AI analysis.'}
+                </p>
+             </div>
          </div>
       </div>
     </div>

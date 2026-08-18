@@ -82,7 +82,7 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => 
                  <CheckCircle2 size={32} className="text-green-600" />
               </div>
               <h1 className="text-2xl font-black mb-2">Verified!</h1>
-              <p className="text-gray-600 mb-6">Thank you for confirming your review. It is now marked as <span className="font-bold text-black">Trusted Proof</span> on the blockchain (simulated).</p>
+              <p className="text-gray-600 mb-6">Thank you for confirming your review. It is now marked as <span className="font-bold text-black">Verified Proof</span> — confirmed by the original author and visible on the public trust wall.</p>
            </div>
         </div>
      );

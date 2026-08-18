@@ -44,7 +44,7 @@ export const Showcase: React.FC = () => {
                                <span className="font-bold text-sm">Hana M.</span>
                                <CheckCircle2 size={14} className="text-brand-lime fill-black" />
                             </div>
-                            <p className="text-xs text-gray-600 line-clamp-2">"Absolutely verified. I checked the blockchain record."</p>
+                            <p className="text-xs text-gray-600 line-clamp-2">"Verified and trusted. The AI analysis confirmed it."</p>
                          </div>
                       </div>
 
