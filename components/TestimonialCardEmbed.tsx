@@ -15,8 +15,7 @@ interface EmbedData {
     company?: string;
     avatar_url?: string; // Client avatar
     video_url?: string;
-    score?: number; // AI Trust Score (0-100)
-    sentiment?: 'Positive' | 'Neutral' | 'Negative';
+    score?: number;
     created_at: string;
     user_id?: string;
     is_verified?: boolean;
@@ -34,7 +33,6 @@ export const TestimonialCardEmbed: React.FC<TestimonialCardEmbedProps> = ({ test
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [showTrustScore, setShowTrustScore] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -104,14 +102,6 @@ export const TestimonialCardEmbed: React.FC<TestimonialCardEmbedProps> = ({ test
 
   const { testimonial, brand } = data;
   
-  // Trust Score Color Calculation
-  const getTrustScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600 bg-green-50 border-green-200';
-    if (score >= 70) return 'text-lime-600 bg-lime-50 border-lime-200';
-    if (score >= 50) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    return 'text-red-600 bg-red-50 border-red-200';
-  };
-
   return (
     <div className="h-full font-sans antialiased w-full bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative group hover:shadow-md transition-all duration-300">
         
@@ -164,18 +154,6 @@ export const TestimonialCardEmbed: React.FC<TestimonialCardEmbedProps> = ({ test
                         <CheckCircle2 size={10} className="text-blue-500" />
                         <span className="text-[9px] font-bold text-blue-700 uppercase tracking-wide">Verified</span>
                     </div>
-                )}
-                
-                {/* AI Trust Score Badge (Click/Hover to reveal details in full version) */}
-                {testimonial.score !== undefined && testimonial.score > 0 && (
-                     <div 
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full border cursor-help ${getTrustScoreColor(testimonial.score)}`}
-                        title={`AI Trust Score: ${testimonial.score}/100 based on sentiment and authenticity checks.`}
-                        onClick={() => setShowTrustScore(!showTrustScore)}
-                     >
-                        <ShieldCheck size={10} />
-                        <span className="text-[9px] font-bold uppercase tracking-wide">Score: {testimonial.score}</span>
-                     </div>
                 )}
               </div>
           </div>

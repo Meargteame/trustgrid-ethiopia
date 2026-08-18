@@ -13,12 +13,10 @@ import { VerificationBadge } from './VerificationBadge';
 import { AnalyticsTab } from './AnalyticsTab';
 import { SettingsTab } from './SettingsTab';
 import { FormBuilderTab } from './FormBuilderTab';
-import { AiSummaryHeader } from './AiSummaryHeader';
 import { TrustMeter } from './TrustMeter';
 import { SocialShareModal } from './SocialShareModal';
 import { EmbedCodeModal } from './EmbedCodeModal';
 import { InviteMemberModal } from './InviteMemberModal';
-import { analyzeTrustContent } from '../services/geminiService';
 
 const INITIAL_TEAM: TeamMember[] = [];
 
@@ -314,20 +312,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       const verified = testimonials.filter(t => t.status === 'verified');
       if (verified.length === 0) return 10;
 
-      // 1. Average AI Score (50% weight)
-      const aiScores = verified.map(t => t.score || 70); // Default 70 if no score
-      const avgAiScore = aiScores.reduce((a, b) => a + b, 0) / aiScores.length;
-      score += (avgAiScore * 0.5);
+      // 1. Volume (50% weight) - Max out at 50 points (25 reviews)
+      score += Math.min(verified.length * 2, 50);
 
-      // 2. Volume (10% weight) - Max out at 20 reviews
-      score += Math.min(verified.length * 2, 20);
-
-      // 3. Completeness (video, linkedin) (20% weight)
-      // Video Reviews
+      // 2. Completeness (video, linkedin) (40% weight)
       const videoCount = verified.filter(t => t.videoUrl).length;
-      score += Math.min(videoCount * 5, 20);
+      score += Math.min(videoCount * 5, 30);
       
-      // LinkedIn Connected
       const hasLinkedin = verified.some(t => t.verificationMethod === 'linkedin');
       if (hasLinkedin) score += 10;
 
@@ -472,32 +463,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
 
    const handleApprove = async (id: string) => {
       try {
-         showToast('Verifying and analyzing...', 'success');
+         showToast('Verifying and publishing...', 'success');
          
          const testimonial = testimonials.find(t => t.id === id);
-         let analysisUpdates = {};
-
-         // Trigger AI Analysis if text exists and not already scored
-         if (testimonial?.text && !testimonial.score) {
-             try {
-                // Use analyzeTrustContent instead of analyzeSingleTestimonial
-                 const analysis = await analyzeTrustContent(testimonial.text);
-                 analysisUpdates = {
-                     score: analysis.score,
-                     sentiment: analysis.sentiment
-                 };
-             } catch (aiError) {
-                 console.warn("AI Analysis failed during verification", aiError);
-             }
-         }
 
          // Update DB
          const { error } = await supabase
             .from('testimonials')
             .update({ 
                 status: 'verified', 
-                is_verified: true,
-                ...analysisUpdates 
+                is_verified: true
             })
             .eq('id', id);
 
@@ -507,8 +482,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
          setTestimonials(testimonials.map(t => 
              t.id === id ? { 
                  ...t, 
-                 status: 'verified',
-                 ...analysisUpdates
+                 status: 'verified'
              } : t
          ));
          
@@ -520,34 +494,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
-   // Analyze existing verified testimonial
-   const handleAnalyze = async (id: string) => {
-      const testimonial = testimonials.find(t => t.id === id);
-      if (!testimonial || !testimonial.text) return;
 
-      showToast('Analyzing with Gemini...', 'success');
-      try {
-         const analysis = await analyzeTrustContent(testimonial.text);
-         
-         const { error } = await supabase
-            .from('testimonials')
-            .update({ 
-               score: analysis.score,
-               sentiment: analysis.sentiment
-            })
-            .eq('id', id);
-
-         if (error) throw error;
-
-         setTestimonials(testimonials.map(t => 
-            t.id === id ? { ...t, score: analysis.score, sentiment: analysis.sentiment } : t
-         ));
-         showToast('Analysis updated!');
-      } catch (err) {
-         console.error(err);
-         showToast('Analysis failed', 'error');
-      }
-   };
 
    const handleReject = async (id: string) => {
       if (!window.confirm("Are you sure you want to reject and delete this testimonial? This cannot be undone.")) return;
@@ -635,17 +582,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
             }
          }
 
-         // 2. Analyze Content (Mock or Real)
-         const analysis = await analyzeTrustContent(formData.text);
-
          // 3. Prepare Payload
          const payload = {
             user_id: user.id,
             name: formData.name,
             text: formData.text,
             avatar_url: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=random`,
-            score: analysis.score,
-            sentiment: analysis.sentiment,
             status: verificationType === 'email' ? 'pending_verification' : 'verified', // If email, set pending
             source: verificationType,
             client_email: verificationType === 'email' ? formData.email : null,
@@ -897,8 +839,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
          {/* Trust Meter (Gamification) */}
          <TrustMeter score={calculateTrustScore()} />
 
-         {/* AI Summary Header */}
-         <AiSummaryHeader reviews={testimonials.filter(t => t.status === 'verified').map(t => t.text)} />
+
 
          {/* Masonry Feed */}
          {isLoadingTestimonials ? (
@@ -971,14 +912,6 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                         ) : (
                            /* VERIFIED ACTIONS */
                            <>
-                              <button
-                                 onClick={() => handleAnalyze(t.id)}
-                                 className={`p-1.5 rounded-lg hover:bg-yellow-50 hover:text-yellow-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                                 title="Re-analyze with AI"
-                              >
-                                 <Shield size={16} />
-                              </button>
-
                               <button
                                  onClick={() => setShareModalData(t)}
                                  className={`p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}

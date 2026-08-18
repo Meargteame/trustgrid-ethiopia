@@ -4,7 +4,6 @@ import { Hero } from './components/Hero';
 import { Features } from './components/TrustSignals';
 import { Showcase } from './components/ComparisonSection';
 import { Testimonials } from './components/Testimonials';
-import { GeminiDemo } from './components/GeminiDemo';
 import { Footer } from './components/Footer';
 import { Dashboard } from './components/Dashboard';
 import { AuthPage } from './components/AuthPage';
@@ -216,7 +215,6 @@ if (currentView === 'embed-card') {
         <Features />
         <Showcase />
         <Testimonials />
-        <GeminiDemo />
       </main>
       <Footer />
     </div>

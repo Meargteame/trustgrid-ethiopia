@@ -228,9 +228,9 @@ export const AnalyticsTab: React.FC = () => {
                 </div>
              </div>
 
-             {/* TODO: Sentiment Score was previously hardcoded to 98/100.
-                  Now computed from average AI trust scores stored in `testimonials` table.
-                  Keywords are still placeholder — wire to actual Gemini keyword extraction. */}
+             {/* TODO: Trust Score was previously computed from AI.
+                  Now computed from average review ratings.
+                  Keywords are placeholder. */}
              <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100">
                 <h4 className="font-bold text-sm mb-2 text-blue-900">Avg. Trust Score</h4>
                 <div className="flex items-center gap-4 mb-2">

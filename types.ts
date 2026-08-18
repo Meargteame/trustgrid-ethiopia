@@ -34,19 +34,9 @@ export interface TestimonialData {
   cardStyle?: 'white' | 'lime' | 'dark';
   createdAt: string;
   updatedAt?: string;
-  score?: number; // AI Trust Score (0-100)
-  sentiment?: 'Positive' | 'Neutral' | 'Negative'; // AI Sentiment
+  score?: number; // Star rating (0-100)
   reviewerTelegramUsername?: string;
 }
-
-export interface TrustAnalysisResult {
-    score: number;
-    sentiment: 'Positive' | 'Neutral' | 'Negative';
-    keywords: string[];
-    proofPoints: string[]; // Key claims/metrics identified
-    reasoning: string;
-    isAuthentic: boolean;
-  }
 
 export enum AnalysisStatus {
   IDLE = 'IDLE',
