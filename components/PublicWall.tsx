@@ -278,7 +278,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                         )}
                      </div>
 
-                     <p className={`text-base leading-relaxed mb-6 flex-1 opacity-90 ${textClass}`}>
+                     <p className={`text-base leading-relaxed mb-6 flex-1 opacity-90 break-words whitespace-pre-wrap ${textClass}`}>
                         "{item.text}"
                      </p>
 
