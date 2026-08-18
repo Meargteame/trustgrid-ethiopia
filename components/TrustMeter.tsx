@@ -18,10 +18,10 @@ export const TrustMeter: React.FC<TrustMeterProps> = ({ score }) => {
   };
 
   return (
-    <div className="bg-black text-white rounded-3xl p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center gap-8 shadow-[8px_8px_0px_0px_rgba(212,249,84,1)] border-2 border-brand-lime relative overflow-hidden">
+    <div className="bg-white text-gray-900 rounded-3xl p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center gap-8 border border-gray-200 shadow-sm relative overflow-hidden">
       
       {/* Background Glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-lime opacity-10 blur-3xl rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+      
 
       {/* Circular Progress */}
       <div className="relative w-32 h-32 flex-shrink-0">
@@ -62,24 +62,24 @@ export const TrustMeter: React.FC<TrustMeterProps> = ({ score }) => {
             Reputation Score
             {score === 100 && <CheckCircle2 className="text-brand-lime" />}
          </h2>
-         <p className="text-gray-400 text-sm mb-6 max-w-md">
+         <p className="text-gray-500 text-sm mb-6 max-w-md">
             Your Trust Score determines your visibility on the TrustGrid marketplace. Reach 100% to get the "Verified Elite" badge.
          </p>
 
          {/* Tips */}
          {score < 100 ? (
-            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                <p className="text-xs font-bold text-brand-lime uppercase mb-3 flex items-center gap-2">
                   <TrendingUp size={14} /> Tips to Improve
                </p>
                <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
                      <span className="flex items-center gap-2"><Video size={14} className="text-gray-400" /> Add a Video Testimonial</span>
-                     <span className="font-bold text-brand-lime">+20 pts</span>
+                     <span className="font-bold text-brand-lime">+10 pts</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                     <span className="flex items-center gap-2"><Linkedin size={14} className="text-gray-400" /> Connect LinkedIn</span>
-                     <span className="font-bold text-brand-lime">+10 pts</span>
+                     <span className="flex items-center gap-2"><CheckCircle2 size={14} className="text-gray-400" /> Use Telegram Verification</span>
+                     <span className="font-bold text-brand-lime">+20 pts</span>
                   </div>
                </div>
             </div>

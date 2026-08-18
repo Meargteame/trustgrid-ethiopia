@@ -173,7 +173,7 @@ export const TestimonialCardEmbed: React.FC<TestimonialCardEmbedProps> = ({ test
           {/* Testimonial Text */}
           <div className="relative flex-1">
              <Quote className="absolute -top-1 -left-2 opacity-10 text-gray-400 transform -scale-x-100" size={24} />
-             <p className="text-sm text-gray-700 leading-relaxed px-1 overflow-y-auto max-h-[120px] scrollbar-hide italic">
+             <p className="text-sm text-gray-700 leading-relaxed px-1 overflow-y-auto max-h-[120px] scrollbar-hide italic break-words whitespace-pre-wrap">
                 "{testimonial.text}"
              </p>
           </div>

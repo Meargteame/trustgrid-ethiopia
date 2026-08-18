@@ -182,7 +182,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
       </div>
     );
   }
@@ -198,7 +198,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium disabled:opacity-70"
+          className="flex items-center gap-2 px-5 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors font-medium disabled:opacity-70"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {saving ? 'Saving...' : 'Save Changes'}
@@ -217,7 +217,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
       {/* General Settings Section */}
       <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
         <div className="flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-indigo-600" />
+          <Settings className="w-5 h-5 text-gray-900" />
           <h3 className="text-lg font-semibold text-gray-800">General Information</h3>
         </div>
 
@@ -228,7 +228,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
               type="text"
               value={config.title}
               onChange={(e) => setConfig({ ...config, title: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all outline-none"
               placeholder="e.g. Share your experience"
             />
             <p className="text-xs text-gray-500">The main heading of your collection page.</p>
@@ -240,7 +240,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
               type="text"
               value={config.subtitle}
               onChange={(e) => setConfig({ ...config, subtitle: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all outline-none"
               placeholder="e.g. We'd love to hear your feedback."
             />
             <p className="text-xs text-gray-500">A short welcome message to your users.</p>
@@ -251,7 +251,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
               type="text"
               value={config.incentive_message || ''}
               onChange={(e) => setConfig({ ...config, incentive_message: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all outline-none"
               placeholder="e.g. Leave a video review and get a 10% discount code instantly!"
             />
             <p className="text-xs text-gray-500">Display a custom message to incentivize customers to leave a review.</p>
@@ -264,7 +264,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
                 type="checkbox"
                 checked={config.allow_video}
                 onChange={(e) => setConfig({ ...config, allow_video: e.target.checked })}
-                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                className="w-5 h-5 text-gray-900 rounded focus:ring-gray-900 border-gray-300"
               />
               <span className="text-sm font-medium text-gray-700">Allow Video Reviews</span>
             </label>
@@ -274,7 +274,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
                 type="checkbox"
                 checked={config.allow_photo}
                 onChange={(e) => setConfig({ ...config, allow_photo: e.target.checked })}
-                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                className="w-5 h-5 text-gray-900 rounded focus:ring-gray-900 border-gray-300"
               />
               <span className="text-sm font-medium text-gray-700">Allow Photo Uploads</span>
             </label>
@@ -284,7 +284,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
                 type="checkbox"
                 checked={config.allow_linkedin_import}
                 onChange={(e) => setConfig({ ...config, allow_linkedin_import: e.target.checked })}
-                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                className="w-5 h-5 text-gray-900 rounded focus:ring-gray-900 border-gray-300"
               />
               <span className="text-sm font-medium text-gray-700">LinkedIn Import</span>
             </label>
@@ -295,12 +295,12 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
       <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
-            <Eye className="w-5 h-5 text-indigo-600" />
+            <Eye className="w-5 h-5 text-gray-900" />
             <h3 className="text-lg font-semibold text-gray-800">Questions</h3>
           </div>
           <button
             onClick={addQuestion}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors font-medium"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-medium"
           >
             <Plus className="w-4 h-4" />
             Add Question
@@ -343,7 +343,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
                         type="text"
                         value={q.label}
                         onChange={(e) => updateQuestion(q.id, { label: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all outline-none"
                         placeholder="e.g. What specific results did you see?"
                       />
                     </div>
@@ -353,7 +353,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
                       <select
                         value={q.type}
                         onChange={(e) => updateQuestion(q.id, { type: e.target.value as any })}
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all outline-none"
                       >
                         <option value="text">Short Text</option>
                         <option value="textarea">Long Text (TextArea)</option>
@@ -367,7 +367,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
                           type="checkbox"
                           checked={q.required}
                           onChange={(e) => updateQuestion(q.id, { required: e.target.checked })}
-                          className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                          className="w-4 h-4 text-gray-900 rounded focus:ring-gray-900 border-gray-300"
                         />
                         <span className="text-sm text-gray-700">Required Field</span>
                       </label>
@@ -381,7 +381,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
                           type="text"
                           value={q.placeholder || ''}
                           onChange={(e) => updateQuestion(q.id, { placeholder: e.target.value })}
-                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-all outline-none"
                           placeholder="e.g. Describes the placeholder text..."
                         />
                       </div>
