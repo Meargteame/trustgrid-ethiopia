@@ -831,7 +831,12 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   </button>
                </div>
                <Button onClick={() => {
-                     const url = window.location.origin + '/collect/' + (profileData.username || '');
+                     if (!profileData.username) {
+                         showToast('Please set your Username in Settings first!', 'error');
+                         setActiveTab('settings');
+                         return;
+                     }
+                     const url = window.location.origin + '/collect/' + profileData.username;
                      navigator.clipboard.writeText(url);
                      showToast('Collection link copied!', 'success');
                  }} className="shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -862,7 +867,12 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   </p>
                   <div className="flex justify-center w-full">
                        <Button onClick={() => {
-                          const url = window.location.origin + '/collect/' + (profileData.username || '');
+                          if (!profileData.username) {
+                              showToast('Please set your Username in Settings first!', 'error');
+                              setActiveTab('settings');
+                              return;
+                          }
+                          const url = window.location.origin + '/collect/' + profileData.username;
                           navigator.clipboard.writeText(url);
                           showToast('Collection link copied!', 'success');
                        }}>
@@ -1431,6 +1441,23 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                onInvite={handleSendInvite}
             />
          )}
+
+           {/* Onboarding Modal */}
+           {!loadingProfile && !profileData.username && activeTab !== 'settings' && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+                 <div className="bg-white rounded-[2rem] border-2 border-black w-full max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col p-8 text-center">
+                    <div className="w-16 h-16 bg-[#D4F954]/20 text-black rounded-full flex items-center justify-center mx-auto mb-6">
+                        <User size={32} />
+                    </div>
+                    <h2 className="text-2xl font-extrabold mb-2">Welcome to TrustGrid!</h2>
+                    <p className="text-gray-600 mb-6">Before you can start collecting verified testimonials, you need to claim your unique username.</p>
+                    <Button onClick={() => setActiveTab('settings')} className="w-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 hover:translate-x-1 transition-all">
+                        Set Username Now
+                    </Button>
+                 </div>
+              </div>
+           )}
+
 
          {/* Sidebar */}
          <aside className="w-full md:w-80 bg-white border-r border-gray-200 p-6 flex flex-col fixed md:sticky top-0 h-auto md:h-screen z-20 overflow-y-auto">
