@@ -26,6 +26,7 @@ interface DbFormConfig {
   user_id?: string;
   title: string;
   subtitle: string;
+  incentive_message?: string;
   allow_video: boolean;
   allow_photo: boolean;
   allow_linkedin_import: boolean;
@@ -44,6 +45,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
   const [config, setConfig] = useState<DbFormConfig>({
     title: 'Share your experience',
     subtitle: 'Your feedback helps us grow.',
+    incentive_message: '',
     allow_video: true,
     allow_photo: true,
     allow_linkedin_import: true,
@@ -77,6 +79,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
           user_id: data.user_id,
           title: data.title || '',
           subtitle: data.subtitle || '',
+          incentive_message: data.incentive_message || '',
           allow_video: data.allow_video ?? true,
           allow_photo: data.allow_photo ?? true,
           allow_linkedin_import: data.allow_linkedin_import ?? true,
@@ -104,6 +107,7 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
         user_id: userId,
         title: config.title,
         subtitle: config.subtitle,
+        incentive_message: config.incentive_message,
         allow_video: config.allow_video,
         allow_photo: config.allow_photo,
         allow_linkedin_import: config.allow_linkedin_import,
@@ -240,6 +244,17 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
               placeholder="e.g. We'd love to hear your feedback."
             />
             <p className="text-xs text-gray-500">A short welcome message to your users.</p>
+          </div>
+                  <div className="space-y-2 md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Incentive Message (Optional)</label>
+            <input
+              type="text"
+              value={config.incentive_message || ''}
+              onChange={(e) => setConfig({ ...config, incentive_message: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+              placeholder="e.g. Leave a video review and get a 10% discount code instantly!"
+            />
+            <p className="text-xs text-gray-500">Display a custom message to incentivize customers to leave a review.</p>
           </div>
         </div>
 
