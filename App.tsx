@@ -11,9 +11,10 @@ import { CollectionPage } from './components/CollectionPage';
 import { PublicWall } from './components/PublicWall';
 import { VerificationPage } from './components/VerificationPage';
 import { TestimonialCardEmbed } from './components/TestimonialCardEmbed';
+import { WidgetEmbed } from './components/WidgetEmbed';
 import { supabase } from './lib/supabase';
 
-type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection' | 'public-wall' | 'verification' | 'embed-card';
+type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection' | 'public-wall' | 'verification' | 'embed-card' | 'embed-widget';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
@@ -24,20 +25,30 @@ const App: React.FC = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
-    // Check for "Embed", "Collect", or "Verify" routes manually
+    // Check for "Embed", "Collect", "Wall", or "Verify" routes manually
     const path = window.location.pathname;
     
+    if (path.startsWith('/wall/')) {
+       let handle = path.split('/wall/')[1];
+       if (handle.endsWith('/')) handle = handle.slice(0, -1);
+       if (handle.includes('?')) handle = handle.split('?')[0];
+       if (handle) {
+         setEmbedHandle(handle);
+         setCurrentView('public-wall');
+         return;
+       }
+    }
+
     if (path.startsWith('/embed/')) {
        // Check if it's a card embed first: /embed/card/:id
        if (path.startsWith('/embed/card/')) {
           let cardId = path.split('/embed/card/')[1];
-          // Remove query params if any
           if (cardId.includes('?')) {
              cardId = cardId.split('?')[0];
           }
           if (cardId) {
              setEmbedCardId(cardId);
-             setCurrentView('embed-card'); // New view type will be needed
+             setCurrentView('embed-card');
              return;
           }
        }
@@ -53,7 +64,7 @@ const App: React.FC = () => {
 
        if (handle) {
          setEmbedHandle(handle);
-         setCurrentView('public-wall');
+         setCurrentView('embed-widget');
          return; 
        }
     }
@@ -224,6 +235,10 @@ const App: React.FC = () => {
 
   if (currentView === 'public-wall') {
     return <PublicWall companyHandle={embedHandle} />;
+  }
+
+  if (currentView === 'embed-widget') {
+    return <WidgetEmbed companyHandle={embedHandle} />;
   }
 
 if (currentView === 'embed-card') {

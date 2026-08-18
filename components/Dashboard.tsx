@@ -16,6 +16,7 @@ import { FormBuilderTab } from './FormBuilderTab';
 import { TrustMeter } from './TrustMeter';
 import { SocialShareModal } from './SocialShareModal';
 import { EmbedCodeModal } from './EmbedCodeModal';
+import { WidgetEmbedModal } from './WidgetEmbedModal';
 import { InviteMemberModal } from './InviteMemberModal';
 
 const INITIAL_TEAM: TeamMember[] = [];
@@ -36,6 +37,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
    const [setupRequired, setSetupRequired] = useState(false);
    const [isSavingWidget, setIsSavingWidget] = useState(false);
+   const [isWidgetEmbedModalOpen, setIsWidgetEmbedModalOpen] = useState(false);
+   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+   const [previewBg, setPreviewBg] = useState<'light' | 'dark' | 'checkered'>('light');
 
    // Widget Lab State
    const [configTab, setConfigTab] = useState<'layout' | 'style' | 'content'>('layout');
@@ -307,51 +311,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    // --- Logic ---
 
    const calculateTrustScore = () => {
-      let score = 0;
-      // Base for account setup
-      score += 10;
+      let score = 10; // Base score for account setup
       
-      const verified = testimonials.filter(t => t.status === 'verified');
+      const verified = testimonials.filter(t => t.status === 'published' || t.status === 'verified');
       if (verified.length === 0) return 10;
 
-      // 1. Volume (50% weight) - Max out at 50 points (25 reviews)
-      score += Math.min(verified.length * 2, 50);
+      // 1. Volume (2 points per review, max 30 points)
+      score += Math.min(verified.length * 2, 30);
 
-      // 2. Completeness (video, linkedin) (40% weight)
+      // 2. Telegram Verification (20 points per review, max 40 points)
+      const telegramCount = verified.filter(t => t.verificationMethod === 'telegram' || t.reviewerTelegramUsername).length;
+      score += Math.min(telegramCount * 20, 40);
+
+      // 3. Video Testimonials (10 points per review, max 20 points)
       const videoCount = verified.filter(t => t.videoUrl).length;
-      score += Math.min(videoCount * 5, 30);
-      
-      const hasLinkedin = verified.some(t => t.verificationMethod === 'linkedin');
-      if (hasLinkedin) score += 10;
+      score += Math.min(videoCount * 10, 20);
 
       return Math.min(100, Math.round(score));
    };
 
    const handleCopyLink = () => {
-      const url = window.location.origin + '/embed/' + (profileData.username || '');
+      const url = window.location.origin + '/wall/' + (profileData.username || '');
       navigator.clipboard.writeText(url);
-      showToast('Link copied to clipboard!');
+      showToast('Public wall link copied to clipboard!');
    };
 
    const handleCopyEmbed = () => {
-      const params = new URLSearchParams({
-         theme: widgetConfig.theme,
-         layout: widgetConfig.layout,
-         rating: widgetConfig.showRating.toString(),
-         date: widgetConfig.showDate.toString(),
-         avatar: widgetConfig.showAvatar.toString(),
-         rad: widgetConfig.borderRadius,
-         shad: widgetConfig.shadow,
-         font: widgetConfig.font,
-         cols: widgetConfig.columns.toString(),
-         gap: widgetConfig.gap
-      });
-      // Also encode title if present
-      if (widgetConfig.headerTitle) params.append('title', widgetConfig.headerTitle);
-
-      const code = `<iframe src="${window.location.origin}/embed/${profileData.username || ''}?${params.toString()}" width="100%" height="600" frameborder="0"></iframe>`;
-      navigator.clipboard.writeText(code);
-      showToast('Code copied! Ready to paste into your Telegram portfolio or Website.');
+      setIsWidgetEmbedModalOpen(true);
    };
 
    const handleInviteTeam = () => {
@@ -1045,92 +1031,176 @@ create policy "User insert own profile" on profiles for insert with check (auth.
    );
 
    const renderWidgetLab = () => {
-      // Determine preview styles based on active config
-      let previewClass = "bg-white border-2 border-dashed border-gray-300";
-      let textClass = "text-black font-sans";
-      let cardClass = "bg-white border border-gray-100 shadow-sm rounded-xl";
-      let containerClass = "";
+      const { theme, layout, borderRadius, shadow, font, columns, gap, showRating, showDate, showAvatar, headerTitle } = widgetConfig;
       
-      const { theme, layout, borderRadius, shadow, font } = widgetConfig;
-      
-      // Theme Logic
+      // Theme Classes
+      let cardBgClass = "bg-white text-gray-900 border-gray-200";
+      let cardTextClass = "text-gray-900";
+      let cardSubtextClass = "text-gray-500";
+      let cardQuoteClass = "text-gray-700";
+      let badgeStyle = "bg-emerald-50 text-emerald-700 border-emerald-200";
+
       if (theme === 'dark_mode') {
-         previewClass = "bg-black border-2 border-blue-900";
-         cardClass = "bg-gray-900 border border-gray-800 text-white";
-         textClass = "text-white";
+         cardBgClass = "bg-gray-900 text-white border-gray-800";
+         cardTextClass = "text-white";
+         cardSubtextClass = "text-gray-400";
+         cardQuoteClass = "text-gray-200";
+         badgeStyle = "bg-emerald-950/60 text-emerald-300 border-emerald-800/60";
       } else if (theme === 'minimalist') {
-         previewClass = "bg-gray-50 border-0";
-         cardClass = "bg-white border-0 shadow-none";
-         textClass = "text-gray-800";
+         cardBgClass = "bg-white/40 backdrop-blur-md text-gray-900 border-white/50";
+         cardTextClass = "text-gray-900";
+         cardSubtextClass = "text-gray-600";
+         cardQuoteClass = "text-gray-800";
+         badgeStyle = "bg-emerald-500/10 text-emerald-800 border-emerald-500/20";
       } else if (theme === 'brand') {
-         previewClass = "bg-brand-lime/5 border-2 border-brand-lime";
-         cardClass = "bg-white border-2 border-brand-lime shadow-brutal";
-         textClass = "text-black";
+         cardBgClass = "bg-white text-black border-2 border-brand-lime shadow-brutal";
+         cardTextClass = "text-black";
+         cardSubtextClass = "text-gray-700";
+         cardQuoteClass = "text-gray-900";
+         badgeStyle = "bg-brand-lime text-black border-black";
       }
 
-      // Radius Logic
-      const radiusMap = { 'none': 'rounded-none', 'sm': 'rounded-md', 'md': 'rounded-xl', 'full': 'rounded-3xl' };
-      cardClass = cardClass.replace('rounded-xl', ''); // remove default
-      const activeRadius = radiusMap[borderRadius as keyof typeof radiusMap] || 'rounded-xl';
-      cardClass += ` ${activeRadius}`;
+      // Radius Classes
+      const radiusMap: Record<string, string> = {
+         'none': 'rounded-none',
+         'sm': 'rounded-lg',
+         'md': 'rounded-2xl',
+         'full': 'rounded-3xl'
+      };
+      const activeRadius = radiusMap[borderRadius] || 'rounded-2xl';
 
-      // Shadow Logic
-      const shadowMap = { 'none': 'shadow-none', 'sm': 'shadow-sm', 'card': 'shadow-md', 'strong': 'shadow-xl' };
-      cardClass = cardClass.replace('shadow-sm', ''); // remove default
-      cardClass += ` ${shadowMap[shadow as keyof typeof shadowMap] || 'shadow-md'}`;
+      // Shadow Classes
+      const shadowMap: Record<string, string> = {
+         'none': 'shadow-none',
+         'sm': 'shadow-sm',
+         'card': 'shadow-md',
+         'strong': 'shadow-xl'
+      };
+      const activeShadow = shadowMap[shadow] || 'shadow-md';
 
-      // Font Logic
-      const fontMap = { 'inter': 'font-sans', 'serif': 'font-serif', 'mono': 'font-mono' };
-      textClass = textClass.replace('font-sans', '');
-      textClass += ` ${fontMap[font as keyof typeof fontMap] || 'font-sans'}`;
+      // Font Classes
+      const fontMap: Record<string, string> = {
+         'inter': 'font-sans',
+         'serif': 'font-serif',
+         'mono': 'font-mono'
+      };
+      const activeFont = fontMap[font] || 'font-sans';
 
-      // Mock data for preview (filtered)
+      // Gap Classes
+      let gapSpacing = 'gap-5';
+      if (gap === 'tight') gapSpacing = 'gap-3';
+      if (gap === 'loose') gapSpacing = 'gap-6';
+      if (gap === 'extra') gapSpacing = 'gap-8';
+
+      // Layout Container
+      let gridColsClass = 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3';
+      if (columns === 1) gridColsClass = 'grid-cols-1 max-w-xl mx-auto';
+      if (columns === 2) gridColsClass = 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto';
+      if (columns === 4) gridColsClass = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
+
+      // Mock or Real items for live preview
       const visibleItems = (testimonials.length > 0 ? testimonials : [
-         { id: '1', clientName: 'Yonas A.', clientRole: 'Marketing', text: 'TrustGrid changed how we do business.', avatarUrl: 'https://ui-avatars.com/api/?name=Yonas+A', score: 5 },
-         { id: '2', clientName: 'Sara K.', clientRole: 'CEO', text: 'Best tool for collecting testimonials in Ethiopia.', avatarUrl: 'https://ui-avatars.com/api/?name=Sara+K', score: 5 },
-         { id: '3', clientName: 'Dawit M.', clientRole: 'Developer', text: 'Integration was super simple and looks great.', avatarUrl: 'https://ui-avatars.com/api/?name=Dawit+M', score: 4 },
-         { id: '4', clientName: 'Abebe B.', clientRole: 'Founder', text: 'Highly recommended for any agency.', avatarUrl: 'https://ui-avatars.com/api/?name=Abebe+B', score: 5 }
-      ]).slice(0, widgetConfig.cardsToShow);
+         { 
+            id: '1', 
+            clientName: 'Yonas Alemayehu', 
+            clientCompany: 'Tech Lead at AddisHub', 
+            text: 'TrustGrid made collecting and showing off real client feedback effortless. Our conversion rate jumped significantly!', 
+            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', 
+            score: 5,
+            verificationMethod: 'telegram',
+            reviewerTelegramUsername: 'yonas_tech',
+            createdAt: new Date().toISOString()
+         },
+         { 
+            id: '2', 
+            clientName: 'Sara Kifle', 
+            clientCompany: 'Founder, BlueNile Studio', 
+            text: 'Being able to verify that our clients are real Telegram users has eliminated fake reviews completely. Super clean UI!', 
+            avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80', 
+            score: 5,
+            verificationMethod: 'telegram',
+            reviewerTelegramUsername: 'sara_k',
+            createdAt: new Date().toISOString()
+         },
+         { 
+            id: '3', 
+            clientName: 'Dawit Mengistu', 
+            clientCompany: 'Product Manager', 
+            text: 'Embedded the widget on our Webflow site in 30 seconds. Seamless and looks stunning on both mobile and desktop.', 
+            avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', 
+            score: 5,
+            verificationMethod: 'linkedin',
+            createdAt: new Date().toISOString()
+         }
+      ]).slice(0, widgetConfig.cardsToShow || 6);
+
+      // Canvas background class
+      let canvasBg = 'bg-gray-100';
+      if (previewBg === 'dark') canvasBg = 'bg-gray-950';
+      if (previewBg === 'checkered') canvasBg = 'bg-stone-200 [background-image:radial-gradient(#9ca3af_1px,transparent_1px)] [background-size:16px_16px]';
+
+      // Device frame max-width
+      let deviceWidth = 'w-full max-w-5xl';
+      if (previewDevice === 'tablet') deviceWidth = 'w-full max-w-[720px]';
+      if (previewDevice === 'mobile') deviceWidth = 'w-full max-w-[390px]';
 
       return (
-         <div className="animate-fade-in w-full h-full flex flex-col">
-            <header className="mb-6 border-b pb-4 flex justify-between items-end">
+         <div className="animate-fade-in w-full h-full flex flex-col space-y-6">
+            {/* Studio Header */}
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
                <div>
-                  <h1 className="text-3xl font-extrabold text-black mb-1 flex items-center gap-2">
-                     <Code size={32} /> Widget Studio
-                  </h1>
-                  <p className="text-gray-500 text-xs uppercase font-bold tracking-wider">
-                     Build your perfect wall of love
+                  <div className="flex items-center gap-2 mb-1">
+                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-black text-white">
+                        Studio 2.0
+                     </span>
+                     <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                        Widget Studio
+                     </h1>
+                  </div>
+                  <p className="text-gray-500 text-xs font-medium">
+                     Customize, preview, and embed your verified wall of love onto any website
                   </p>
                </div>
-               <div className="flex items-center gap-3">
-                   <Button onClick={saveWidgetConfig} disabled={isSavingWidget} variant="outline" className="border-gray-200">
-                      {isSavingWidget ? <Loader2 size={16} className="animate-spin mr-2" /> : <Settings size={16} className="mr-2" />}
-                      {isSavingWidget ? 'Saving...' : 'Save Configuration'}
-                   </Button>
-                   <Button onClick={handleCopyEmbed} className="bg-black text-white hover:bg-gray-800 shadow-lg">
-                      <Code size={16} className="mr-2" /> Get Embed Code
-                   </Button>
+               
+               <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <Button 
+                     onClick={saveWidgetConfig} 
+                     disabled={isSavingWidget} 
+                     variant="outline" 
+                     className="flex-1 sm:flex-initial border-gray-200 hover:bg-gray-50 font-bold"
+                  >
+                     {isSavingWidget ? <Loader2 size={16} className="animate-spin mr-2" /> : <Settings size={16} className="mr-2" />}
+                     {isSavingWidget ? 'Saving...' : 'Save Preset'}
+                  </Button>
+                  <Button 
+                     onClick={handleCopyEmbed} 
+                     className="flex-1 sm:flex-initial bg-black text-white hover:bg-gray-900 shadow-lg font-bold hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                     <Code size={16} className="mr-2 text-brand-lime" /> Get Embed Code
+                  </Button>
                </div>
             </header>
 
-            <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
-               {/* Controls Sidebar */}
-               <div className="lg:w-[350px] bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden h-[calc(100vh-250px)]">
-                  {/* Tabs Header */}
-                  <div className="flex border-b border-gray-100">
+            {/* Split-Pane Studio */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+               
+               {/* LEFT PANE: Controls Sidebar */}
+               <div className="xl:col-span-4 bg-white border border-gray-200 rounded-3xl shadow-sm flex flex-col overflow-hidden">
+                  
+                  {/* Category Tabs */}
+                  <div className="flex border-b border-gray-100 bg-gray-50/70 p-1.5">
                      {[
-                        { id: 'layout', icon: <LayoutGrid size={16} />, label: 'Layout' },
-                        { id: 'style', icon: <Palette size={16} />, label: 'Style' },
-                        { id: 'content', icon: <Settings size={16} />, label: 'Content' }
+                        { id: 'layout', icon: <LayoutGrid size={15} />, label: 'Layout' },
+                        { id: 'style', icon: <Palette size={15} />, label: 'Style & Theme' },
+                        { id: 'content', icon: <Settings size={15} />, label: 'Content' }
                      ].map((tab) => (
                         <button
                            key={tab.id}
                            onClick={() => setConfigTab(tab.id as any)}
-                           className={`flex-1 py-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                           className={`flex-1 py-2.5 px-3 rounded-2xl flex items-center justify-center gap-1.5 text-xs font-extrabold transition-all ${
                               configTab === tab.id 
-                                 ? 'text-black border-b-2 border-black bg-gray-50' 
-                                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                                 ? 'bg-white text-black shadow-sm border border-gray-200/60' 
+                                 : 'text-gray-400 hover:text-gray-700'
                            }`}
                         >
                            {tab.icon} {tab.label}
@@ -1138,276 +1208,447 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      ))}
                   </div>
 
-                  {/* Tabs Content - Scrollable */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                  {/* Tab Body */}
+                  <div className="p-6 space-y-6 max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
                      
                      {/* TAB 1: LAYOUT */}
                      {configTab === 'layout' && (
                         <div className="space-y-6 animate-fade-in">
-                           <div className="space-y-3">
-                              <label className="text-xs font-bold text-gray-500 uppercase">Display Mode</label>
-                              <div className="grid grid-cols-2 gap-3">
+                           {/* Display Mode */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Display Mode
+                              </label>
+                              <div className="grid grid-cols-3 gap-2.5">
                                  {[
-                                    { id: 'grid', label: 'Grid Wall', icon: <LayoutGrid size={20} /> },
-                                    { id: 'carousel', label: 'Carousel', icon: <Columns size={20} /> },
-                                    { id: 'list', label: 'Feed List', icon: <List size={20} /> },
-                                    { id: 'popup', label: 'Pop-up', icon: <MessageSquare size={20} /> }
+                                    { id: 'grid', label: 'Grid Wall', icon: <LayoutGrid size={18} /> },
+                                    { id: 'carousel', label: 'Slider Row', icon: <Columns size={18} /> },
+                                    { id: 'feed', label: 'Single Feed', icon: <List size={18} /> }
                                  ].map((opt) => (
                                     <button
                                        key={opt.id}
                                        onClick={() => setWidgetConfig({ ...widgetConfig, layout: opt.id as any })}
-                                       className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${
+                                       className={`p-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all ${
                                           widgetConfig.layout === opt.id 
                                              ? 'border-black bg-black text-white shadow-md' 
-                                             : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                                             : 'border-gray-100 hover:border-gray-300 text-gray-600 bg-gray-50/50'
                                        }`}
                                     >
                                        {opt.icon}
-                                       <span className="text-xs font-bold">{opt.label}</span>
+                                       <span className="text-[11px] font-bold">{opt.label}</span>
                                     </button>
                                  ))}
                               </div>
                            </div>
 
-                          {widgetConfig.layout === 'grid' && (
-                              <div className="space-y-3">
-                                 <label className="text-xs font-bold text-gray-500 uppercase">Grid Columns</label>
-                                 <div className="flex gap-2">
-                                    {[2, 3, 4].map(cols => (
+                           {/* Columns (only for Grid) */}
+                           {widgetConfig.layout === 'grid' && (
+                              <div className="space-y-2.5">
+                                 <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                    Desktop Columns
+                                 </label>
+                                 <div className="grid grid-cols-4 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                    {[1, 2, 3, 4].map(cols => (
                                        <button 
                                           key={cols}
                                           onClick={() => setWidgetConfig({...widgetConfig, columns: cols})}
-                                          className={`flex-1 py-2 border rounded-lg text-sm font-bold ${
-                                             widgetConfig.columns === cols ? 'bg-black text-white border-black' : 'border-gray-200'
+                                          className={`py-2 rounded-xl text-xs font-black transition-all ${
+                                             widgetConfig.columns === cols 
+                                                ? 'bg-white text-black shadow-sm' 
+                                                : 'text-gray-400 hover:text-gray-700'
                                           }`}
                                        >
-                                          {cols}
+                                          {cols} {cols === 1 ? 'Col' : 'Cols'}
                                        </button>
                                     ))}
                                  </div>
                               </div>
                            )}
 
-                           <div className="space-y-3">
-                                 <label className="text-xs font-bold text-gray-500 uppercase">Spacing (Gap)</label>
-                                 <input 
-                                    type="range" min="0" max="3" step="1" 
-                                    className="w-full accent-black"
-                                    onChange={(e) => {
-                                       const gaps = ['tight', 'normal', 'loose', 'extra'];
-                                       setWidgetConfig({...widgetConfig, gap: gaps[parseInt(e.target.value)]});
-                                    }} 
-                                 />
-                                 <div className="flex justify-between text-[10px] text-gray-400 font-medium">
-                                    <span>Tight</span><span>Normal</span><span>Loose</span><span>Extra</span>
-                                 </div>
+                           {/* Card Spacing (Gap) */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Card Spacing
+                              </label>
+                              <div className="grid grid-cols-4 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                 {[
+                                    { id: 'tight', label: 'Compact' },
+                                    { id: 'normal', label: 'Normal' },
+                                    { id: 'loose', label: 'Relaxed' },
+                                    { id: 'extra', label: 'Spacious' }
+                                 ].map(g => (
+                                    <button 
+                                       key={g.id}
+                                       onClick={() => setWidgetConfig({...widgetConfig, gap: g.id})}
+                                       className={`py-2 rounded-xl text-[11px] font-bold transition-all ${
+                                          widgetConfig.gap === g.id 
+                                             ? 'bg-white text-black shadow-sm' 
+                                             : 'text-gray-400 hover:text-gray-700'
+                                       }`}
+                                    >
+                                       {g.label}
+                                    </button>
+                                 ))}
+                              </div>
                            </div>
-                        </div>
-                     )}
 
-                     {/* TAB 2: DESIGN/STYLE */}
-                     {configTab === 'style' && (
-                        <div className="space-y-6 animate-fade-in">
-                           <div className="space-y-3">
-                              <label className="text-xs font-bold text-gray-500 uppercase">Theme Preset</label>
+                           {/* Maximum items */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Maximum Reviews to Show
+                              </label>
                               <select 
-                                 value={widgetConfig.theme}
-                                 onChange={(e) => setWidgetConfig({...widgetConfig, theme: e.target.value as any})}
-                                 className="w-full p-3 rounded-xl border border-gray-200 text-sm font-bold focus:border-black outline-none"
+                                 value={widgetConfig.cardsToShow}
+                                 onChange={(e) => setWidgetConfig({...widgetConfig, cardsToShow: parseInt(e.target.value)})}
+                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold text-gray-800 outline-none focus:border-black"
                               >
-                                 <option value="modern">Modern (Default)</option>
-                                 <option value="dark_mode">Dark Mode</option>
-                                 <option value="minimalist">Minimalist White</option>
-                                 <option value="brand">Brand Color Highlight</option>
+                                 <option value="3">Show 3 reviews</option>
+                                 <option value="6">Show 6 reviews</option>
+                                 <option value="9">Show 9 reviews</option>
+                                 <option value="12">Show 12 reviews</option>
+                                 <option value="24">Show 24 reviews</option>
                               </select>
                            </div>
+                        </div>
+                     )}
 
-                           <div className="space-y-3">
-                              <label className="text-xs font-bold text-gray-500 uppercase">Card Roundness</label>
-                              <div className="flex gap-2 bg-gray-50 p-1 rounded-lg">
-                                 {['none', 'sm', 'md', 'full'].map(r => (
-                                    <button 
-                                       key={r}
-                                       onClick={() => setWidgetConfig({...widgetConfig, borderRadius: r})}
-                                       className={`flex-1 py-2 rounded-md text-xs font-bold capitalize transition-all ${
-                                          widgetConfig.borderRadius === r ? 'bg-white shadow-sm text-black' : 'text-gray-400 hover:text-gray-600'
+                     {/* TAB 2: STYLE & THEME */}
+                     {configTab === 'style' && (
+                        <div className="space-y-6 animate-fade-in">
+                           {/* Theme Presets */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Theme Preset
+                              </label>
+                              <div className="grid grid-cols-2 gap-2.5">
+                                 {[
+                                    { id: 'modern', label: 'Clean Light', bg: 'bg-white', border: 'border-gray-200', text: 'text-gray-900' },
+                                    { id: 'dark_mode', label: 'Cyber Dark', bg: 'bg-gray-950', border: 'border-gray-800', text: 'text-white' },
+                                    { id: 'minimalist', label: 'Glass Frosted', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-950' },
+                                    { id: 'brand', label: 'Neo-Brutalist', bg: 'bg-brand-lime/20', border: 'border-brand-lime', text: 'text-black' }
+                                 ].map(thm => (
+                                    <button
+                                       key={thm.id}
+                                       onClick={() => setWidgetConfig({...widgetConfig, theme: thm.id as any})}
+                                       className={`p-3 rounded-2xl border-2 flex items-center gap-2.5 transition-all text-left ${
+                                          widgetConfig.theme === thm.id
+                                             ? 'border-black bg-gray-50 shadow-sm'
+                                             : 'border-gray-100 hover:border-gray-200 bg-white'
                                        }`}
                                     >
-                                       {r}
+                                       <span className={`w-5 h-5 rounded-full ${thm.bg} border ${thm.border} flex-shrink-0 shadow-inner`} />
+                                       <span className="text-xs font-bold text-gray-900">{thm.label}</span>
                                     </button>
                                  ))}
                               </div>
                            </div>
 
-                           <div className="space-y-3">
-                              <label className="text-xs font-bold text-gray-500 uppercase">Shadow Intensity</label>
-                              <div className="flex gap-2 bg-gray-50 p-1 rounded-lg">
-                                 {['none', 'sm', 'card', 'strong'].map(s => (
+                           {/* Card Roundness */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Corner Roundness
+                              </label>
+                              <div className="grid grid-cols-4 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                 {[
+                                    { id: 'none', label: 'Sharp' },
+                                    { id: 'sm', label: 'Subtle' },
+                                    { id: 'md', label: 'Rounded' },
+                                    { id: 'full', label: 'Pill' }
+                                 ].map(r => (
                                     <button 
-                                       key={s}
-                                       onClick={() => setWidgetConfig({...widgetConfig, shadow: s})}
-                                       className={`flex-1 py-2 rounded-md text-xs font-bold capitalize transition-all ${
-                                          widgetConfig.shadow === s ? 'bg-white shadow-sm text-black' : 'text-gray-400 hover:text-gray-600'
+                                       key={r.id}
+                                       onClick={() => setWidgetConfig({...widgetConfig, borderRadius: r.id})}
+                                       className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                                          widgetConfig.borderRadius === r.id 
+                                             ? 'bg-white text-black shadow-sm' 
+                                             : 'text-gray-400 hover:text-gray-700'
                                        }`}
                                     >
-                                       {s}
+                                       {r.label}
                                     </button>
                                  ))}
                               </div>
                            </div>
-                           
-                           <div className="space-y-3">
-                              <label className="text-xs font-bold text-gray-500 uppercase">Font Family</label>
-                              <div className="grid grid-cols-3 gap-2">
-                                 <button onClick={()=>setWidgetConfig({...widgetConfig, font: 'inter'})} className={`py-2 border rounded-lg font-sans text-xs ${widgetConfig.font === 'inter' ? 'border-black bg-black text-white':''}`}>Sans</button>
-                                 <button onClick={()=>setWidgetConfig({...widgetConfig, font: 'serif'})} className={`py-2 border rounded-lg font-serif text-xs ${widgetConfig.font === 'serif' ? 'border-black bg-black text-white':''}`}>Serif</button>
-                                 <button onClick={()=>setWidgetConfig({...widgetConfig, font: 'mono'})} className={`py-2 border rounded-lg font-mono text-xs ${widgetConfig.font === 'mono' ? 'border-black bg-black text-white':''}`}>Mono</button>
+
+                           {/* Shadow Intensity */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Shadow & Depth
+                              </label>
+                              <div className="grid grid-cols-4 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                 {[
+                                    { id: 'none', label: 'Flat' },
+                                    { id: 'sm', label: 'Soft' },
+                                    { id: 'card', label: 'Elevated' },
+                                    { id: 'strong', label: 'Deep' }
+                                 ].map(s => (
+                                    <button 
+                                       key={s.id}
+                                       onClick={() => setWidgetConfig({...widgetConfig, shadow: s.id})}
+                                       className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                                          widgetConfig.shadow === s.id 
+                                             ? 'bg-white text-black shadow-sm' 
+                                             : 'text-gray-400 hover:text-gray-700'
+                                       }`}
+                                    >
+                                       {s.label}
+                                    </button>
+                                 ))}
+                              </div>
+                           </div>
+
+                           {/* Typography */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Font Style
+                              </label>
+                              <div className="grid grid-cols-3 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                 <button 
+                                    onClick={() => setWidgetConfig({...widgetConfig, font: 'inter'})} 
+                                    className={`py-2 rounded-xl font-sans text-xs font-bold transition-all ${widgetConfig.font === 'inter' ? 'bg-white text-black shadow-sm' : 'text-gray-400'}`}
+                                 >
+                                    Modern Sans
+                                 </button>
+                                 <button 
+                                    onClick={() => setWidgetConfig({...widgetConfig, font: 'serif'})} 
+                                    className={`py-2 rounded-xl font-serif text-xs font-bold transition-all ${widgetConfig.font === 'serif' ? 'bg-white text-black shadow-sm' : 'text-gray-400'}`}
+                                 >
+                                    Editorial Serif
+                                 </button>
+                                 <button 
+                                    onClick={() => setWidgetConfig({...widgetConfig, font: 'mono'})} 
+                                    className={`py-2 rounded-xl font-mono text-xs font-bold transition-all ${widgetConfig.font === 'mono' ? 'bg-white text-black shadow-sm' : 'text-gray-400'}`}
+                                 >
+                                    Code Mono
+                                 </button>
                               </div>
                            </div>
                         </div>
                      )}
 
-                     {/* TAB 3: CONTENT */}
+                     {/* TAB 3: CONTENT & TOGGLES */}
                      {configTab === 'content' && (
                         <div className="space-y-6 animate-fade-in">
-                           <div className="space-y-3">
-                              <label className="text-xs font-bold text-gray-500 uppercase">Widget Title</label>
+                           {/* Widget Header Title */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Widget Section Title
+                              </label>
                               <input 
                                  type="text" 
                                  value={widgetConfig.headerTitle}
                                  onChange={(e) => setWidgetConfig({...widgetConfig, headerTitle: e.target.value})}
-                                 className="w-full px-4 py-2 border border-gray-200 rounded-xl text-sm focus:border-black outline-none"
-                                 placeholder="e.g. What our clients say"
+                                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold text-gray-800 outline-none focus:border-black"
+                                 placeholder="e.g. What Our Clients Say"
                               />
-                              <p className="text-[10px] text-gray-400">Leave empty to hide header.</p>
                            </div>
 
-                           <div className="bg-gray-50 rounded-xl p-4 space-y-4 border border-gray-100">
-                              <label className="flex items-center justify-between cursor-pointer group">
-                                 <span className="text-sm font-medium text-gray-700 group-hover:text-black">Show Star Rating</span>
-                                 <input 
-                                    type="checkbox" 
-                                    checked={widgetConfig.showRating}
-                                    onChange={(e) => setWidgetConfig({...widgetConfig, showRating: e.target.checked})}
-                                    className="w-4 h-4 accent-black" 
-                                 />
+                           {/* Toggle Switches */}
+                           <div className="space-y-2.5">
+                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                 Card Elements
                               </label>
-                              <label className="flex items-center justify-between cursor-pointer group">
-                                 <span className="text-sm font-medium text-gray-700 group-hover:text-black">Show Date</span>
-                                 <input 
-                                    type="checkbox" 
-                                    checked={widgetConfig.showDate}
-                                    onChange={(e) => setWidgetConfig({...widgetConfig, showDate: e.target.checked})}
-                                    className="w-4 h-4 accent-black" 
-                                 />
-                              </label>
-                              <label className="flex items-center justify-between cursor-pointer group">
-                                 <span className="text-sm font-medium text-gray-700 group-hover:text-black">Show Avatar</span>
-                                 <input 
-                                    type="checkbox" 
-                                    checked={widgetConfig.showAvatar}
-                                    onChange={(e) => setWidgetConfig({...widgetConfig, showAvatar: e.target.checked})}
-                                    className="w-4 h-4 accent-black" 
-                                 />
-                              </label>
-                           </div>
-
-                           <div className="space-y-3">
-                              <label className="text-xs font-bold text-gray-500 uppercase">Minimum Rating</label>
-                              <div className="flex gap-2">
-                                 {[1,2,3,4,5].map(star => (
-                                    <button
-                                       key={star}
-                                       onClick={() => setWidgetConfig({...widgetConfig, minRating: star})}
-                                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
-                                          widgetConfig.minRating === star ? 'bg-yellow-400 border-yellow-500 text-black' : 'border-gray-200 text-gray-400'
-                                       }`}
-                                    >
-                                       {star}+
-                                    </button>
-                                 ))}
+                              <div className="bg-gray-50 rounded-2xl p-4 space-y-3.5 border border-gray-100">
+                                 <label className="flex items-center justify-between cursor-pointer">
+                                    <span className="text-xs font-bold text-gray-700">Show 5-Star Ratings</span>
+                                    <input 
+                                       type="checkbox" 
+                                       checked={widgetConfig.showRating}
+                                       onChange={(e) => setWidgetConfig({...widgetConfig, showRating: e.target.checked})}
+                                       className="w-4 h-4 rounded text-black accent-black cursor-pointer" 
+                                    />
+                                 </label>
+                                 <label className="flex items-center justify-between cursor-pointer">
+                                    <span className="text-xs font-bold text-gray-700">Show Review Date</span>
+                                    <input 
+                                       type="checkbox" 
+                                       checked={widgetConfig.showDate}
+                                       onChange={(e) => setWidgetConfig({...widgetConfig, showDate: e.target.checked})}
+                                       className="w-4 h-4 rounded text-black accent-black cursor-pointer" 
+                                    />
+                                 </label>
+                                 <label className="flex items-center justify-between cursor-pointer">
+                                    <span className="text-xs font-bold text-gray-700">Show Client Photo Avatar</span>
+                                    <input 
+                                       type="checkbox" 
+                                       checked={widgetConfig.showAvatar}
+                                       onChange={(e) => setWidgetConfig({...widgetConfig, showAvatar: e.target.checked})}
+                                       className="w-4 h-4 rounded text-black accent-black cursor-pointer" 
+                                    />
+                                 </label>
                               </div>
-                           </div>
-
-                           <div className="space-y-3">
-                              <label className="text-xs font-bold text-gray-500 uppercase">Max Items</label>
-                              <select 
-                                 value={widgetConfig.cardsToShow}
-                                 onChange={(e) => setWidgetConfig({...widgetConfig, cardsToShow: parseInt(e.target.value)})}
-                                 className="w-full p-2 border border-gray-200 rounded-lg text-sm bg-white"
-                              >
-                                 <option value="3">3 items</option>
-                                 <option value="6">6 items</option>
-                                 <option value="9">9 items</option>
-                                 <option value="12">12 items</option>
-                                 <option value="20">20 items</option>
-                              </select>
                            </div>
                         </div>
                      )}
                   </div>
                </div>
 
-               {/* Live Preview Panel */}
-               <div className="flex-1 bg-gray-100 rounded-2xl p-8 flex flex-col border border-gray-200 shadow-inner overflow-hidden relative">
-                  <div className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-gray-500 flex items-center gap-2 border border-white/50 shadow-sm">
-                     <Monitor size={12} /> Live Preview
+               {/* RIGHT PANE: Interactive Live Studio Canvas */}
+               <div className="xl:col-span-8 flex flex-col space-y-4">
+                  
+                  {/* Canvas Viewport Toolbar */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm">
+                     {/* Responsive Device Toggles */}
+                     <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                        <button
+                           onClick={() => setPreviewDevice('desktop')}
+                           className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                              previewDevice === 'desktop' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-700'
+                           }`}
+                        >
+                           <Monitor size={14} /> Desktop
+                        </button>
+                        <button
+                           onClick={() => setPreviewDevice('tablet')}
+                           className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                              previewDevice === 'tablet' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-700'
+                           }`}
+                        >
+                           <Layout size={14} /> Tablet
+                        </button>
+                        <button
+                           onClick={() => setPreviewDevice('mobile')}
+                           className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                              previewDevice === 'mobile' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-700'
+                           }`}
+                        >
+                           <MessageSquare size={14} /> Mobile
+                        </button>
+                     </div>
+
+                     {/* Canvas Background Simulation */}
+                     <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-bold text-gray-400 mr-1">Preview Surface:</span>
+                        <button
+                           onClick={() => setPreviewBg('light')}
+                           className={`w-7 h-7 rounded-lg border-2 bg-white flex items-center justify-center transition-all ${previewBg === 'light' ? 'border-black scale-110 shadow-sm' : 'border-gray-200'}`}
+                           title="Light Surface"
+                        />
+                        <button
+                           onClick={() => setPreviewBg('dark')}
+                           className={`w-7 h-7 rounded-lg border-2 bg-gray-950 flex items-center justify-center transition-all ${previewBg === 'dark' ? 'border-black scale-110 shadow-sm' : 'border-gray-300'}`}
+                           title="Dark Surface"
+                        />
+                        <button
+                           onClick={() => setPreviewBg('checkered')}
+                           className={`w-7 h-7 rounded-lg border-2 bg-stone-200 flex items-center justify-center transition-all ${previewBg === 'checkered' ? 'border-black scale-110 shadow-sm' : 'border-gray-300'}`}
+                           title="Transparent Checkered"
+                        />
+                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center">
-                     {/* Preview Wrapper */}
-                     <div className={`w-full max-w-4xl transition-all duration-300 p-8 ${previewClass} min-h-[400px] rounded-xl relative`}>
-                        
-                        {/* Header Title Preview */}
-                        {widgetConfig.headerTitle && (
-                           <div className={`text-center mb-10 ${textClass}`}>
-                              <h2 className={`text-2xl font-bold mb-2`}>{widgetConfig.headerTitle}</h2>
-                              <div className="w-12 h-1 bg-brand-lime mx-auto rounded-full"></div>
-                           </div>
-                        )}
+                  {/* Browser Window Simulation */}
+                  <div className={`rounded-3xl border border-gray-200/80 shadow-md overflow-hidden flex flex-col ${canvasBg} transition-colors duration-300 min-h-[520px]`}>
+                     {/* Window Header */}
+                     <div className="bg-white/90 backdrop-blur-md px-4 py-3 border-b border-gray-200/60 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                           <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                           <div className="w-3 h-3 rounded-full bg-amber-400/80" />
+                           <div className="w-3 h-3 rounded-full bg-emerald-400/80" />
+                        </div>
+                        <div className="bg-gray-100 px-4 py-1 rounded-full text-[11px] font-mono text-gray-500 max-w-xs w-full text-center truncate border border-gray-200/50">
+                           https://yourwebsite.com/client-reviews
+                        </div>
+                        <div className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                           LIVE PREVIEW
+                        </div>
+                     </div>
 
-                        <div className={`w-full transition-all duration-500 ${
-                           layout === 'grid' 
-                              ? `grid grid-cols-1 md:grid-cols-${widgetConfig.columns || 3} gap-${widgetConfig.gap === 'tight' ? '2' : widgetConfig.gap === 'loose' ? '8' : '4'}` 
-                              : 'flex flex-col gap-4 max-w-xl mx-auto'
-                        }`}>
-                           {visibleItems.map((item: any) => (
-                              <div key={item.id} className={`p-6 transition-all duration-300 flex flex-col h-full ${cardClass} ${layout === 'carousel' ? 'min-w-[300px]' : 'w-full'} hover:-translate-y-1 hover:shadow-lg`}>
-                                 <div className="flex justify-between items-start mb-4">
-                                    {widgetConfig.showRating && (
-                                       <div className="flex gap-0.5 text-yellow-400 text-xs">
-                                          {[1,2,3,4,5].map(i => <span key={i}>★</span>)}
-                                       </div>
-                                    )}
-                                    {widgetConfig.showDate && (
-                                       <div className={`text-[10px] uppercase font-bold tracking-wider opacity-40 ${textClass}`}>2 days ago</div>
-                                    )}
-                                 </div>
-
-                                 <p className={`text-sm leading-relaxed mb-6 flex-1 opacity-90 ${textClass}`}>
-                                    "{item.text}"
-                                 </p>
-
-                                 <div className="flex items-center gap-3 pt-4 border-t border-gray-500/10 mt-auto">
-                                    {widgetConfig.showAvatar && (
-                                       <img src={item.avatarUrl} className="w-8 h-8 rounded-full object-cover bg-gray-200 border border-gray-100" />
-                                    )}
-                                    <div>
-                                       <p className={`text-xs font-bold ${layout === 'popup' ? 'text-xs' : ''} ${textClass}`}>{item.clientName}</p>
-                                       {item.clientRole && <p className={`text-[10px] opacity-60 ${textClass}`}>{item.clientRole}</p>}
-                                    </div>
-                                    <div className="ml-auto">
-                                       <div className="w-5 h-5 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
-                                          <CheckCircle2 size={10} />
-                                       </div>
-                                    </div>
-                                 </div>
+                     {/* Live Canvas Viewport */}
+                     <div className="flex-1 p-6 sm:p-10 flex flex-col items-center justify-center overflow-x-auto">
+                        <div className={`${deviceWidth} transition-all duration-300 ${activeFont}`}>
+                           
+                           {/* Optional Header Title */}
+                           {headerTitle && (
+                              <div className="text-center mb-8">
+                                 <h2 className={`text-2xl sm:text-3xl font-black tracking-tight mb-2 ${previewBg === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                    {headerTitle}
+                                 </h2>
+                                 <div className="w-12 h-1 bg-brand-lime mx-auto rounded-full" />
                               </div>
-                           ))}
+                           )}
+
+                           {/* Dynamic Testimonial Grid / Carousel / Feed */}
+                           <div className={`w-full transition-all duration-300 ${
+                              layout === 'grid' 
+                                 ? `grid ${gridColsClass} ${gapSpacing}` 
+                                 : layout === 'carousel'
+                                    ? `flex overflow-x-auto pb-4 ${gapSpacing} snap-x snap-mandatory scrollbar-none`
+                                    : `flex flex-col ${gapSpacing} max-w-xl mx-auto`
+                           }`}>
+                              {visibleItems.map((item: any) => (
+                                 <div 
+                                    key={item.id} 
+                                    className={`p-5 sm:p-6 transition-all duration-300 flex flex-col h-full border ${cardBgClass} ${activeRadius} ${activeShadow} ${
+                                       layout === 'carousel' ? 'min-w-[280px] sm:min-w-[320px] snap-start flex-shrink-0' : 'w-full'
+                                    } hover:-translate-y-1 hover:shadow-lg`}
+                                 >
+                                    {/* Star Rating & Date */}
+                                    <div className="flex justify-between items-start mb-3 gap-2">
+                                       {showRating && (
+                                          <div className="flex gap-1 text-amber-400 text-sm">
+                                             {[1,2,3,4,5].map(i => (
+                                                <span key={i} className="text-amber-400">★</span>
+                                             ))}
+                                          </div>
+                                       )}
+                                       {showDate && (
+                                          <div className={`text-[11px] font-medium opacity-50 ${cardSubtextClass}`}>
+                                             {item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Verified Proof'}
+                                          </div>
+                                       )}
+                                    </div>
+
+                                    {/* Review Text */}
+                                    <p className={`text-sm sm:text-base leading-relaxed mb-5 flex-1 break-words whitespace-pre-wrap ${cardQuoteClass}`}>
+                                       "{item.text}"
+                                    </p>
+
+                                    {/* Reviewer Profile & Badges */}
+                                    <div className="flex items-center justify-between pt-4 border-t border-gray-500/10 mt-auto gap-2">
+                                       <div className="flex items-center gap-3 min-w-0">
+                                          {showAvatar && (
+                                             <img 
+                                                src={item.avatarUrl} 
+                                                className="w-9 h-9 rounded-full object-cover bg-gray-200 border border-gray-100 flex-shrink-0" 
+                                                alt={item.clientName}
+                                             />
+                                          )}
+                                          <div className="min-w-0">
+                                             <p className={`text-xs sm:text-sm font-bold truncate ${cardTextClass}`}>
+                                                {item.clientName}
+                                             </p>
+                                             {item.clientCompany && (
+                                                <p className={`text-[11px] opacity-70 truncate ${cardSubtextClass}`}>
+                                                   {item.clientCompany}
+                                                </p>
+                                             )}
+                                          </div>
+                                       </div>
+
+                                       {item.verificationMethod && item.verificationMethod !== 'manual' && (
+                                          <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${badgeStyle} flex-shrink-0`}>
+                                             <CheckCircle2 size={11} />
+                                             {item.verificationMethod === 'telegram' ? 'Telegram' : 'LinkedIn'}
+                                          </span>
+                                       )}
+                                    </div>
+                                 </div>
+                              ))}
+                           </div>
+
+                           {/* Subtle watermark */}
+                           <div className="text-center mt-6">
+                              <span className="text-[11px] font-medium text-gray-400 inline-flex items-center gap-1">
+                                 Verified by <strong className={previewBg === 'dark' ? 'text-white' : 'text-black'}>TrustGrid.et</strong>
+                              </span>
+                           </div>
+
                         </div>
                      </div>
                   </div>
                </div>
+
             </div>
          </div>
       );
@@ -1448,6 +1689,27 @@ create policy "User insert own profile" on profiles for insert with check (auth.
             <InviteMemberModal 
                onClose={() => setIsInviteModalOpen(false)}
                onInvite={handleSendInvite}
+            />
+         )}
+
+         {/* Widget Embed Publishing Modal */}
+         {isWidgetEmbedModalOpen && (
+            <WidgetEmbedModal
+               username={profileData.username || ''}
+               config={{
+                  theme: widgetConfig.theme,
+                  layout: widgetConfig.layout,
+                  showRating: widgetConfig.showRating,
+                  showDate: widgetConfig.showDate,
+                  showAvatar: widgetConfig.showAvatar,
+                  borderRadius: widgetConfig.borderRadius,
+                  shadow: widgetConfig.shadow,
+                  font: widgetConfig.font,
+                  columns: widgetConfig.columns,
+                  gap: widgetConfig.gap,
+                  headerTitle: widgetConfig.headerTitle
+               }}
+               onClose={() => setIsWidgetEmbedModalOpen(false)}
             />
          )}
 
