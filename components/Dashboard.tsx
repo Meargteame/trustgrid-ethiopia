@@ -266,6 +266,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
             videoUrl: item.video_url,
             verificationMethod: item.reviewer_telegram_id ? 'telegram' : (item.is_verified ? 'email' : 'manual'),
             reviewerTelegramUsername: item.reviewer_telegram_username,
+              socialUrl: item.social_url,
+              consentGiven: item.consent_given,
             status: (item.status === 'approved' ? 'verified' : item.status) as any,
             createdAt: item.created_at,
             // mock missing fields for now
@@ -1008,7 +1010,14 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                         <div className="flex items-center gap-3">
                            <img src={t.avatarUrl} alt={t.clientName} className="w-8 h-8 rounded-full border border-gray-200 object-cover" />
                            <div>
-                              <p className={`text-xs font-bold ${t.cardStyle === 'dark' ? 'text-white' : 'text-black'}`}>{t.clientName}</p>
+                              <p className={`text-xs font-bold flex items-center gap-1 ${t.cardStyle === 'dark' ? 'text-white' : 'text-black'}`}>
+                                  {t.clientName}
+                                  {t.socialUrl && (
+                                     <a href={t.socialUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600" title="Social Profile">
+                                        <LinkIcon size={12} />
+                                     </a>
+                                  )}
+                                </p>
                               <p className={`text-[10px] flex items-center gap-1 ${t.cardStyle === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}>
                                  {t.verificationMethod} • {new Date(t.createdAt).toLocaleDateString()}
                               </p>

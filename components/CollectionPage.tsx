@@ -32,6 +32,7 @@ interface FormConfig {
   allow_video: boolean;
   allow_photo: boolean;
   allow_linkedin_import: boolean;
+  incentive_message?: string;
 }
 
 interface PublicProfile {
@@ -87,6 +88,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
   const [reviewerName, setReviewerName] = useState('');
   const [reviewerCompany, setReviewerCompany] = useState('');
   const [reviewerEmail, setReviewerEmail] = useState('');
+  const [reviewerSocialUrl, setReviewerSocialUrl] = useState('');
+  const [consentGiven, setConsentGiven] = useState(false);
   
   // Media State
   const [isRecording, setIsRecording] = useState(false);
@@ -225,7 +228,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           questions: parsedQuestions || DEFAULT_CONFIG.questions,
           allow_video: configData.allow_video ?? DEFAULT_CONFIG.allow_video,
           allow_photo: configData.allow_photo ?? DEFAULT_CONFIG.allow_photo,
-          allow_linkedin_import: configData.allow_linkedin_import ?? DEFAULT_CONFIG.allow_linkedin_import
+          allow_linkedin_import: configData.allow_linkedin_import ?? DEFAULT_CONFIG.allow_linkedin_import,
+          incentive_message: configData.incentive_message || DEFAULT_CONFIG.incentive_message
         });
       }
 
@@ -294,7 +298,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
     e.preventDefault();
     if (!profile) return;
     
-    setIsSubmitting(true);
+        setIsSubmitting(true);
+
+    if (!consentGiven) {
+       setIsSubmitting(false);
+       alert("You must give consent to submit your review.");
+       return;
+    }
 
     try {
       // 1. Upload video if exists
