@@ -1756,17 +1756,30 @@ create policy "User insert own profile" on profiles for insert with check (auth.
 
                <div className="space-y-4">
                   <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 group hover:border-black transition-colors">
-                     <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Your Public Wall</p>
+                     <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-gray-500 uppercase">Your Public Wall</p>
+                        <a 
+                           href={`/wall/${profileData.username || ''}`}
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                           title="Open Public Wall"
+                        >
+                           Visit <ExternalLink size={10} />
+                        </a>
+                     </div>
                      <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 mb-2">
                         <LinkIcon size={14} className="text-gray-400" />
-                        <span className="text-xs truncate flex-1 text-gray-600">trustgrid.et/{profileData.username || 'your-handle'}</span>
+                        <span className="text-xs truncate flex-1 text-gray-600 font-mono">
+                           trustgrid.pro/wall/{profileData.username || 'your-handle'}
+                        </span>
                      </div>
                      <Button size="sm" fullWidth variant="secondary" onClick={() => {
-                        const url = window.location.origin + '/embed/' + (profileData.username || '');
+                        const url = window.location.origin + '/wall/' + (profileData.username || '');
                         navigator.clipboard.writeText(url);
-                        showToast('Link copied to clipboard!', 'success');
+                        showToast('Public Wall link copied to clipboard!', 'success');
                      }} className="text-xs h-8">
-                        <Copy size={12} className="mr-2" /> Copy Link
+                        <Copy size={12} className="mr-2" /> Copy Wall Link
                      </Button>
                   </div>
 
