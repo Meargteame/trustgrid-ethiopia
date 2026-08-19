@@ -4,6 +4,7 @@ import { toPng } from 'html-to-image';
 import download from 'downloadjs';
 import { TestimonialData } from '../types';
 import { Button } from './Button';
+import { Toast } from './Toast';
 
 interface SocialShareModalProps {
   testimonial: TestimonialData;
@@ -13,6 +14,7 @@ interface SocialShareModalProps {
 export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial, onClose }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = React.useState(false);
+  const [toast, setToast] = React.useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleDownload = async () => {
     if (cardRef.current) {
@@ -20,9 +22,10 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial,
         try {
             const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 2 });
             download(dataUrl, 'trust-signal.png');
+            setToast({ message: 'Social image saved successfully!', type: 'success' });
         } catch (err) {
             console.error('oops, something went wrong!', err);
-            alert("Failed to generate image. Please try again.");
+            setToast({ message: 'Failed to generate image. Please try again.', type: 'error' });
         } finally {
             setGenerating(false);
         }
@@ -31,6 +34,13 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <div className="bg-white rounded-3xl w-full max-w-4xl flex flex-col md:flex-row overflow-hidden shadow-2xl">
         
         {/* Preview Area (Canvas) */}

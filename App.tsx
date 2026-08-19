@@ -12,6 +12,7 @@ import { PublicWall } from './components/PublicWall';
 import { VerificationPage } from './components/VerificationPage';
 import { TestimonialCardEmbed } from './components/TestimonialCardEmbed';
 import { WidgetEmbed } from './components/WidgetEmbed';
+import { Toast } from './components/Toast';
 import { supabase } from './lib/supabase';
 
 type ViewState = 'landing' | 'auth' | 'dashboard' | 'collection' | 'public-wall' | 'verification' | 'embed-card' | 'embed-widget';
@@ -23,6 +24,7 @@ const App: React.FC = () => {
   const [collectionHandle, setCollectionHandle] = useState<string>('');
   const [verificationToken, setVerificationToken] = useState<string>('');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
   useEffect(() => {
     // Check for "Embed", "Collect", "Wall", or "Verify" routes manually
@@ -159,6 +161,7 @@ const App: React.FC = () => {
   const confirmLogout = async () => {
     setShowLogoutConfirm(false);
     await supabase.auth.signOut();
+    setToast({ message: "You have been logged out successfully.", type: "info" });
     window.scrollTo(0, 0);
   };
 
@@ -185,6 +188,7 @@ const App: React.FC = () => {
   if (currentView === 'dashboard') {
     return (
       <>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         <Dashboard onLogout={handleLogout} onOpenCollection={handleOpenCollection} />
         {showLogoutConfirm && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
@@ -214,27 +218,38 @@ const App: React.FC = () => {
 
   if (currentView === 'collection') {
     return (
-      <CollectionPage 
-        targetUsername={collectionHandle} 
-        onBack={() => {
-          if (collectionHandle) {
-             // If accessed via public link, go to landing
-             setCurrentView('landing');
-             window.history.pushState({}, '', '/');
-          } else {
-             handleCloseCollection();
-          }
-        }} 
-      />
+      <>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+        <CollectionPage 
+          targetUsername={collectionHandle} 
+          onBack={() => {
+            if (collectionHandle) {
+               window.location.href = `/wall/${collectionHandle}`;
+            } else {
+               handleCloseCollection();
+            }
+          }} 
+        />
+      </>
     );
   }
 
   if (currentView === 'verification') {
-    return <VerificationPage token={verificationToken} />;
+    return (
+      <>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+        <VerificationPage token={verificationToken} />
+      </>
+    );
   }
 
   if (currentView === 'public-wall') {
-    return <PublicWall companyHandle={embedHandle} />;
+    return (
+      <>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+        <PublicWall companyHandle={embedHandle} />
+      </>
+    );
   }
 
   if (currentView === 'embed-widget') {
@@ -254,11 +269,17 @@ if (currentView === 'embed-card') {
   }
 
   if (currentView === 'auth') {
-    return <AuthPage onLogin={handleAuthSuccess} onBack={handleBackToHome} />;
+    return (
+      <>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+        <AuthPage onLogin={handleAuthSuccess} onBack={handleBackToHome} />
+      </>
+    );
   }
 
   return (
     <div className="min-h-screen bg-white">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <Navbar onLogin={handleInitiateLogin} />
       <main>
         <Hero onLogin={handleInitiateLogin} />

@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+import { Toast } from './Toast';
+
 // --- Types ---
 
 interface QuestionConfig {
@@ -111,6 +113,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setToast({ message, type });
+  };
 
   // Telegram State
   const [telegramUser, setTelegramUser] = useState<any>(null);
@@ -185,7 +192,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
             setPhotoPreview(data.user.photo_url);
           }
        } catch (err: any) {
-          alert('Telegram verification failed: ' + err.message);
+          showToast('Telegram verification failed: ' + err.message, 'error');
        }
     };
 
@@ -306,7 +313,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
     } catch (err) {
       console.error("Error accessing camera:", err);
-      alert("Could not access camera/microphone.");
+      showToast("Could not access camera/microphone. Please check browser permissions.", "error");
     }
   };
 
@@ -329,7 +336,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
     if (!consentGiven) {
        setIsSubmitting(false);
-       alert("Please confirm consent to submit your testimonial.");
+       showToast("Please confirm consent to submit your testimonial.", "warning");
        return;
     }
 
@@ -404,7 +411,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
     } catch (err: any) {
       console.error("Submission error:", err);
-      alert(err.message || "Failed to submit testimonial. Please try again.");
+      showToast(err.message || "Failed to submit testimonial. Please try again.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -462,7 +469,15 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
   const primaryColor = profile.primary_color || DEFAULT_PRIMARY_COLOR;
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans antialiased pb-16">
+    <div className="min-h-screen bg-gray-50 font-sans antialiased pb-16 relative">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       {/* Header / Branding */}
       <div className="bg-white border-b border-gray-200/80 sticky top-0 z-30 backdrop-blur-md bg-white/90">
         <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">

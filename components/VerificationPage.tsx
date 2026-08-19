@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, XCircle, Shield, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Shield, Loader2, Quote as QuoteIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { Toast } from './Toast';
 
 interface VerificationPageProps {
-  token?: string; // Passed from App.tsx handling /verify/:token
+  token: string;
 }
 
 export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => {
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'already_verified'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'already_verified' | 'ready'>('loading');
   const [data, setData] = useState<any>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -37,7 +39,7 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => 
       }
 
       setData(data);
-      setStatus('loading'); // Keep loading state but show content (handled in render)
+      setStatus('ready');
     } catch (err) {
       console.error(err);
       setStatus('error');
@@ -58,7 +60,7 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => 
         setStatus('success');
      } catch (err) {
         console.error(err);
-        alert("Verification failed. Please try again.");
+        setToast({ message: "Verification failed. Please try again.", type: 'error' });
      }
   };
 
@@ -104,55 +106,62 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => 
   if (!data) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 flex flex-col items-center">
-       <div className="max-w-xl w-full">
-          <div className="text-center mb-12">
-             <div className="font-extrabold text-2xl tracking-tighter text-black mb-2">TrustGrid.</div>
-             <p className="text-gray-500">Verification Request</p>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative">
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+        <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 max-w-lg w-full">
+           <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-[#D4F954]/20 text-black rounded-full flex items-center justify-center mx-auto mb-4 border border-[#D4F954]">
+                 <Shield size={32} />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Verify Testimonial</h1>
+              <p className="text-gray-500 text-sm">Did you write this review?</p>
+           </div>
 
-          <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 relative overflow-hidden">
-             <div className="absolute top-0 left-0 w-full h-2 bg-brand-lime" />
-             
-             <h2 className="text-xl font-bold mb-6 text-center">
-                Did you write this review for <br/>
-                <span className="text-brand-lime bg-black px-2 rounded-md">{data.profiles?.company_name || 'TrustGrid User'}</span>?
-             </h2>
+           <div className="space-y-6">
+              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+                 Review Details
+              </h2>
 
-             <div className="bg-gray-50 p-6 rounded-2xl border-l-4 border-gray-300 mb-8 italic text-gray-700 relative">
-                <QuoteIcon className="absolute top-4 left-4 text-gray-200 w-8 h-8 -z-10" />
-                "{data.text}"
-                <div className="mt-4 flex items-center gap-3 not-italic">
-                   {data.avatar_url && <img src={data.avatar_url} className="w-8 h-8 rounded-full" />}
-                   <div>
-                       <p className="text-sm font-bold">{data.name}</p>
-                       <p className="text-xs text-gray-500">{data.company}</p>
-                   </div>
-                </div>
-             </div>
+              <div className="bg-gray-50 p-6 rounded-2xl border-l-4 border-gray-300 mb-8 italic text-gray-700 relative">
+                 <QuoteIcon className="absolute top-4 left-4 text-gray-200 w-8 h-8 -z-10" />
+                 "{data.text}"
+                 <div className="mt-4 flex items-center gap-3 not-italic">
+                    {data.avatar_url && <img src={data.avatar_url} className="w-8 h-8 rounded-full" />}
+                    <div>
+                        <p className="text-sm font-bold">{data.name}</p>
+                        <p className="text-xs text-gray-500">{data.company}</p>
+                    </div>
+                 </div>
+              </div>
 
-             <div className="flex gap-4">
-                <button 
-                   onClick={() => alert("Please contact the user directly to request removal.")}
-                   className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-bold hover:bg-gray-50 transition-colors text-gray-500"
-                >
-                   No, Report
-                </button>
-                <button 
-                   onClick={handleVerify}
-                   className="flex-1 py-3 rounded-xl bg-black text-white font-bold shadow-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-                >
-                   <Shield size={18} />
-                   Yes, Verify It
-                </button>
-             </div>
+              <div className="flex gap-4">
+                 <button 
+                    onClick={() => setToast({ message: "Please contact the user directly to request removal.", type: 'info' })}
+                    className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-bold hover:bg-gray-50 transition-colors text-gray-500"
+                 >
+                    No, Report
+                 </button>
+                 <button 
+                    onClick={handleVerify}
+                    className="flex-1 py-3 rounded-xl bg-black text-white font-bold shadow-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                 >
+                    <Shield size={18} />
+                    Yes, Verify It
+                 </button>
+              </div>
 
-             <p className="text-center text-xs text-gray-400 mt-6">
-                By verifying, you confirm this testimonial is authentic.
-             </p>
-          </div>
-       </div>
-    </div>
+              <p className="text-center text-xs text-gray-400 mt-6">
+                 By verifying, you confirm this testimonial is authentic.
+              </p>
+           </div>
+        </div>
+     </div>
   );
 };
 
