@@ -25,6 +25,7 @@ interface WidgetEmbedProps {
 
 export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
   const [testimonials, setTestimonials] = useState<TestimonialData[]>([]);
+  const [profileInfo, setProfileInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +49,7 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
         // 1. Get Profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, min_rating, cards_to_show')
+          .select('id, username, company_name, full_name, avatar_url, primary_color, min_rating, cards_to_show')
           .eq('username', companyHandle)
           .single();
 
@@ -56,12 +57,14 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
           throw new Error("Wall not found");
         }
 
-        // 2. Get Testimonials
+        setProfileInfo(profile);
+
+        // 2. Get Testimonials (query verified or approved or published)
         const { data: testimonialsData, error: testimonialsError } = await supabase
           .from('testimonials')
           .select('*')
           .eq('user_id', profile.id)
-          .eq('status', 'published') // Only show published
+          .in('status', ['verified', 'published', 'approved'])
           .order('created_at', { ascending: false });
 
         if (testimonialsError) {
@@ -109,16 +112,8 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
 
   if (loading) {
     return (
-      <div className="min-h-[200px] flex items-center justify-center bg-transparent">
+      <div className="min-h-[220px] flex items-center justify-center bg-transparent">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-      </div>
-    );
-  }
-
-  if (error || testimonials.length === 0) {
-    return (
-      <div className="p-8 text-center text-sm text-gray-400">
-        No verified reviews to display.
       </div>
     );
   }
@@ -163,6 +158,54 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
   if (shadow === 'none') shadClass = 'shadow-none';
   if (shadow === 'sm') shadClass = 'shadow-sm';
   if (shadow === 'lg') shadClass = 'shadow-xl';
+
+  // If no testimonials or error, show a welcoming CTA card
+  if (error || testimonials.length === 0) {
+    const brandTitle = profileInfo?.company_name || profileInfo?.full_name || companyHandle;
+    const collectUrl = `/collect/${companyHandle}`;
+
+    return (
+      <div className={`w-full min-h-[260px] bg-transparent ${fontClass} p-4 sm:p-6 flex flex-col items-center justify-center antialiased`}>
+        <div className={`max-w-md w-full p-6 sm:p-8 border ${bgClass} ${textClass} ${borderClass} ${radClass} ${shadClass} text-center flex flex-col items-center`}>
+          {profileInfo?.avatar_url ? (
+            <img 
+              src={profileInfo.avatar_url} 
+              alt={brandTitle} 
+              className="w-12 h-12 rounded-full object-cover mb-3 border border-gray-200" 
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center font-black text-sm mb-3">
+              {brandTitle?.charAt(0) || '⭐'}
+            </div>
+          )}
+
+          <div className="flex gap-1 text-amber-400 mb-2">
+            {[1,2,3,4,5].map(i => (
+              <Star key={i} size={15} className="fill-amber-400 text-amber-400" />
+            ))}
+          </div>
+
+          <h3 className="font-extrabold text-base mb-1.5">{brandTitle}</h3>
+          <p className={`text-xs leading-relaxed mb-5 ${subTextClass}`}>
+            No reviews published yet. Be the first client to share your verified experience!
+          </p>
+
+          <a 
+            href={collectUrl} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="w-full py-3 px-4 rounded-xl font-extrabold text-xs bg-black text-white hover:bg-gray-800 transition-all shadow-md inline-flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            ⭐ Leave a Verified Review
+          </a>
+
+          <div className="mt-4 text-[10px] text-gray-400 font-medium">
+            Powered by <strong className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>TrustGrid</strong>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Gap translation
   let gapClass = 'gap-5';

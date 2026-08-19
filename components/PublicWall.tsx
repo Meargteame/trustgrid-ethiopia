@@ -92,7 +92,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
             .from('testimonials')
             .select('*')
             .eq('user_id', profileData.id)
-            .eq('status', 'verified')
+            .in('status', ['verified', 'published', 'approved'])
             .order('created_at', { ascending: false });
 
           if (testimonialsError) {
@@ -254,8 +254,20 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
          )}
 
          {testimonials.length === 0 ? (
-            <div className="text-center py-20 opacity-50 border-2 border-dashed border-gray-400 rounded-2xl mx-auto max-w-2xl">
-               <p className={`text-lg ${textClass}`}>No verified testimonials available.</p>
+            <div className="text-center py-16 px-6 bg-white/60 backdrop-blur-sm border-2 border-dashed border-gray-300 rounded-3xl mx-auto max-w-xl shadow-sm">
+               <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                  ⭐
+               </div>
+               <h3 className={`text-xl font-bold mb-2 ${textClass}`}>No Reviews Published Yet</h3>
+               <p className={`text-sm opacity-70 mb-6 max-w-sm mx-auto ${textClass}`}>
+                  Be the first customer to share your experience with {profile.company_name || profile.full_name}!
+               </p>
+               <a 
+                  href={`/collect/${companyHandle}`}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-black text-white font-bold text-sm shadow-md hover:bg-gray-800 transition-all hover:scale-105"
+               >
+                  Leave a Verified Review
+               </a>
             </div>
          ) : (
             <div className={`w-full transition-all duration-500 ${
