@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, XCircle, Shield, Loader2, Quote as QuoteIcon } from 'lucide-react';
+import { CheckCircle2, XCircle, Shield, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Toast } from './Toast';
 
