@@ -884,110 +884,112 @@ create policy "User insert own profile" on profiles for insert with check (auth.
             <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
 
                {filteredTestimonials.map((t) => (
-                  <div key={t.id} className={`break-inside-avoid border-2 rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 group relative ${getCardStyle(t)}`}>
+                  <div 
+                     key={t.id} 
+                     className={`break-inside-avoid border rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200 group relative flex flex-col justify-between ${getCardStyle(t)}`}
+                  >
+                     <div>
+                        {/* Top Header: Badge + Actions */}
+                        <div className="flex items-center justify-between gap-2 mb-4">
+                           <VerificationBadge method={t.verificationMethod} />
+                           
+                           <div className="flex items-center gap-1">
+                              {/* PENDING ACTIONS */}
+                              {t.status === 'pending' || t.status === 'pending_verification' ? (
+                                 <>
+                                    <button
+                                       onClick={() => handleApprove(t.id)}
+                                       className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm"
+                                       title="Approve & Publish"
+                                    >
+                                       <CheckCircle2 size={15} />
+                                    </button>
+                                    <button
+                                       onClick={() => handleReject(t.id)}
+                                       className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors shadow-sm"
+                                       title="Reject"
+                                    >
+                                       <X size={15} />
+                                    </button>
+                                 </>
+                              ) : (
+                                 /* VERIFIED ACTIONS */
+                                 <>
+                                    <button
+                                       onClick={() => handleCustomizeStyle(t.id)}
+                                       className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-400 hover:text-black'}`}
+                                       title="Toggle Card Theme"
+                                    >
+                                       <Palette size={15} />
+                                    </button>
+                                    <button
+                                       onClick={() => setShareModalData(t)}
+                                       className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-400 hover:text-black'}`}
+                                       title="Share to Social"
+                                    >
+                                       <Share2 size={15} />
+                                    </button>
+                                    <button
+                                       onClick={() => setEmbedModalId(t.id)}
+                                       className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-400 hover:text-black'}`}
+                                       title="Embed on Website"
+                                    >
+                                       <Code size={15} />
+                                    </button>
+                                    <button
+                                       onClick={() => handleDelete(t.id)}
+                                       className={`p-1.5 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                                       title="Delete"
+                                    >
+                                       <Trash2 size={15} />
+                                    </button>
+                                 </>
+                              )}
+                           </div>
+                        </div>
 
-                     {/* Actions Dropdown (Hover) */}
-                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-20">
-                        
-                        {/* PENDING ACTIONS */}
-                        {t.status === 'pending' || t.status === 'pending_verification' ? (
-                           <>
-                              <button
-                                 onClick={() => handleApprove(t.id)}
-                                 className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors shadow-sm"
-                                 title="Approve & Analyze"
-                              >
-                                 <CheckCircle2 size={16} />
-                              </button>
-                              <button
-                                 onClick={() => handleReject(t.id)}
-                                 className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors shadow-sm"
-                                 title="Reject"
-                              >
-                                 <X size={16} />
-                              </button>
-                           </>
-                        ) : (
-                           /* VERIFIED ACTIONS */
-                           <>
-                              <button
-                                 onClick={() => setShareModalData(t)}
-                                 className={`p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                                 title="Share to Social"
-                              >
-                                 <Share2 size={16} />
-                              </button>
-                              
-                              <button
-                                 onClick={() => setEmbedModalId(t.id)}
-                                 className={`p-1.5 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                                 title="Embed on Website"
-                              >
-                                 <Code size={16} />
-                              </button>
-
-                              <button
-                                 onClick={() => handleDelete(t.id)}
-                                 className={`p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                                 title="Delete"
-                              >
-                                 <Trash2 size={16} />
-                              </button>
-                           </>
+                        {/* Video Player (if attached) */}
+                        {t.videoUrl && t.videoUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+                           <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative border border-gray-200 shadow-sm">
+                              <video 
+                                 src={t.videoUrl} 
+                                 controls 
+                                 className="w-full h-full object-cover"
+                              />
+                           </div>
+                        ) : t.videoUrl && (
+                           <div className="mb-4 bg-gray-100 rounded-xl p-3 flex items-center gap-2">
+                              <ExternalLink size={14} />
+                              <a href={t.videoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline truncate block">{t.videoUrl}</a>
+                           </div>
                         )}
-                     </div>
 
-                     {/* Status Badge */}
-                     <div className="flex justify-between items-start mb-4">
-                        <VerificationBadge method={t.verificationMethod} />
-                        {t.score && t.status === 'verified' && (
-                           <div className="bg-black/5 px-2 py-1 rounded text-[10px] font-bold">
-                              Trust Score: {t.score}
+                        {/* Text Content */}
+                        <p className={`text-sm leading-relaxed mb-6 font-medium break-words whitespace-pre-wrap ${t.cardStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${/[\u1200-\u137F]/.test(t.text) ? 'font-ethiopic' : ''}`}>
+                           "{t.text}"
+                        </p>
+
+                        {/* Email Verification Pending State */}
+                        {t.verificationMethod === 'email' && t.status === 'pending' && (
+                           <div className="mb-4 bg-yellow-50 border border-yellow-200 p-3 rounded-xl">
+                              <p className="text-xs text-yellow-800 font-bold mb-1 flex items-center gap-1">
+                                 <Clock size={12} /> Pending Client Actions
+                              </p>
+                              <p className="text-[10px] text-yellow-600 mb-2">
+                                 Email sent to {t.clientEmail}
+                              </p>
+                              <button
+                                 onClick={() => showToast('Verification email resent!')}
+                                 className="text-[10px] font-bold underline text-yellow-700 hover:text-black"
+                              >
+                                 Resend Email
+                              </button>
                            </div>
                         )}
                      </div>
 
-                     {/* Video Player (Mock Supported) */}
-                     {t.videoUrl && t.videoUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-                        <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative group/video">
-                           <video 
-                              src={t.videoUrl} 
-                              controls 
-                              className="w-full h-full object-cover"
-                           />
-                        </div>
-                     ) : t.videoUrl && (
-                        /* Handle simple links or non-video URLs appropriately */
-                        <div className="mb-4 bg-gray-100 rounded-xl p-3 flex items-center gap-2">
-                           <ExternalLink size={16} />
-                           <a href={t.videoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline truncate block">{t.videoUrl}</a>
-                        </div>
-                     )}
-
-                     {/* Text Content */}
-                     <p className={`text-sm leading-relaxed mb-6 font-medium break-words whitespace-pre-wrap ${t.cardStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${/[\u1200-\u137F]/.test(t.text) ? 'font-ethiopic' : ''}`}>
-                        "{t.text}"
-                     </p>
-
-                     {/* Email Verification Pending State */}
-                     {t.verificationMethod === 'email' && t.status === 'pending' && (
-                        <div className="mb-4 bg-yellow-50 border border-yellow-200 p-3 rounded-xl">
-                           <p className="text-xs text-yellow-800 font-bold mb-1 flex items-center gap-1">
-                              <Clock size={12} /> Pending Client Actions
-                           </p>
-                           <p className="text-[10px] text-yellow-600 mb-2">
-                              Email sent to {t.clientEmail}
-                           </p>
-                           <button
-                              onClick={() => showToast('Verification email resent!')}
-                              className="text-[10px] font-bold underline text-yellow-700 hover:text-black"
-                           >
-                              Resend Email
-                           </button>
-                        </div>
-                     )}
-
-                     <div className={`flex items-center justify-between border-t pt-4 ${t.cardStyle === 'dark' ? 'border-gray-800' : 'border-gray-100'}`}>
+                     {/* Reviewer Profile */}
+                     <div className={`flex items-center justify-between border-t pt-4 mt-auto ${t.cardStyle === 'dark' ? 'border-gray-800' : 'border-gray-100'}`}>
                         <div className="flex items-center gap-3">
                            <img src={t.avatarUrl} alt={t.clientName} className="w-8 h-8 rounded-full border border-gray-200 object-cover" />
                            <div>
@@ -1004,19 +1006,6 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                               </p>
                            </div>
                         </div>
-                     </div>
-
-                     {/* Quick Action */}
-                     <div className={`mt-4 pt-4 border-t border-dashed hidden group-hover:block animate-fade-in ${t.cardStyle === 'dark' ? 'border-gray-800' : 'border-gray-200'}`}>
-                        <Button
-                           size="sm"
-                           variant="outline"
-                           fullWidth
-                           onClick={() => handleCustomizeStyle(t.id)}
-                           className={`text-xs h-8 ${t.cardStyle === 'dark' ? 'border-gray-700 text-white hover:bg-gray-800' : 'border-gray-300'}`}
-                        >
-                           <Palette size={12} className="mr-2" /> Customize Style
-                        </Button>
                      </div>
                   </div>
                ))}
