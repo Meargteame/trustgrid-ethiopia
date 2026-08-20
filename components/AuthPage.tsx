@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, AlertCircle, ShieldCheck, Zap, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, ShieldCheck, Zap, Lock, Sparkles, CheckCircle2, Mail, KeyRound, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
 
@@ -8,11 +8,22 @@ interface AuthPageProps {
   onBack: () => void;
 }
 
+const FREE_EMAIL_DOMAINS = [
+  'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.fr',
+  'hotmail.com', 'hotmail.co.uk', 'hotmail.fr', 'outlook.com', 'outlook.fr',
+  'icloud.com', 'me.com', 'mac.com', 'aol.com', 'mail.ru', 'bk.ru',
+  'inbox.ru', 'list.ru', 'protonmail.com', 'proton.me', 'pm.me',
+  'zoho.com', 'yandex.com', 'yandex.ru', 'live.com', 'msn.com',
+  'gmx.com', 'gmx.de', 'gmx.net', 'web.de', 't-online.de', 'inbox.com'
+];
+
 export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
   const telegramWrapperRef = useRef<HTMLDivElement>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [activeMode, setActiveMode] = useState<'telegram' | 'email'>('telegram');
 
@@ -52,43 +63,74 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
     }
   }, []);
 
+  const validateWorkEmail = (emailStr: string): boolean => {
+    const trimmed = emailStr.trim().toLowerCase();
+    const parts = trimmed.split('@');
+    if (parts.length !== 2 || !parts[1].includes('.')) {
+      setErrorMsg('Please enter a valid email address.');
+      return false;
+    }
+    const domain = parts[1];
+    if (FREE_EMAIL_DOMAINS.includes(domain)) {
+      setErrorMsg('Please enter a company work email (e.g. name@yourbrand.com). Personal email accounts (@gmail, @yahoo, @outlook) are not permitted.');
+      return false;
+    }
+    return true;
+  };
+
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
+
+    if (!validateWorkEmail(email)) {
+      return;
+    }
+
     try {
       setEmailLoading(true);
       setErrorMsg(null);
+      
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: email.trim().toLowerCase(),
         options: {
           emailRedirectTo: window.location.origin
         }
       });
+
       if (error) throw error;
       setEmailSent(true);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to send login link');
+      setErrorMsg(err.message || 'Failed to send login link. Please try again.');
     } finally {
       setEmailLoading(false);
     }
   };
 
-  const handleDemoLogin = async () => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode || !email) return;
+
     try {
+      setOtpLoading(true);
       setErrorMsg(null);
-      // Fast demo bypass for local/demo evaluation
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: 'demo@trustgrid.et',
-        password: 'TrustGridDemo2026!'
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: otpCode.trim(),
+        type: 'email'
       });
-      if (!error && data?.session) {
+
+      if (error) throw error;
+
+      if (data?.session) {
         onLogin();
-        return;
+      } else {
+        throw new Error('Verification failed. Please double check the code.');
       }
-      // If user doesn't exist, create demo user session
-      onLogin();
-    } catch {
-      onLogin();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Invalid or expired verification code.');
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -113,7 +155,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
       {/* Main Split Authentication Screen */}
       <div className="flex-1 max-w-6xl w-full mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
         
-        {/* Left Side: Brand Value Proposition & Trust Signal Showcase */}
+        {/* Left Side: Brand Value Proposition */}
         <div className="flex-1 w-full max-w-lg space-y-8">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#F4F4F5] border border-gray-200 rounded-full text-xs font-bold text-[#0A0A0A] mb-4">
@@ -183,9 +225,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
 
             {/* Error Notification */}
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2">
-                <AlertCircle size={15} className="flex-shrink-0" />
-                <span>{errorMsg}</span>
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-start gap-2">
+                <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
+                <span className="leading-snug">{errorMsg}</span>
               </div>
             )}
 
@@ -193,7 +235,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
             <div className="flex bg-[#F4F4F5] p-1 rounded-xl border border-gray-200">
               <button
                 type="button"
-                onClick={() => setActiveMode('telegram')}
+                onClick={() => { setActiveMode('telegram'); setErrorMsg(null); }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                   activeMode === 'telegram'
                     ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
@@ -204,7 +246,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveMode('email')}
+                onClick={() => { setActiveMode('email'); setErrorMsg(null); }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                   activeMode === 'email'
                     ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
@@ -219,22 +261,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
             {activeMode === 'telegram' && (
               <div className="space-y-4 animate-fade-in text-center">
                 <p className="text-xs text-[#6B7280]">
-                  Click below to log in with your official Telegram account:
+                  Click below to authenticate with your official Telegram account:
                 </p>
 
                 {/* Telegram Official Button Widget Container */}
-                <div className="py-3 flex justify-center items-center min-h-[50px]">
+                <div className="py-4 flex justify-center items-center min-h-[60px]">
                   <div ref={telegramWrapperRef}></div>
                 </div>
 
-                <div className="pt-2 border-t border-gray-100">
-                  <button
-                    type="button"
-                    onClick={handleDemoLogin}
-                    className="w-full py-2.5 px-4 bg-[#F4F4F5] hover:bg-gray-200 text-[#0A0A0A] text-xs font-bold rounded-xl transition-colors border border-gray-200 flex items-center justify-center gap-2"
-                  >
-                    <span>Instant Preview / Demo Access</span>
-                  </button>
+                <div className="p-3 bg-[#F4F4F5] rounded-xl border border-gray-200 text-center">
+                  <p className="text-[11px] text-[#6B7280]">
+                    🛡️ Instant cryptographic identity verification via Telegram
+                  </p>
                 </div>
               </div>
             )}
@@ -243,32 +281,79 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
             {activeMode === 'email' && (
               <div className="space-y-4 animate-fade-in">
                 {emailSent ? (
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-center space-y-2">
-                    <p className="font-bold text-xs">Magic login link sent!</p>
-                    <p className="text-[11px] text-emerald-800">
-                      Check your inbox at <strong>{email}</strong> and click the confirmation link to sign in.
-                    </p>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl space-y-1.5 text-center">
+                      <p className="font-bold text-xs">Security link & code sent!</p>
+                      <p className="text-[11px] text-emerald-800 leading-relaxed">
+                        We sent a login code and confirmation link to <strong>{email}</strong>.
+                      </p>
+                    </div>
+
+                    {/* Enter Code Option (Solves redirect issues) */}
+                    <form onSubmit={handleVerifyOtp} className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-[#6B7280] uppercase">
+                          Enter 6-Digit Code from Email
+                        </label>
+                        <div className="relative">
+                          <KeyRound size={15} className="absolute left-3.5 top-3.5 text-[#6B7280]" />
+                          <input
+                            type="text"
+                            required
+                            maxLength={8}
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\s+/g, ''))}
+                            placeholder="123456"
+                            className="w-full pl-10 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-mono font-bold tracking-widest text-[#0A0A0A] focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={otpLoading || !otpCode}
+                        className="w-full py-2.5 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {otpLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                        <span>{otpLoading ? 'Verifying...' : 'Verify & Sign In'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setEmailSent(false); setOtpCode(''); }}
+                        className="w-full py-1 text-center text-xs text-[#6B7280] hover:text-[#0A0A0A] font-medium"
+                      >
+                        Use a different email address
+                      </button>
+                    </form>
                   </div>
                 ) : (
                   <form onSubmit={handleEmailSignIn} className="space-y-3">
                     <div className="space-y-1">
-                      <label className="block text-xs font-bold text-[#6B7280] uppercase">Work Email</label>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@company.com"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
-                      />
+                      <label className="block text-xs font-bold text-[#6B7280] uppercase">Company Work Email</label>
+                      <div className="relative">
+                        <Mail size={15} className="absolute left-3.5 top-3.5 text-[#6B7280]" />
+                        <input
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="name@yourcompany.com"
+                          className="w-full pl-10 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                        />
+                      </div>
+                      <p className="text-[11px] text-[#6B7280]">
+                        Only company domain emails allowed (e.g. <code>@leonslab.tech</code>).
+                      </p>
                     </div>
 
                     <button
                       type="submit"
                       disabled={emailLoading}
-                      className="w-full py-3 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors disabled:opacity-50"
+                      className="w-full py-3 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {emailLoading ? 'Sending Login Link...' : 'Send Magic Login Link'}
+                      {emailLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                      <span>{emailLoading ? 'Sending Work Login Link...' : 'Send Work Magic Link'}</span>
                     </button>
                   </form>
                 )}
