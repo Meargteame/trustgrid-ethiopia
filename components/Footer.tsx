@@ -14,8 +14,8 @@ export const Footer: React.FC = () => {
             <p className="text-xs text-gray-500 leading-relaxed mb-6">
               Build verified proof for your business. Turn customer testimonials into a trusted wall of proof with Telegram & email identity verification.
             </p>
-            <a href="mailto:trustgrid.ethiopia@gmail.com" className="text-xs font-bold text-black border-b border-black pb-0.5">
-              trustgrid.ethiopia@gmail.com
+            <a href="mailto:support@leonslab.tech" className="text-xs font-bold text-black border-b border-black pb-0.5">
+              support@leonslab.tech
             </a>
           </div>
 
@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="font-bold text-sm mb-4">Company</h4>
             <ul className="space-y-3 text-xs text-gray-500">
-              <li><a href="mailto:trustgrid.ethiopia@gmail.com" className="hover:text-black transition-colors">Contact</a></li>
+              <li><a href="mailto:support@leonslab.tech" className="hover:text-black transition-colors">Contact Support</a></li>
               <li><a href="#" className="hover:text-black transition-colors">Privacy Policy</a></li>
               <li><a href="#" className="hover:text-black transition-colors">Terms of Service</a></li>
             </ul>

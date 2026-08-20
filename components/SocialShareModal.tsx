@@ -14,7 +14,7 @@ interface SocialShareModalProps {
 export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial, onClose }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [platform, setPlatform] = useState<'instagram' | 'linkedin'>('instagram');
-  const [cardTheme, setCardTheme] = useState<'dark' | 'light' | 'lime'>('dark');
+  const [cardTheme, setCardTheme] = useState<'dark' | 'light' | 'lime'>('light');
   const [generating, setGenerating] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 

@@ -66,9 +66,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       filterTag: 'all'
    });
 
-   // Social Share State
+   // Social Share & Delete State
    const [shareModalData, setShareModalData] = useState<TestimonialData | null>(null);
    const [embedModalId, setEmbedModalId] = useState<string | null>(null);
+   const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
+   const [isDeleting, setIsDeleting] = useState(false);
 
    // Settings Form State
    const [profileData, setProfileData] = useState({
@@ -515,24 +517,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
-   const handleReject = async (id: string) => {
-      if (!window.confirm("Are you sure you want to reject and delete this testimonial? This cannot be undone.")) return;
-       
+   const handleConfirmDelete = async () => {
+      if (!deleteReviewId) return;
+      setIsDeleting(true);
       try {
-          const { error } = await supabase
-              .from('testimonials')
-              .delete()
-              .eq('id', id);
+         const { error } = await supabase
+            .from('testimonials')
+            .delete()
+            .eq('id', deleteReviewId);
 
-          if (error) throw error;
+         if (error) throw error;
 
-          // Remove from list
-          setTestimonials(testimonials.filter(t => t.id !== id));
-          
-          showToast('Testimonial deleted.');
+         // Optimistically update list
+         setTestimonials(prev => prev.filter(t => t.id !== deleteReviewId));
+         showToast('Review permanently deleted.', 'success');
+         setDeleteReviewId(null);
       } catch (err: any) {
-          console.error("Reject failed:", err);
-          showToast('Failed to reject testimonial', 'error');
+         console.error("Delete failed:", err);
+         showToast(err.message || 'Failed to delete review', 'error');
+      } finally {
+         setIsDeleting(false);
       }
    };
 
@@ -971,9 +975,9 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                        <CheckCircle2 size={15} />
                                     </button>
                                     <button
-                                       onClick={() => handleReject(t.id)}
+                                       onClick={() => setDeleteReviewId(t.id)}
                                        className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors shadow-sm"
-                                       title="Reject"
+                                       title="Reject & Delete"
                                     >
                                        <X size={15} />
                                     </button>
@@ -1023,7 +1027,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                        <Code size={15} />
                                     </button>
                                     <button
-                                       onClick={() => handleDelete(t.id)}
+                                       onClick={() => setDeleteReviewId(t.id)}
                                        className={`p-1.5 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
                                        title="Permanently Delete"
                                     >
@@ -1707,25 +1711,25 @@ create policy "User insert own profile" on profiles for insert with check (auth.
 
                            {/* Dynamic Testimonial Grid / Carousel / Feed / Toast */}
                            {layout === 'toast' ? (
-                              <div className="w-full min-h-[420px] rounded-2xl relative flex flex-col justify-between p-6 sm:p-8 bg-white dark:bg-gray-900 shadow-inner border border-gray-200/70 overflow-hidden">
-                                 
-                                 {/* Simulated Live Customer Site Content */}
-                                 <div className="max-w-md mx-auto text-center space-y-4 py-8">
-                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-[11px] font-bold text-gray-600 dark:text-gray-300">
-                                       ✨ Your Official Storefront / Landing Page
-                                    </div>
-                                    <h3 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-tight">
-                                       Grow Your Brand With High-Converting Trust
-                                    </h3>
-                                    <p className="text-xs text-gray-500 leading-relaxed max-w-sm mx-auto">
-                                       Visitors explore your products while live verified customer proof builds instant buying confidence.
-                                    </p>
-                                    <div className="pt-2 flex justify-center gap-2">
-                                       <div className="px-5 py-2.5 rounded-xl bg-black text-white text-xs font-bold shadow-sm">
-                                          Explore Products
-                                       </div>
-                                    </div>
-                                 </div>
+                               <div className="w-full min-h-[440px] rounded-3xl relative flex flex-col justify-between p-6 sm:p-8 bg-slate-50 border border-slate-200/90 shadow-inner overflow-hidden">
+                                  
+                                  {/* Simulated Live Customer Site Content */}
+                                  <div className="max-w-lg mx-auto text-center space-y-3.5 py-6 bg-white p-6 sm:p-8 rounded-2xl border border-gray-200/80 shadow-sm">
+                                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-[11px] font-bold text-gray-700">
+                                        ✨ Your Official Storefront
+                                     </div>
+                                     <h3 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight leading-tight">
+                                        Grow Your Brand With High-Converting Trust
+                                     </h3>
+                                     <p className="text-xs text-gray-500 leading-relaxed max-w-sm mx-auto">
+                                        Visitors explore your products while live verified customer proof builds instant buying confidence.
+                                     </p>
+                                     <div className="pt-2 flex justify-center gap-2">
+                                        <div className="px-4 py-2 rounded-xl bg-black text-white text-xs font-bold shadow-sm">
+                                           Explore Products
+                                        </div>
+                                     </div>
+                                  </div>
 
                                  {/* Simulated Floating Social Proof Toast at chosen position */}
                                  <div className={`w-full flex ${widgetConfig.gap === 'bottom-right' ? 'justify-end' : 'justify-start'} mt-auto z-20`}>
@@ -1900,6 +1904,40 @@ create policy "User insert own profile" on profiles for insert with check (auth.
          {/* Social Share Modal */}
          {shareModalData && (
             <SocialShareModal testimonial={shareModalData} onClose={() => setShareModalData(null)} />
+         )}
+
+         {/* Delete Confirmation Modal */}
+         {deleteReviewId && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+               <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-200 text-center space-y-5">
+                  <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-sm">
+                     <Trash2 size={26} />
+                  </div>
+                  <div>
+                     <h3 className="text-xl font-extrabold text-black mb-2 tracking-tight">Delete Testimonial?</h3>
+                     <p className="text-xs sm:text-sm text-gray-500 font-medium leading-relaxed">
+                        This review will be permanently deleted from your dashboard, public wall, and website widgets. This action cannot be undone.
+                     </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                     <button
+                        onClick={() => setDeleteReviewId(null)}
+                        disabled={isDeleting}
+                        className="py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-all disabled:opacity-50"
+                     >
+                        Cancel
+                     </button>
+                     <button
+                        onClick={handleConfirmDelete}
+                        disabled={isDeleting}
+                        className="py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                     >
+                        {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                     </button>
+                  </div>
+               </div>
+            </div>
          )}
 
          {/* Invite Member Modal */}
