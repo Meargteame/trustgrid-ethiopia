@@ -93,12 +93,9 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
 
   if (loading) {
     return (
-      <div className="min-h-[260px] flex flex-col items-center justify-center bg-transparent gap-3 p-8">
-        <div className="relative">
-          <div className="w-10 h-10 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin"></div>
-          <Sparkles className="w-4 h-4 text-emerald-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
-        </div>
-        <p className="text-xs font-semibold text-gray-400 animate-pulse tracking-wide">Loading Verified Proofs...</p>
+      <div className="min-h-[220px] flex flex-col items-center justify-center bg-transparent gap-3 p-8">
+        <div className="w-12 h-12 rounded-full border-4 border-black border-t-[#D4F954] animate-spin shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"></div>
+        <p className="text-xs font-black text-black tracking-wide uppercase">Loading Verified Proofs...</p>
       </div>
     );
   }
@@ -109,41 +106,41 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
   if (font === 'mono') fontClass = 'font-mono';
 
   // Theme Colors
-  let bgClass = 'bg-white/90 backdrop-blur-xl';
-  let textClass = 'text-gray-900';
-  let borderClass = 'border-gray-100 hover:border-gray-300';
+  let bgClass = 'bg-white';
+  let textClass = 'text-black';
+  let borderClass = 'border-2 border-black';
   let subTextClass = 'text-gray-500';
-  let quoteColor = 'text-gray-700';
-  let badgeBg = 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20';
+  let quoteColor = 'text-black';
+  let badgeBg = 'bg-brand-lime text-black border-2 border-black';
   
   if (theme === 'dark') {
-    bgClass = 'bg-gray-950/90 backdrop-blur-xl';
+    bgClass = 'bg-black';
     textClass = 'text-white';
-    borderClass = 'border-gray-800/80 hover:border-gray-700';
+    borderClass = 'border-2 border-gray-800';
     subTextClass = 'text-gray-400';
     quoteColor = 'text-gray-200';
-    badgeBg = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+    badgeBg = 'bg-brand-lime text-black border-2 border-black';
   } else if (theme === 'transparent') {
-    bgClass = 'bg-white/60 backdrop-blur-md';
-    textClass = 'text-gray-900';
-    borderClass = 'border-white/60 hover:border-white';
+    bgClass = 'bg-white/80 backdrop-blur-md';
+    textClass = 'text-black';
+    borderClass = 'border-2 border-black/80';
     subTextClass = 'text-gray-600';
-    quoteColor = 'text-gray-800';
-    badgeBg = 'bg-emerald-500/10 text-emerald-800 border-emerald-500/20';
+    quoteColor = 'text-black';
+    badgeBg = 'bg-brand-lime text-black border-2 border-black';
   }
 
   // Border Radius
   let radClass = 'rounded-2xl';
   if (borderRadius === 'none') radClass = 'rounded-none';
   if (borderRadius === 'md') radClass = 'rounded-xl';
-  if (borderRadius === '2xl') radClass = 'rounded-2xl';
-  if (borderRadius === '3xl') radClass = 'rounded-3xl';
+  if (borderRadius === '2xl') radClass = 'rounded-[2rem]';
+  if (borderRadius === '3xl') radClass = 'rounded-[2.5rem]';
 
   // Shadow
-  let shadClass = 'shadow-lg hover:shadow-xl';
+  let shadClass = 'shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]';
   if (shadow === 'none') shadClass = 'shadow-none';
-  if (shadow === 'sm') shadClass = 'shadow-sm';
-  if (shadow === 'lg') shadClass = 'shadow-2xl';
+  if (shadow === 'sm') shadClass = 'shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]';
+  if (shadow === 'lg') shadClass = 'shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]';
 
   // Gap translation
   let gapClass = 'gap-6';
@@ -156,54 +153,50 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
     const collectUrl = `/collect/${companyHandle}`;
 
     return (
-      <div className={`w-full min-h-[300px] bg-transparent ${fontClass} p-4 sm:p-6 flex flex-col items-center justify-center antialiased`}>
-        <div className={`max-w-md w-full p-8 border ${bgClass} ${textClass} ${borderClass} ${radClass} ${shadClass} text-center flex flex-col items-center relative overflow-hidden transition-all duration-300`}>
+      <div className={`w-full min-h-[280px] bg-transparent ${fontClass} p-4 sm:p-6 flex flex-col items-center justify-center antialiased`}>
+        <div className={`max-w-md w-full p-8 ${bgClass} ${textClass} ${borderClass} ${radClass} ${shadClass} text-center flex flex-col items-center relative transition-all`}>
           
-          {/* Subtle glowing ambient gradient */}
-          <div className="absolute -top-16 -right-16 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
-
           <div className="relative mb-4">
             {profileInfo?.avatar_url ? (
               <img 
                 src={profileInfo.avatar_url} 
                 alt={brandTitle} 
-                className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 shadow-md p-0.5 bg-white" 
+                className="w-16 h-16 rounded-full object-cover border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-0.5 bg-white" 
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-gray-900 to-black text-white flex items-center justify-center font-black text-xl shadow-lg border border-gray-700">
+              <div className="w-16 h-16 rounded-full bg-[#FCE676] text-black flex items-center justify-center font-black text-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black">
                 {brandTitle?.charAt(0)?.toUpperCase() || '⭐'}
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md">
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-brand-lime text-black rounded-full flex items-center justify-center border border-black shadow-sm">
               <CheckCircle2 size={14} className="stroke-[3]" />
             </div>
           </div>
 
-          <div className="flex items-center gap-1 text-amber-400 mb-2">
+          <div className="flex items-center gap-1 text-amber-500 mb-2">
             {[1,2,3,4,5].map(i => (
-              <Star key={i} size={16} className="fill-amber-400 text-amber-400 drop-shadow-sm" />
+              <Star key={i} size={16} className="fill-amber-400 text-amber-500" />
             ))}
           </div>
 
-          <h3 className="font-black text-lg mb-1 tracking-tight">{brandTitle}</h3>
-          <p className={`text-xs leading-relaxed mb-6 max-w-xs ${subTextClass}`}>
-            No customer reviews published yet. Be the very first verified client to share your experience!
+          <h3 className="font-extrabold text-xl mb-1 tracking-tight">{brandTitle}</h3>
+          <p className={`text-xs leading-relaxed mb-6 max-w-xs font-medium ${subTextClass}`}>
+            No customer reviews published yet. Be the first verified client to share your experience!
           </p>
 
           <a 
             href={collectUrl} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="w-full py-3.5 px-6 rounded-xl font-extrabold text-xs bg-black text-white hover:bg-gray-800 transition-all shadow-xl inline-flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-3 px-6 rounded-xl font-extrabold text-xs bg-brand-lime text-black hover:bg-[#c2ed3d] border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] inline-flex items-center justify-center gap-2 transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
           >
-            <Sparkles size={14} className="text-yellow-400" />
+            <Sparkles size={14} />
             Leave a Verified Review
           </a>
 
-          <div className="mt-5 flex items-center gap-1.5 text-[10px] text-gray-400 font-semibold tracking-wider uppercase">
-            <Shield size={11} className="text-emerald-500" />
-            Verified with <span className={theme === 'dark' ? 'text-white font-bold' : 'text-gray-900 font-bold'}>TrustGrid</span>
+          <div className="mt-5 flex items-center gap-1.5 text-[10px] text-gray-500 font-extrabold tracking-wider uppercase">
+            <Shield size={11} className="text-black" />
+            Verified with <span className="text-black font-black">TrustGrid.PRO</span>
           </div>
         </div>
       </div>
@@ -245,16 +238,21 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
                     ))}
                   </div>
                 )}
-                {item.verificationMethod === 'telegram' && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ml-2 ${badgeBg}`}>
+                {item.verificationMethod === 'telegram' ? (
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black border-2 border-black ml-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${badgeBg}`}>
                     <CheckCircle2 size={11} className="stroke-[3]" />
                     Telegram
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black border-2 border-black ml-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-blue-100 text-blue-900">
+                    <CheckCircle2 size={11} className="stroke-[3]" />
+                    Verified
                   </span>
                 )}
               </div>
 
               {showDate && item.createdAt && (
-                <span className={`text-[10px] font-semibold tracking-wider uppercase ${subTextClass}`}>
+                <span className={`text-[10px] font-black tracking-wider uppercase ${subTextClass}`}>
                   {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               )}
@@ -262,7 +260,7 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
 
             {/* Video Attachment (if present) */}
             {item.videoUrl && (
-              <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative group/video shadow-inner">
+              <div className="mb-4 rounded-2xl overflow-hidden bg-black aspect-video relative border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 <video 
                   src={item.videoUrl} 
                   controls 
@@ -274,34 +272,34 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
 
             {/* Testimonial Quote Text */}
             <div className="mb-5 flex-1 relative">
-              <Quote size={20} className="text-gray-300 dark:text-gray-700 mb-2 opacity-50" />
-              <p className={`text-sm leading-relaxed font-medium break-words whitespace-pre-wrap ${quoteColor}`}>
-                {item.text}
+              <Quote size={20} className="text-gray-300 mb-2 opacity-60" />
+              <p className={`text-sm sm:text-base leading-relaxed font-semibold break-words whitespace-pre-wrap ${quoteColor}`}>
+                "{item.text}"
               </p>
             </div>
 
             {/* Reviewer Profile Card */}
-            <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800/80 mt-auto">
+            <div className="flex items-center gap-3 pt-4 border-t-2 border-gray-100 dark:border-gray-800/80 mt-auto">
               {showAvatar && (
                 <img 
-                  src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}&background=0D1117&color=fff`} 
+                  src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}&background=FCE676&color=111111`} 
                   alt={item.clientName} 
-                  className="w-10 h-10 rounded-full object-cover bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex-shrink-0 shadow-sm" 
+                  className="w-10 h-10 rounded-full object-cover bg-gray-100 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex-shrink-0" 
                 />
               )}
               <div className="min-w-0 flex-1">
                 <h4 className="font-extrabold text-sm truncate leading-tight flex items-center gap-1.5">
                   {item.clientName}
                   {item.verificationMethod === 'telegram' && (
-                    <CheckCircle2 size={13} className="text-blue-500 flex-shrink-0" />
+                    <CheckCircle2 size={13} className="text-blue-600 flex-shrink-0" />
                   )}
                 </h4>
                 {item.clientCompany ? (
-                  <p className={`text-xs truncate ${subTextClass}`}>{item.clientCompany}</p>
+                  <p className={`text-xs font-bold truncate ${subTextClass}`}>{item.clientCompany}</p>
                 ) : item.reviewerTelegramUsername ? (
-                  <p className="text-[11px] text-blue-500 font-medium truncate">@{item.reviewerTelegramUsername}</p>
+                  <p className="text-xs text-blue-600 font-bold truncate">@{item.reviewerTelegramUsername}</p>
                 ) : (
-                  <p className={`text-[11px] font-medium ${subTextClass}`}>Verified Customer</p>
+                  <p className={`text-xs font-bold ${subTextClass}`}>Verified Client</p>
                 )}
               </div>
             </div>
