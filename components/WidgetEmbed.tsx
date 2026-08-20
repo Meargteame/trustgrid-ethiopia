@@ -108,39 +108,39 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
   // Theme Colors
   let bgClass = 'bg-white';
   let textClass = 'text-black';
-  let borderClass = 'border-2 border-black';
+  let borderClass = 'border border-gray-200 hover:border-gray-300';
   let subTextClass = 'text-gray-500';
-  let quoteColor = 'text-black';
-  let badgeBg = 'bg-brand-lime text-black border-2 border-black';
+  let quoteColor = 'text-gray-900';
+  let badgeBg = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
   
   if (theme === 'dark') {
-    bgClass = 'bg-black';
+    bgClass = 'bg-gray-950';
     textClass = 'text-white';
-    borderClass = 'border-2 border-gray-800';
+    borderClass = 'border border-gray-800 hover:border-gray-700';
     subTextClass = 'text-gray-400';
     quoteColor = 'text-gray-200';
-    badgeBg = 'bg-brand-lime text-black border-2 border-black';
+    badgeBg = 'bg-emerald-950/60 text-emerald-400 border border-emerald-800';
   } else if (theme === 'transparent') {
-    bgClass = 'bg-white/80 backdrop-blur-md';
+    bgClass = 'bg-white/90 backdrop-blur-md';
     textClass = 'text-black';
-    borderClass = 'border-2 border-black/80';
+    borderClass = 'border border-gray-200/80 hover:border-gray-300';
     subTextClass = 'text-gray-600';
     quoteColor = 'text-black';
-    badgeBg = 'bg-brand-lime text-black border-2 border-black';
+    badgeBg = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
   }
 
   // Border Radius
   let radClass = 'rounded-2xl';
   if (borderRadius === 'none') radClass = 'rounded-none';
   if (borderRadius === 'md') radClass = 'rounded-xl';
-  if (borderRadius === '2xl') radClass = 'rounded-[2rem]';
-  if (borderRadius === '3xl') radClass = 'rounded-[2.5rem]';
+  if (borderRadius === '2xl') radClass = 'rounded-2xl';
+  if (borderRadius === '3xl') radClass = 'rounded-3xl';
 
   // Shadow
-  let shadClass = 'shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]';
+  let shadClass = 'shadow-sm hover:shadow-md';
   if (shadow === 'none') shadClass = 'shadow-none';
-  if (shadow === 'sm') shadClass = 'shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]';
-  if (shadow === 'lg') shadClass = 'shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]';
+  if (shadow === 'sm') shadClass = 'shadow-sm';
+  if (shadow === 'lg') shadClass = 'shadow-lg';
 
   // Gap translation
   let gapClass = 'gap-6';
@@ -153,7 +153,7 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
     const collectUrl = `/collect/${companyHandle}`;
 
     return (
-      <div className={`w-full min-h-[280px] bg-transparent ${fontClass} p-4 sm:p-6 flex flex-col items-center justify-center antialiased`}>
+      <div className={`w-full min-h-[260px] bg-transparent ${fontClass} p-4 sm:p-6 flex flex-col items-center justify-center antialiased`}>
         <div className={`max-w-md w-full p-8 ${bgClass} ${textClass} ${borderClass} ${radClass} ${shadClass} text-center flex flex-col items-center relative transition-all`}>
           
           <div className="relative mb-4">
@@ -161,14 +161,14 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
               <img 
                 src={profileInfo.avatar_url} 
                 alt={brandTitle} 
-                className="w-16 h-16 rounded-full object-cover border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-0.5 bg-white" 
+                className="w-16 h-16 rounded-full object-cover border border-gray-200 shadow-sm p-0.5 bg-white" 
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-[#FCE676] text-black flex items-center justify-center font-black text-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black">
+              <div className="w-16 h-16 rounded-full bg-[#FCE676] text-black flex items-center justify-center font-black text-xl shadow-sm border border-black/15">
                 {brandTitle?.charAt(0)?.toUpperCase() || '⭐'}
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-brand-lime text-black rounded-full flex items-center justify-center border border-black shadow-sm">
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-sm">
               <CheckCircle2 size={14} className="stroke-[3]" />
             </div>
           </div>
@@ -188,15 +188,15 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
             href={collectUrl} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="w-full py-3 px-6 rounded-xl font-extrabold text-xs bg-brand-lime text-black hover:bg-[#c2ed3d] border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] inline-flex items-center justify-center gap-2 transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            className="w-full py-3 px-6 rounded-xl font-bold text-xs bg-black text-white hover:bg-gray-800 shadow-sm inline-flex items-center justify-center gap-2 transition-all"
           >
-            <Sparkles size={14} />
+            <Sparkles size={14} className="text-yellow-400" />
             Leave a Verified Review
           </a>
 
-          <div className="mt-5 flex items-center gap-1.5 text-[10px] text-gray-500 font-extrabold tracking-wider uppercase">
-            <Shield size={11} className="text-black" />
-            Verified with <span className="text-black font-black">TrustGrid.PRO</span>
+          <div className="mt-5 flex items-center gap-1.5 text-[10px] text-gray-400 font-bold tracking-wider uppercase">
+            <Shield size={11} className="text-gray-400" />
+            Verified with <span className="text-black font-extrabold">TrustGrid.PRO</span>
           </div>
         </div>
       </div>
@@ -239,12 +239,12 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
                   </div>
                 )}
                 {item.verificationMethod === 'telegram' ? (
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black border-2 border-black ml-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${badgeBg}`}>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-blue-200 bg-blue-50 text-blue-700 ml-2">
                     <CheckCircle2 size={11} className="stroke-[3]" />
                     Telegram
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black border-2 border-black ml-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-blue-100 text-blue-900">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 ml-2">
                     <CheckCircle2 size={11} className="stroke-[3]" />
                     Verified
                   </span>
@@ -252,7 +252,7 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
               </div>
 
               {showDate && item.createdAt && (
-                <span className={`text-[10px] font-black tracking-wider uppercase ${subTextClass}`}>
+                <span className={`text-[10px] font-bold tracking-wider uppercase ${subTextClass}`}>
                   {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               )}
@@ -260,7 +260,7 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
 
             {/* Video Attachment (if present) */}
             {item.videoUrl && (
-              <div className="mb-4 rounded-2xl overflow-hidden bg-black aspect-video relative border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative border border-gray-200 shadow-sm">
                 <video 
                   src={item.videoUrl} 
                   controls 
@@ -272,19 +272,19 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
 
             {/* Testimonial Quote Text */}
             <div className="mb-5 flex-1 relative">
-              <Quote size={20} className="text-gray-300 mb-2 opacity-60" />
-              <p className={`text-sm sm:text-base leading-relaxed font-semibold break-words whitespace-pre-wrap ${quoteColor}`}>
+              <Quote size={18} className="text-gray-300 mb-2 opacity-60" />
+              <p className={`text-sm sm:text-base leading-relaxed font-medium break-words whitespace-pre-wrap ${quoteColor}`}>
                 "{item.text}"
               </p>
             </div>
 
             {/* Reviewer Profile Card */}
-            <div className="flex items-center gap-3 pt-4 border-t-2 border-gray-100 dark:border-gray-800/80 mt-auto">
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800/80 mt-auto">
               {showAvatar && (
                 <img 
                   src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}&background=FCE676&color=111111`} 
                   alt={item.clientName} 
-                  className="w-10 h-10 rounded-full object-cover bg-gray-100 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex-shrink-0" 
+                  className="w-10 h-10 rounded-full object-cover bg-gray-100 border border-gray-200 shadow-sm flex-shrink-0" 
                 />
               )}
               <div className="min-w-0 flex-1">

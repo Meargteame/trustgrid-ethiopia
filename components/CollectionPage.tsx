@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  ArrowLeft, 
-  Video, 
-  Send, 
-  X, 
-  CheckCircle2, 
-  Loader2, 
-  Star, 
   Camera, 
-  Upload,
-  MessageCircle,
-  Gift,
-  Globe,
-  Mail,
-  User,
-  ShieldCheck,
-  Check
+  Video, 
+  Upload, 
+  Check, 
+  X, 
+  Star, 
+  Send, 
+  Loader2, 
+  MessageCircle, 
+  CheckCircle2, 
+  ShieldCheck, 
+  User, 
+  Mail, 
+  Globe, 
+  Gift, 
+  ArrowLeft,
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-
 import { Toast } from './Toast';
 
 // --- Types ---
@@ -27,60 +27,59 @@ interface QuestionConfig {
   id: string;
   label: string;
   type: 'text' | 'textarea' | 'rating';
-  required: boolean;
+  required?: boolean;
   placeholder?: string;
 }
 
 interface FormConfig {
   title: string;
   subtitle: string;
-  questions: QuestionConfig[];
+  incentive_message?: string;
   allow_video: boolean;
   allow_photo: boolean;
   allow_linkedin_import: boolean;
-  incentive_message?: string;
+  questions: QuestionConfig[];
 }
 
 interface PublicProfile {
   id: string;
-  username: string;
-  full_name: string;
   company_name: string;
   avatar_url?: string;
-  primary_color: string;
+  primary_color?: string;
+  full_name?: string;
+  username: string;
 }
 
 interface CollectionPageProps {
-   targetUsername?: string;
-   onBack: () => void;
+  targetUsername?: string;
+  onBack?: () => void;
 }
 
-// --- Default Configuration ---
+const DEFAULT_PRIMARY_COLOR = '#D4F954';
 
 const DEFAULT_CONFIG: FormConfig = {
   title: 'Share your experience',
-  subtitle: 'Your feedback helps us grow.',
-  questions: [
-    { 
-      id: 'q1', 
-      label: 'What did you like most about working with us?', 
-      type: 'textarea', 
-      required: true, 
-      placeholder: 'Share your thoughts...' 
-    },
-    { 
-      id: 'q2', 
-      label: 'How would you rate our service?', 
-      type: 'rating', 
-      required: true 
-    }
-  ],
+  subtitle: 'Your feedback helps us grow and helps others make informed decisions.',
+  incentive_message: '',
   allow_video: true,
   allow_photo: true,
-  allow_linkedin_import: true
+  allow_linkedin_import: true,
+  questions: [
+    {
+      id: 'q1',
+      label: 'What did you like most about working with us?',
+      type: 'textarea',
+      required: true,
+      placeholder: 'Write your honest feedback here...'
+    },
+    {
+      id: 'q2',
+      label: 'How would you rate our service?',
+      type: 'rating',
+      required: true
+    }
+  ]
 };
-
-const DEFAULT_PRIMARY_COLOR = '#D4F954'; // Lime green default
 
 export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, onBack }) => {
   // --- State ---
@@ -123,55 +122,83 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
   const [telegramUser, setTelegramUser] = useState<any>(null);
   const telegramWrapperRef = useRef<HTMLDivElement>(null);
 
-  // --- Initialization ---
-
   useEffect(() => {
-    async function init() {
-      if (!targetUsername) {
-        // Preview Mode: Use current logged-in user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          loadDataForUser(user.id);
-        } else {
-          setError("Preview requires login.");
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Public Mode: Resolve username
+    const fetchTargetProfileAndForm = async () => {
       try {
-        const { data: profiles, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, company_name, avatar_url, primary_color')
-          .eq('username', targetUsername)
-          .single();
+        setLoading(true);
+        let usernameToFetch = targetUsername;
 
-        if (profileError || !profiles) {
-          // Fallback: Check if it's the logged-in user viewing their own (during dev/testing)
+        if (!usernameToFetch) {
           const { data: { user } } = await supabase.auth.getUser();
-          if (user && user.user_metadata?.username === targetUsername) {
-             console.log("Fallback to self for preview");
-             loadDataForUser(user.id);
-             return;
+          if (user) {
+            const { data: ownProfile } = await supabase
+              .from('profiles')
+              .select('id, username, company_name, avatar_url, primary_color, full_name')
+              .eq('id', user.id)
+              .single();
+            if (ownProfile) {
+              setProfile(ownProfile);
+              await fetchFormConfig(ownProfile.id);
+              return;
+            }
           }
-          setError("User not found.");
-          setLoading(false);
+        }
+
+        if (!usernameToFetch) {
+          setError('No user specified');
           return;
         }
 
-        loadDataForUser(profiles.id, profiles);
+        const cleanUsername = usernameToFetch.replace(/\/+$/, '').trim();
 
-      } catch (err) {
-        console.error("Error resolving user:", err);
-        setError("Failed to load profile.");
+        // 1. Fetch Profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, username, company_name, avatar_url, primary_color, full_name')
+          .ilike('username', cleanUsername)
+          .single();
+
+        if (profileError || !profileData) {
+          throw new Error('Company not found');
+        }
+
+        setProfile(profileData);
+
+        // 2. Fetch Form Config
+        await fetchFormConfig(profileData.id);
+
+      } catch (err: any) {
+        console.error('Error fetching collection profile:', err);
+        setError(err.message || 'Failed to load page');
+      } finally {
         setLoading(false);
       }
-    }
+    };
 
-    init();
+    const fetchFormConfig = async (userId: string) => {
+      const { data: formConfigData } = await supabase
+        .from('form_configs')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (formConfigData) {
+        setConfig({
+          title: formConfigData.title || DEFAULT_CONFIG.title,
+          subtitle: formConfigData.subtitle || DEFAULT_CONFIG.subtitle,
+          incentive_message: formConfigData.incentive_message || '',
+          allow_video: formConfigData.allow_video ?? true,
+          allow_photo: formConfigData.allow_photo ?? true,
+          allow_linkedin_import: formConfigData.allow_linkedin_import ?? true,
+          questions: (formConfigData.questions as QuestionConfig[]) || DEFAULT_CONFIG.questions
+        });
+      }
+    };
+
+    fetchTargetProfileAndForm();
   }, [targetUsername]);
 
+  // Telegram Login Script Integration
   useEffect(() => {
     (window as any).onTelegramAuth = async (user: any) => {
        try {
@@ -191,6 +218,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           if (data.user.photo_url && !photoPreview) {
             setPhotoPreview(data.user.photo_url);
           }
+          showToast('Telegram verified successfully!', 'success');
        } catch (err: any) {
           showToast('Telegram verification failed: ' + err.message, 'error');
        }
@@ -210,60 +238,12 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
     }
   }, [telegramUser, reviewerName, photoPreview]);
 
-  // Helper to load config and profile
-  async function loadDataForUser(userId: string, knownProfile?: any) {
-    try {
-      // 1. Get Profile (if not already fetched)
-      let profileData = knownProfile;
-      if (!profileData) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, company_name, avatar_url, primary_color')
-          .eq('id', userId)
-          .single();
-        profileData = data;
-      }
-      
-      if (profileData) {
-        setProfile(profileData);
-      }
-
-      // 2. Get Form Config
-      const { data: configData } = await supabase
-        .from('form_configs')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      if (configData) {
-        const parsedQuestions = typeof configData.questions === 'string' 
-           ? JSON.parse(configData.questions) 
-           : configData.questions;
-
-        setConfig({
-          title: configData.title || DEFAULT_CONFIG.title,
-          subtitle: configData.subtitle || DEFAULT_CONFIG.subtitle,
-          questions: parsedQuestions || DEFAULT_CONFIG.questions,
-          allow_video: configData.allow_video ?? DEFAULT_CONFIG.allow_video,
-          allow_photo: configData.allow_photo ?? DEFAULT_CONFIG.allow_photo,
-          allow_linkedin_import: configData.allow_linkedin_import ?? DEFAULT_CONFIG.allow_linkedin_import,
-          incentive_message: configData.incentive_message || ''
-        });
-      }
-
-    } catch (err) {
-      console.error("Error loading user data:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // --- Handlers ---
-
-  const handleAnswerChange = (questionId: string, value: any) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+  // Handle Dynamic Answers
+  const handleAnswerChange = (qId: string, val: any) => {
+    setAnswers(prev => ({ ...prev, [qId]: val }));
   };
 
+  // Photo Upload Handler
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -275,35 +255,32 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
   const clearPhoto = () => {
     setPhotoFile(null);
     setPhotoPreview(null);
-    if (photoInputRef.current) {
-      photoInputRef.current.value = '';
-    }
+    if (photoInputRef.current) photoInputRef.current.value = '';
   };
 
+  // Video Recording Logic
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       setMediaStream(stream);
       setIsRecording(true);
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
       mediaRecorderRef.current = mediaRecorder;
-      const chunks: BlobPart[] = [];
+      const chunks: Blob[] = [];
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.push(e.data);
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        setVideoBlob(blob);
-        setVideoPreview(URL.createObjectURL(blob));
-        
-        // Stop all tracks
+        const completeBlob = new Blob(chunks, { type: 'video/webm' });
+        setVideoBlob(completeBlob);
+        setVideoPreview(URL.createObjectURL(completeBlob));
         stream.getTracks().forEach(track => track.stop());
         setMediaStream(null);
         setIsRecording(false);
@@ -313,7 +290,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
     } catch (err) {
       console.error("Error accessing camera:", err);
-      showToast("Could not access camera/microphone. Please check browser permissions.", "error");
+      showToast("Could not access camera/microphone. Please check permissions.", "error");
     }
   };
 
@@ -391,7 +368,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           text: textResponses || "Verified Testimonial",
           video_url: videoUrl,
           score: score,
-          status: 'pending',
+          status: 'verified', // Verified customer submission
           source: 'web_collection',
           social_url: reviewerSocialUrl || null,
           consent_given: consentGiven,
@@ -421,21 +398,22 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
+      <div className="min-h-screen bg-white bg-grid flex flex-col items-center justify-center gap-3">
+        <div className="w-12 h-12 rounded-full border-3 border-gray-200 border-t-black animate-spin"></div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Loading Form...</p>
       </div>
     );
   }
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-sm border border-gray-200 p-8 text-center">
+      <div className="min-h-screen bg-white bg-grid flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-md border border-gray-200 p-8 text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Page Not Found</h2>
           <p className="text-gray-500 mb-6 text-sm">{error || "This collection page does not exist."}</p>
           <button 
             onClick={onBack} 
-            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-black text-white rounded-xl hover:bg-gray-800 font-bold text-sm transition-colors shadow-md"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-black text-white rounded-xl hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" /> Go Back
           </button>
@@ -446,18 +424,18 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-gray-100 p-8 text-center animate-fade-in">
-          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-600">
-            <CheckCircle2 className="w-9 h-9" />
+      <div className="min-h-screen bg-white bg-grid flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-lg border border-gray-200 p-8 text-center animate-fade-in">
+          <div className="w-16 h-16 bg-[#D4F954]/20 border border-black/10 rounded-full flex items-center justify-center mx-auto mb-6 text-black">
+            <CheckCircle2 className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">Thank You!</h2>
+          <h2 className="text-2xl font-extrabold text-black mb-2">Thank You!</h2>
           <p className="text-gray-600 mb-8 text-sm leading-relaxed">
-            Your verified review has been submitted to <span className="font-bold text-gray-900">{profile.company_name || profile.full_name}</span>. Thank you for your feedback!
+            Your verified review has been submitted to <span className="font-bold text-black">{profile.company_name || profile.full_name}</span>. Thank you for your feedback!
           </p>
           <button 
             onClick={() => window.location.reload()}
-            className="py-3 px-6 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition-colors"
+            className="py-3 px-6 rounded-xl bg-gray-100 hover:bg-gray-200 text-black font-bold text-xs transition-colors"
           >
             Submit Another Response
           </button>
@@ -466,10 +444,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
     );
   }
 
-  const primaryColor = profile.primary_color || DEFAULT_PRIMARY_COLOR;
+  const brandTitle = profile.company_name || profile.full_name || 'TrustGrid Business';
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans antialiased pb-16 relative">
+    <div className="min-h-screen bg-white bg-grid font-sans antialiased pb-20 relative text-black">
       {/* Toast Notification */}
       {toast && (
         <Toast
@@ -478,52 +456,56 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           onClose={() => setToast(null)}
         />
       )}
+
       {/* Header / Branding */}
-      <div className="bg-white border-b border-gray-200/80 sticky top-0 z-30 backdrop-blur-md bg-white/90">
-        <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
            <div className="flex items-center gap-3">
              {profile.avatar_url ? (
                <img src={profile.avatar_url} alt="Logo" className="w-9 h-9 rounded-full object-cover border border-gray-200" />
              ) : (
-                <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs">
-                  {profile.company_name?.charAt(0) || profile.full_name?.charAt(0) || '?'}
+                <div className="w-9 h-9 rounded-full bg-[#FCE676] text-black border border-black/20 flex items-center justify-center font-black text-xs">
+                  {brandTitle.charAt(0).toUpperCase()}
                 </div>
              )}
              <div>
-               <h1 className="font-bold text-sm text-gray-900 leading-tight">{profile.company_name || profile.full_name}</h1>
-               <p className="text-[11px] text-gray-400 font-medium">Verified Reviews Collection</p>
+               <h1 className="font-extrabold text-sm text-black leading-tight flex items-center gap-1.5">
+                 {brandTitle}
+                 <CheckCircle2 size={13} className="text-green-600 inline" />
+               </h1>
+               <p className="text-[11px] text-gray-500 font-medium">Verified Reviews Collection</p>
              </div>
            </div>
-           {onBack && (
-              <button 
-                onClick={onBack} 
-                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-                title="Exit Preview"
-              >
-                  <X className="w-5 h-5" />
-              </button>
-           )}
+           
+           <div className="flex items-center gap-2">
+             <span className="text-xs font-bold text-gray-400">Powered by</span>
+             <span className="font-extrabold text-xs text-black">TrustGrid<span className="text-brand-lime bg-black px-1 py-0.5 rounded text-[10px] ml-0.5">.PRO</span></span>
+           </div>
         </div>
-      </div>
+      </header>
 
       <div className="max-w-2xl mx-auto px-4 pt-10">
         {/* Title Header */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">{config.title}</h2>
-          <p className="text-sm text-gray-500 font-medium">{config.subtitle}</p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4F954]/30 border border-black/10 text-black text-xs font-bold uppercase tracking-wider mb-3">
+            <Sparkles size={12} />
+            Verified Customer Feedback
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-black mb-2 tracking-tight">{config.title}</h2>
+          <p className="text-sm text-gray-600 font-medium max-w-md mx-auto">{config.subtitle}</p>
         </div>
 
         {/* Incentive Banner (if configured) */}
         {config.incentive_message && (
-          <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-400/10 to-brand-lime/20 border border-amber-300/40 flex items-start gap-3.5 shadow-sm">
-            <div className="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-[#FCE676]/20 border border-amber-300/60 flex items-start gap-3.5 shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-amber-400/30 text-amber-900 flex items-center justify-center flex-shrink-0 mt-0.5">
               <Gift size={20} />
             </div>
             <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-full inline-block mb-1">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full inline-block mb-1">
                 Reward for Reviewers
               </span>
-              <p className="text-xs sm:text-sm font-bold text-gray-800 leading-relaxed">
+              <p className="text-xs sm:text-sm font-bold text-gray-900 leading-relaxed">
                 {config.incentive_message}
               </p>
             </div>
@@ -533,10 +515,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* Dynamic Questions */}
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-200/80 overflow-hidden divide-y divide-gray-100">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden divide-y divide-gray-100">
             {config.questions.map((q) => (
               <div key={q.id} className="p-6">
-                <label className="block text-sm font-bold text-gray-800 mb-2.5">
+                <label className="block text-sm font-bold text-gray-900 mb-2">
                   {q.label} {q.required && <span className="text-red-500">*</span>}
                 </label>
                 
@@ -545,7 +527,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                     required={q.required}
                     rows={4}
                     placeholder={q.placeholder || "Share details of your experience..."}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black focus:border-transparent transition-all outline-none resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black focus:border-transparent transition-all outline-none resize-none placeholder-gray-400"
                     value={answers[q.id] || ''}
                     onChange={(e) => handleAnswerChange(q.id, e.target.value)}
                   />
@@ -556,7 +538,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                     type="text"
                     required={q.required}
                     placeholder={q.placeholder || "Your answer"}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black focus:border-transparent transition-all outline-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black focus:border-transparent transition-all outline-none placeholder-gray-400"
                     value={answers[q.id] || ''}
                     onChange={(e) => handleAnswerChange(q.id, e.target.value)}
                   />
@@ -574,8 +556,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                         <Star 
                           className={`w-8 h-8 ${(answers[q.id] || 0) >= star ? 'fill-current' : 'text-gray-200'}`}
                           style={{ 
-                            color: (answers[q.id] || 0) >= star ? '#FBBF24' : undefined,
-                            fill: (answers[q.id] || 0) >= star ? '#FBBF24' : 'none' 
+                            color: (answers[q.id] || 0) >= star ? '#F59E0B' : undefined,
+                            fill: (answers[q.id] || 0) >= star ? '#F59E0B' : 'none' 
                            }}
                         />
                       </button>
@@ -588,11 +570,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
           {/* Photo / Headshot Upload (if enabled) */}
           {config.allow_photo && (
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-200/80 p-6">
-              <h3 className="text-sm font-bold text-gray-800 mb-1 flex items-center gap-2">
-                <Camera className="w-4 h-4 text-gray-600" /> Your Profile Photo (Optional)
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
+                <Camera className="w-4 h-4 text-gray-700" /> Your Profile Photo (Optional)
               </h3>
-              <p className="text-xs text-gray-400 mb-4">Adding a photo increases testimonial credibility by 40%</p>
+              <p className="text-xs text-gray-500 mb-4">Adding a headshot or company logo increases testimonial credibility</p>
 
               <input 
                 type="file" 
@@ -603,15 +585,15 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
               />
 
               {photoPreview ? (
-                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-2xl border border-gray-200/80">
+                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
                   <img 
                     src={photoPreview} 
                     alt="Preview" 
-                    className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-sm" 
+                    className="w-14 h-14 rounded-xl object-cover border border-gray-200 shadow-sm" 
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-gray-800 truncate">Photo Attached</p>
-                    <p className="text-[11px] text-gray-400">Will be shown beside your review</p>
+                    <p className="text-xs font-bold text-gray-900 truncate">Photo Attached</p>
+                    <p className="text-[11px] text-gray-500">Will appear alongside your review</p>
                   </div>
                   <button
                     type="button"
@@ -626,7 +608,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                 <button
                   type="button"
                   onClick={() => photoInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2.5 p-4 border-2 border-dashed border-gray-200 rounded-2xl hover:border-gray-400 hover:bg-gray-50 transition-all group text-xs font-bold text-gray-600"
+                  className="w-full flex items-center justify-center gap-2.5 p-4 border border-dashed border-gray-300 rounded-xl hover:border-black hover:bg-gray-50 transition-all group text-xs font-bold text-gray-700"
                 >
                   <Upload size={16} className="text-gray-400 group-hover:text-black transition-colors" />
                   <span>Upload Headshot or Company Logo</span>
@@ -637,22 +619,22 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
           {/* Video Recording Section (if enabled) */}
           {config.allow_video && (
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-200/80 p-6">
-              <h3 className="text-sm font-bold text-gray-800 mb-1 flex items-center gap-2">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
                 <Video className="w-4 h-4 text-rose-500" /> Record a Video Review (Optional)
               </h3>
-              <p className="text-xs text-gray-400 mb-4">Record a short 30-60 second video from your camera</p>
+              <p className="text-xs text-gray-500 mb-4">Record a short 30-60 second video from your camera</p>
               
               {!isRecording && !videoPreview ? (
                 <button
                   type="button"
                   onClick={startRecording}
-                  className="w-full flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-200 rounded-2xl hover:border-rose-300 hover:bg-rose-50/40 transition-all group"
+                  className="w-full flex flex-col items-center justify-center gap-2 p-8 border border-dashed border-gray-300 rounded-xl hover:border-rose-400 hover:bg-rose-50/30 transition-all group"
                 >
-                  <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center group-hover:bg-rose-100 transition-colors text-rose-600">
+                  <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center group-hover:bg-rose-100 transition-colors text-rose-600">
                     <Camera className="w-6 h-6" />
                   </div>
-                  <span className="font-bold text-xs text-gray-700">Click to Start Camera</span>
+                  <span className="font-bold text-xs text-gray-800">Click to Start Camera</span>
                 </button>
               ) : (
                 <div className="relative rounded-2xl overflow-hidden bg-black aspect-video shadow-inner">
@@ -691,11 +673,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           )}
 
           {/* About You Section */}
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-200/80 p-6 space-y-4">
-            <h3 className="text-sm font-bold text-gray-800 mb-1 flex items-center gap-2">
-              <User size={16} className="text-gray-600" /> About You
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+            <h3 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
+              <User size={16} className="text-gray-700" /> About You
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Your public profile details for this testimonial</p>
+            <p className="text-xs text-gray-500 mb-4">Your public profile details for this testimonial</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -706,7 +688,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                   placeholder="e.g. Dawit Tadesse"
                   value={reviewerName}
                   onChange={(e) => setReviewerName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none placeholder-gray-400"
                 />
               </div>
               <div>
@@ -716,7 +698,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                   placeholder="e.g. Marketing Director"
                   value={reviewerCompany}
                   onChange={(e) => setReviewerCompany(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none placeholder-gray-400"
                 />
               </div>
             </div>
@@ -731,7 +713,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                   placeholder="name@example.com"
                   value={reviewerEmail}
                   onChange={(e) => setReviewerEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none placeholder-gray-400"
                 />
               </div>
               <div>
@@ -743,14 +725,14 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                   placeholder="linkedin.com/in/you or t.me/username"
                   value={reviewerSocialUrl}
                   onChange={(e) => setReviewerSocialUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none placeholder-gray-400"
                 />
               </div>
             </div>
           </div>
 
           {/* Consent Checkbox */}
-          <div className="p-4 bg-white rounded-2xl border border-gray-200/80">
+          <div className="p-4 bg-white rounded-2xl border border-gray-200">
             <label className="flex items-start gap-3 cursor-pointer">
               <input 
                 type="checkbox"
@@ -759,8 +741,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                 onChange={(e) => setConsentGiven(e.target.checked)}
                 className="w-4 h-4 rounded text-black accent-black cursor-pointer mt-0.5" 
               />
-              <span className="text-xs text-gray-600 leading-relaxed">
-                I grant permission to <strong className="text-gray-900">{profile.company_name || profile.full_name}</strong> to use and display this testimonial, my name, and my photo on their website and promotional materials.
+              <span className="text-xs text-gray-600 leading-relaxed font-medium">
+                I grant permission to <strong className="text-black">{brandTitle}</strong> to use and display this testimonial, my name, and my photo on their website and promotional materials.
               </span>
             </label>
           </div>
@@ -768,13 +750,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           {/* Submission and Telegram Verification */}
           <div className="pt-2">
             {!telegramUser ? (
-               <div className="bg-gradient-to-b from-blue-50/80 to-blue-100/40 rounded-3xl p-6 sm:p-8 border border-blue-200/70 flex flex-col items-center text-center shadow-sm">
-                  <div className="w-14 h-14 bg-blue-500 text-white rounded-2xl flex items-center justify-center mb-4 shadow-md shadow-blue-500/20">
-                     <MessageCircle size={28} />
+               <div className="bg-blue-50/60 rounded-2xl p-6 sm:p-8 border border-blue-100 flex flex-col items-center text-center shadow-sm">
+                  <div className="w-12 h-12 bg-blue-500 text-white rounded-xl flex items-center justify-center mb-3 shadow-md shadow-blue-500/20">
+                     <MessageCircle size={24} />
                   </div>
-                  <h3 className="font-black text-lg text-blue-950 mb-1.5">Verify with Telegram to Submit</h3>
-                  <p className="text-xs text-blue-800/80 max-w-sm mb-6 font-medium leading-relaxed">
-                    We use Telegram verification to authenticate genuine customers and eliminate spam reviews.
+                  <h3 className="font-extrabold text-base text-blue-950 mb-1">Verify with Telegram to Submit</h3>
+                  <p className="text-xs text-blue-800/80 max-w-sm mb-5 font-medium leading-relaxed">
+                    We use Telegram verification to authenticate genuine customers and eliminate fake reviews.
                   </p>
                   <div ref={telegramWrapperRef} className="min-h-[44px]"></div>
                </div>
@@ -783,12 +765,12 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                  {/* Verified Telegram Banner */}
                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold">
-                       <ShieldCheck size={20} />
+                     <div className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold">
+                       <ShieldCheck size={18} />
                      </div>
                      <div>
                        <p className="text-xs font-bold text-emerald-950">Verified as @{telegramUser.username || telegramUser.first_name}</p>
-                       <p className="text-[11px] text-emerald-700">Authenticated via Telegram</p>
+                       <p className="text-[11px] text-emerald-700 font-medium">Cryptographic Proof Active</p>
                      </div>
                    </div>
                    <span className="text-[11px] font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full flex items-center gap-1">
@@ -799,8 +781,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                  <button
                    type="submit"
                    disabled={isSubmitting}
-                   className="w-full py-4 rounded-2xl text-black font-extrabold shadow-lg hover:shadow-xl transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                   style={{ backgroundColor: primaryColor }}
+                   className="w-full py-4 rounded-xl bg-black text-white font-extrabold shadow-md hover:bg-gray-800 transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                  >
                    {isSubmitting ? (
                      <>
@@ -819,7 +800,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
             <div className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-400 mt-6 font-medium">
                <ShieldCheck size={14} className="text-gray-400" />
-               <span>Secured and verified by <strong>TrustGrid.et</strong></span>
+               <span>Secured and verified by <strong>TrustGrid.PRO</strong></span>
             </div>
           </div>
         </form>

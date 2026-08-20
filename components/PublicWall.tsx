@@ -154,9 +154,9 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white bg-grid flex flex-col items-center justify-center gap-4 text-black font-sans">
-        <div className="w-16 h-16 rounded-full border-4 border-black border-t-[#D4F954] animate-spin shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></div>
-        <p className="text-sm font-black text-black uppercase tracking-wider">
+      <div className="min-h-screen bg-white bg-grid flex flex-col items-center justify-center gap-3 text-black font-sans">
+        <div className="w-12 h-12 rounded-full border-3 border-gray-200 border-t-black animate-spin"></div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
           Loading Wall of Proof...
         </p>
       </div>
@@ -166,17 +166,17 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-white bg-grid flex flex-col items-center justify-center p-6 text-center text-black font-sans">
-        <div className="max-w-md w-full p-8 rounded-[2.5rem] bg-white border-4 border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
-          <div className="w-16 h-16 rounded-2xl bg-[#D4F954] border-2 border-black text-black flex items-center justify-center mx-auto mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <Shield size={32} />
+        <div className="max-w-md w-full p-8 rounded-3xl bg-white border border-gray-200 shadow-md">
+          <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-200 text-black flex items-center justify-center mx-auto mb-4">
+            <Shield size={28} />
           </div>
-          <h1 className="text-2xl font-black mb-2 tracking-tight">Wall Not Found</h1>
-          <p className="text-gray-600 text-sm mb-6 font-medium">
+          <h1 className="text-2xl font-extrabold mb-2 tracking-tight">Wall Not Found</h1>
+          <p className="text-gray-500 text-sm mb-6 font-medium">
             The requested public wall for "<span className="text-black font-bold font-mono">{companyHandle}</span>" does not exist or has been relocated.
           </p>
           <a
             href="/"
-            className="w-full py-3.5 px-4 rounded-xl font-black bg-black text-white hover:bg-gray-800 transition-all inline-block text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            className="w-full py-3 px-4 rounded-xl font-bold bg-black text-white hover:bg-gray-800 transition-all inline-block text-sm shadow-sm"
           >
             Go to Homepage
           </a>
@@ -200,18 +200,18 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-black">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 group">
             <span className="font-extrabold text-2xl tracking-tighter text-black">
-              TrustGrid<span className="text-brand-lime bg-black px-1.5 py-0.5 rounded-md ml-1 text-base">.PRO</span>
+              TrustGrid<span className="text-brand-lime bg-black px-1.5 py-0.5 rounded text-sm ml-1">.PRO</span>
             </span>
           </a>
 
           <div className="flex items-center gap-3">
             <button
               onClick={handleCopyShare}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-gray-50 text-black border-2 border-black text-xs font-bold transition-all flex items-center gap-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-gray-50 text-black border border-gray-200 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
               title="Share Wall"
             >
               <Share2 size={13} />
@@ -219,9 +219,9 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
             </button>
             <a
               href={`/collect/${companyHandle}`}
-              className="px-4 py-2 rounded-xl bg-brand-lime hover:bg-[#c4ec41] text-black font-extrabold text-xs transition-all flex items-center gap-1.5 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+              className="px-4 py-2 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <Sparkles size={13} />
+              <Sparkles size={13} className="text-yellow-400" />
               Leave Review
             </a>
           </div>
@@ -232,28 +232,28 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       <section className="pt-12 pb-10 px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-4xl mx-auto text-center">
           
-          {/* Avatar with Neo-Brutalist Border */}
-          <div className="relative inline-block mb-6">
+          {/* Avatar */}
+          <div className="relative inline-block mb-5">
             {profile.avatar_url ? (
               <img
                 src={profile.avatar_url}
                 alt={brandTitle}
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-0.5"
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-gray-200 shadow-md bg-white p-0.5"
               />
             ) : (
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#FCE676] text-black border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center text-3xl sm:text-4xl font-black">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#FCE676] text-black border-2 border-gray-200 shadow-md flex items-center justify-center text-3xl sm:text-4xl font-black">
                 {brandTitle.charAt(0).toUpperCase()}
               </div>
             )}
             <div 
-              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-brand-lime text-black flex items-center justify-center border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" 
+              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-sm" 
               title="100% Cryptographically Verified Business"
             >
               <CheckCircle2 size={18} className="stroke-[3]" />
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-brand-lime border-2 border-black text-black text-xs font-black tracking-wider uppercase mb-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4F954]/40 border border-black/10 text-black text-xs font-bold tracking-wide uppercase mb-3">
             <Shield size={12} />
             Verified Wall of Proof
           </div>
@@ -262,31 +262,31 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
             {brandTitle}
           </h1>
 
-          <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto mb-8 font-medium leading-relaxed">
-            See what verified clients are saying. Every review is cryptographically authentic with verified identity.
+          <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-8 font-medium leading-relaxed">
+            See what verified clients are saying. Every review is authentic with cryptographic identity verification.
           </p>
 
           {/* Social Proof Stats Bar */}
-          <div className="grid grid-cols-3 max-w-xl mx-auto bg-white rounded-2xl border-3 border-black p-4 divide-x-2 divide-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <div className="grid grid-cols-3 max-w-xl mx-auto bg-white rounded-2xl border border-gray-200 p-4 divide-x divide-gray-100 shadow-sm">
             <div className="px-3 text-center">
               <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
                 {[1, 2, 3, 4, 5].map(s => (
                   <Star key={s} size={14} className="fill-amber-400 text-amber-500" />
                 ))}
               </div>
-              <p className="text-[11px] font-extrabold text-black uppercase tracking-wider">5.0 Star Rating</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">5.0 Star Rating</p>
             </div>
             
             <div className="px-3 text-center">
-              <div className="text-xl font-black text-black">{testimonials.length}</div>
-              <p className="text-[11px] font-extrabold text-gray-600 uppercase tracking-wider">Total Proofs</p>
+              <div className="text-xl font-extrabold text-black">{testimonials.length}</div>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Total Proofs</p>
             </div>
 
             <div className="px-3 text-center">
-              <div className="text-xl font-black text-black flex items-center justify-center gap-1">
-                <CheckCircle2 size={18} className="text-green-600" /> 100%
+              <div className="text-xl font-extrabold text-emerald-600 flex items-center justify-center gap-1">
+                <CheckCircle2 size={18} /> 100%
               </div>
-              <p className="text-[11px] font-extrabold text-gray-600 uppercase tracking-wider">Verified Proof</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Verified Proof</p>
             </div>
           </div>
 
@@ -295,16 +295,16 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
       {/* Filter and Search Controls */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 w-full">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
           
           {/* Filter Pills */}
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             <button
               onClick={() => setFilterType('all')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap border-2 border-black ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
                 filterType === 'all'
-                  ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-white text-black hover:bg-gray-100'
+                  ? 'bg-black text-white border-black shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
               }`}
             >
               <MessageSquare size={13} />
@@ -313,10 +313,10 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
             <button
               onClick={() => setFilterType('video')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap border-2 border-black ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
                 filterType === 'video'
-                  ? 'bg-brand-lime text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-white text-black hover:bg-gray-100'
+                  ? 'bg-black text-white border-black shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
               }`}
             >
               <Video size={13} />
@@ -325,10 +325,10 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
             <button
               onClick={() => setFilterType('telegram')}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap border-2 border-black ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
                 filterType === 'telegram'
-                  ? 'bg-brand-yellow text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-white text-black hover:bg-gray-100'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
               }`}
             >
               <Shield size={13} />
@@ -338,13 +338,13 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
           {/* Search Input */}
           <div className="relative w-full sm:w-64">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search proofs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border-2 border-black rounded-xl text-xs text-black placeholder-gray-500 font-bold focus:outline-none focus:bg-yellow-50 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs text-black placeholder-gray-400 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
             />
           </div>
 
@@ -354,19 +354,19 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       {/* Main Reviews Grid */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28 flex-1 w-full">
         {filteredTestimonials.length === 0 ? (
-          <div className="py-20 px-6 rounded-[2.5rem] bg-white border-3 border-dashed border-black text-center max-w-lg mx-auto shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-            <div className="w-16 h-16 rounded-2xl bg-brand-lime border-2 border-black text-black flex items-center justify-center mx-auto mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <Sparkles size={28} />
+          <div className="py-20 px-6 rounded-3xl bg-white border border-dashed border-gray-300 text-center max-w-lg mx-auto shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-200 text-black flex items-center justify-center mx-auto mb-4">
+              <Sparkles size={24} />
             </div>
-            <h3 className="text-2xl font-black text-black mb-2">No Reviews Found</h3>
-            <p className="text-sm text-gray-600 mb-6 max-w-sm mx-auto font-medium leading-relaxed">
+            <h3 className="text-xl font-extrabold text-black mb-2">No Reviews Found</h3>
+            <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto font-medium leading-relaxed">
               {searchQuery ? "No reviews match your search query." : `Be the first customer to share your verified experience with ${brandTitle}!`}
             </p>
             <a
               href={`/collect/${companyHandle}`}
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-brand-lime hover:bg-[#c2ed3d] text-black font-extrabold text-xs transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs transition-all shadow-sm"
             >
-              <Sparkles size={14} />
+              <Sparkles size={14} className="text-yellow-400" />
               Leave a Verified Review
             </a>
           </div>
@@ -375,7 +375,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
             {filteredTestimonials.map((item) => (
               <div
                 key={item.id}
-                className="rounded-[2rem] bg-white border-3 border-black p-6 flex flex-col justify-between hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all duration-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] group relative"
+                className="rounded-2xl bg-white border border-gray-200 p-6 flex flex-col justify-between hover:shadow-md hover:border-gray-300 transition-all duration-200 shadow-sm group relative"
               >
                 <div>
                   {/* Top Header: Stars + Date + Verified Badge */}
@@ -387,12 +387,12 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                         ))}
                       </div>
                       {item.verificationMethod === 'telegram' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#D4F954] text-black border-2 border-black ml-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 ml-2">
                           <CheckCircle2 size={11} className="stroke-[3]" />
                           Telegram
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-900 border-2 border-black ml-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 ml-2">
                           <CheckCircle2 size={11} className="stroke-[3]" />
                           Verified
                         </span>
@@ -400,7 +400,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                     </div>
 
                     {item.createdAt && (
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                         {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                     )}
@@ -408,7 +408,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
                   {/* Video Player (if attached) */}
                   {item.videoUrl && (
-                    <div className="mb-4 rounded-2xl overflow-hidden bg-black aspect-video relative border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative border border-gray-200 shadow-sm">
                       <video
                         src={item.videoUrl}
                         controls
@@ -420,30 +420,30 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
                   {/* Quote Body */}
                   <div className="mb-6">
-                    <Quote size={20} className="text-gray-300 mb-2" />
-                    <p className="text-sm sm:text-base leading-relaxed text-black font-semibold break-words whitespace-pre-wrap">
+                    <Quote size={18} className="text-gray-300 mb-2" />
+                    <p className="text-sm sm:text-base leading-relaxed text-gray-900 font-medium break-words whitespace-pre-wrap">
                       "{item.text}"
                     </p>
                   </div>
                 </div>
 
                 {/* Reviewer Profile Card */}
-                <div className="flex items-center gap-3 pt-4 border-t-2 border-gray-100 mt-auto">
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-100 mt-auto">
                   <img
                     src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}&background=FCE676&color=111111`}
                     alt={item.clientName}
-                    className="w-11 h-11 rounded-full object-cover bg-gray-100 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex-shrink-0"
+                    className="w-10 h-10 rounded-full object-cover bg-gray-100 border border-gray-200 shadow-sm flex-shrink-0"
                   />
                   <div className="min-w-0 flex-1">
                     <h4 className="font-extrabold text-sm text-black truncate leading-tight flex items-center gap-1.5">
                       {item.clientName}
                     </h4>
                     {item.clientCompany ? (
-                      <p className="text-xs text-gray-500 font-bold truncate mt-0.5">{item.clientCompany}</p>
+                      <p className="text-xs text-gray-500 font-medium truncate mt-0.5">{item.clientCompany}</p>
                     ) : item.reviewerTelegramUsername ? (
-                      <p className="text-xs text-blue-600 font-bold truncate mt-0.5">@{item.reviewerTelegramUsername}</p>
+                      <p className="text-xs text-blue-600 font-medium truncate mt-0.5">@{item.reviewerTelegramUsername}</p>
                     ) : (
-                      <p className="text-xs text-gray-400 font-bold truncate mt-0.5">Verified Client</p>
+                      <p className="text-xs text-gray-400 font-medium mt-0.5">Verified Client</p>
                     )}
                   </div>
                 </div>
@@ -455,14 +455,14 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
       {/* Floating Bottom CTA Bar */}
       <aside className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 max-w-xl w-[92%] sm:w-auto">
-        <div className="bg-white border-3 border-black px-6 py-3 rounded-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-black font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-brand-lime border border-black animate-ping"></span>
-            Verified by <strong className="font-extrabold">TrustGrid.PRO</strong>
+        <div className="bg-white/95 backdrop-blur-md border border-gray-200 px-5 py-2.5 rounded-full shadow-lg flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-xs text-gray-800 font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+            Verified by <strong className="font-extrabold text-black">TrustGrid.PRO</strong>
           </div>
           <a
             href={`/collect/${companyHandle}`}
-            className="px-4 py-2 rounded-full bg-brand-lime hover:bg-[#c2ed3d] text-black font-extrabold text-xs transition-all border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1.5 whitespace-nowrap active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            className="px-4 py-1.5 rounded-full bg-black hover:bg-gray-800 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap"
           >
             Leave Review
             <ArrowRight size={13} />
@@ -471,10 +471,10 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       </aside>
 
       {/* Footer */}
-      <footer className="border-t-2 border-black bg-white py-8 text-center text-xs font-bold text-gray-500 mt-auto">
+      <footer className="border-t border-gray-100 bg-white py-8 text-center text-xs font-medium text-gray-400 mt-auto">
         <p>
           Protected & Verified by{' '}
-          <a href="/" className="text-black font-extrabold hover:underline">
+          <a href="/" className="text-black font-bold hover:underline">
             TrustGrid.PRO
           </a>
         </p>
