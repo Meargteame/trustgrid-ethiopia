@@ -487,10 +487,12 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
       <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
            <div className="flex items-center gap-3">
-             {profile.avatar_url ? (
-               <img src={profile.avatar_url} alt="Logo" className="w-9 h-9 rounded-full object-cover border border-gray-200" />
+             {profile.logo_url || profile.avatar_url ? (
+               <div className="w-9 h-9 rounded-xl bg-white border border-gray-200 p-1 flex items-center justify-center overflow-hidden shadow-xs">
+                 <img src={profile.logo_url || profile.avatar_url} alt="Logo" className="w-full h-full object-contain" />
+               </div>
              ) : (
-                <div className="w-9 h-9 rounded-full bg-[#FCE676] text-black border border-black/20 flex items-center justify-center font-black text-xs">
+                <div className="w-9 h-9 rounded-xl bg-[#FCE676] text-black border border-black/20 flex items-center justify-center font-black text-xs">
                   {brandTitle.charAt(0).toUpperCase()}
                 </div>
              )}

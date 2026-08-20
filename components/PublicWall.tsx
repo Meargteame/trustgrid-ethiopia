@@ -4,7 +4,7 @@ import { TestimonialData, WidgetConfig } from '../types';
 import { 
   CheckCircle2, Star, Quote, Search, Share2, Play, 
   Shield, Sparkles, Filter, Video, MessageSquare, ExternalLink,
-  ArrowRight, Heart, Award, Copy
+  ArrowRight, Heart, Award, Copy, Globe
 } from 'lucide-react';
 import { Toast } from './Toast';
 
@@ -17,6 +17,7 @@ interface CompanyProfile {
   company_name: string;
   avatar_url: string;
   logo_url?: string;
+  website?: string;
   primary_color: string;
   username: string;
   full_name: string;
@@ -232,30 +233,48 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       <section className="pt-12 pb-10 px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
           
-          {/* Avatar */}
+          {/* Real Company Logo / Avatar */}
           <div className="relative mb-5">
-            {profile.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={brandTitle}
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-gray-200 shadow-md bg-white p-0.5"
-              />
+            {profile.logo_url || profile.avatar_url ? (
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-white border-2 border-gray-200 shadow-md p-2 flex items-center justify-center overflow-hidden">
+                <img
+                  src={profile.logo_url || profile.avatar_url}
+                  alt={brandTitle}
+                  className="w-full h-full object-contain"
+                />
+              </div>
             ) : (
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#FCE676] text-black border-2 border-gray-200 shadow-md flex items-center justify-center text-3xl sm:text-4xl font-black">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-[#FCE676] text-black border-2 border-gray-200 shadow-md flex items-center justify-center text-3xl sm:text-4xl font-black">
                 {brandTitle.charAt(0).toUpperCase()}
               </div>
             )}
             <div 
-              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-sm" 
+              className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-sm" 
               title="100% Cryptographically Verified Business"
             >
               <CheckCircle2 size={18} className="stroke-[3]" />
             </div>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-black mb-3">
-            {brandTitle}
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-black mb-2 flex items-center justify-center gap-2">
+            <span>{brandTitle}</span>
           </h1>
+
+          {/* Official Website Link (if configured) */}
+          {profile.website && (
+            <div className="mb-4">
+              <a 
+                href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 hover:text-black transition-all shadow-sm group"
+              >
+                <Globe size={13} className="text-gray-400 group-hover:text-black transition-colors" />
+                <span>{profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                <ExternalLink size={11} className="text-gray-400 group-hover:text-black transition-colors" />
+              </a>
+            </div>
+          )}
 
           <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-8 font-medium leading-relaxed">
             See what verified clients are saying. Every review is authentic with cryptographic identity verification.
