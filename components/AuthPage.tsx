@@ -43,7 +43,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
       }
     };
 
-    if (telegramWrapperRef.current) {
+    if (activeMode === 'telegram' && telegramWrapperRef.current) {
       telegramWrapperRef.current.innerHTML = '';
       const script = document.createElement('script');
       script.src = 'https://telegram.org/js/telegram-widget.js?22';
@@ -55,7 +55,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
       script.async = true;
       telegramWrapperRef.current.appendChild(script);
     }
-  }, []);
+  }, [activeMode]);
 
   // 1. Password Login / Signup
   const handlePasswordAuth = async (e: React.FormEvent) => {
