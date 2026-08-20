@@ -1,12 +1,26 @@
 @import "tailwindcss";
 
-@theme {
-  --color-brand-lime: #D4F954;
-  --color-brand-yellow: #FCE676;
-  --color-brand-black: #111111;
-  --color-brand-gray: #F8F9FA;
+:root {
+  --tg-black: #0A0A0A;
+  --tg-lime: #D7FF3D;
+  --tg-white: #FFFFFF;
+  --tg-gray-600: #6B7280;
+  --tg-gray-100: #F4F4F5;
+}
 
-  --font-sans: 'Plus Jakarta Sans', sans-serif;
+@theme {
+  --color-tg-black: #0A0A0A;
+  --color-tg-lime: #D7FF3D;
+  --color-tg-white: #FFFFFF;
+  --color-tg-gray-600: #6B7280;
+  --color-tg-gray-100: #F4F4F5;
+
+  --color-brand-lime: #D7FF3D;
+  --color-brand-yellow: #FCE676;
+  --color-brand-black: #0A0A0A;
+  --color-brand-gray: #F4F4F5;
+
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-ethiopic: 'Noto Sans Ethiopic', sans-serif;
 
   --shadow-sharp: 0 4px 0 0 #000;

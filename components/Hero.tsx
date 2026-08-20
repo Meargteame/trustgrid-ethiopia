@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from './Button';
-import { CheckCircle2, Shield, Star, Send, ArrowRight, Video } from 'lucide-react';
+import { ArrowRight, Send, Star } from 'lucide-react';
+import { TrustGridMark } from './TrustGridLogo';
 
 interface HeroProps {
   onLogin: () => void;
@@ -8,108 +8,108 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onLogin }) => {
   return (
-    <section className="relative pt-28 pb-20 lg:pt-36 lg:pb-28 overflow-hidden bg-white bg-grid">
-      
+    <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-28 bg-[#FFFFFF] border-b border-[#F4F4F5]">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* Left Content */}
-          <div className="lg:col-span-7 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-xs font-bold text-gray-800 mb-6 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              The Trust & Verification Infrastructure for Modern Businesses
+          {/* Left Content - Confident Left-Aligned Value Proposition */}
+          <div className="lg:col-span-7 text-left space-y-6">
+            
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F4F4F5] border border-gray-200 text-xs font-bold text-[#0A0A0A]">
+              <span className="w-2 h-2 rounded-full bg-[#0A0A0A]"></span>
+              <span>Verified Customer Social Proof</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-black tracking-tight mb-6 leading-[1.1]">
-              Turn Client Praise Into <br/>
-              <span className="relative text-black">
-                Verified Social Proof.
-                <svg className="absolute w-full h-3 -bottom-1 left-0 text-brand-lime -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
-                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
-                </svg>
-              </span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#0A0A0A] tracking-tight leading-[1.08]">
+              Real proof. <br />
+              Real trust.
             </h1>
 
-            <p className="text-base sm:text-lg text-gray-600 mb-8 leading-relaxed max-w-xl">
-              Stop relying on easily faked chat screenshots that clients doubt. Collect authentic customer feedback verified via <strong>Telegram & Work Email</strong>, and showcase your live Wall of Proof anywhere.
+            <p className="text-base sm:text-lg text-[#6B7280] font-normal leading-relaxed max-w-xl">
+              Stop posting unverified chat screenshots that buyers doubt. TrustGrid collects authentic customer reviews verified through <strong>real Telegram identity</strong>, giving your business a trusted Wall of Proof that turns skeptics into buyers.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <Button size="lg" onClick={onLogin} className="shadow-md">
-                Claim Your Public Wall
-                <ArrowRight size={16} className="ml-2" />
-              </Button>
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <button 
+                onClick={onLogin} 
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-[#0A0A0A] text-[#FFFFFF] font-bold text-sm hover:bg-[#222222] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0A0A0A] focus:ring-offset-2"
+              >
+                <span>Create your wall</span>
+                <ArrowRight size={16} />
+              </button>
+              
               <a 
                 href="#demo"
-                className="inline-flex items-center justify-center px-6 py-3.5 text-sm font-bold text-gray-700 hover:text-black bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition-colors"
+                className="inline-flex items-center justify-center px-6 py-3.5 text-sm font-bold text-[#0A0A0A] bg-[#F4F4F5] hover:bg-gray-200 rounded-xl border border-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
               >
-                Explore Live Demo
+                Why Telegram proof works
               </a>
             </div>
 
-            <div className="mt-10 flex items-center gap-6 text-xs font-bold text-gray-500">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 size={16} className="text-emerald-600" />
-                <span>Telegram Identity Verified</span>
+            <div className="pt-4 flex flex-wrap items-center gap-6 text-xs font-bold text-[#6B7280]">
+              <div className="flex items-center gap-2">
+                <TrustGridMark size={16} />
+                <span className="text-[#0A0A0A]">Telegram Identity Verified</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Shield size={16} className="text-emerald-600" />
-                <span>Zero-Code Embed Widgets</span>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                <span>Zero fake screenshots</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                <span>Embed anywhere in seconds</span>
               </div>
             </div>
+
           </div>
 
-          {/* Right Content - Modern Live Card Preview */}
-          <div className="lg:col-span-5 relative flex justify-center">
-             
-             {/* Decorative Backdrop Glow */}
-             <div className="absolute -inset-4 bg-gradient-to-tr from-brand-lime/30 to-amber-200/30 rounded-3xl blur-2xl -z-10 opacity-70"></div>
-
-             {/* Live Verified Card Simulation */}
-             <div className="bg-white border border-gray-200/80 rounded-3xl p-6 sm:p-7 shadow-xl w-full max-w-md relative overflow-hidden flex flex-col space-y-4">
+          {/* Right Content - Flat Verified Proof Card Simulation */}
+          <div className="lg:col-span-5 flex justify-center">
+             <div className="bg-[#FFFFFF] border border-gray-200 rounded-3xl p-6 sm:p-7 w-full max-w-md flex flex-col space-y-4">
                 
                 {/* Header: Verified Status */}
                 <div className="flex items-center justify-between">
-                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold">
+                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F4F4F5] border border-gray-200 text-[#0A0A0A] text-xs font-bold">
                       <Send size={12} className="text-[#0088cc]" />
                       <span>Verified via Telegram</span>
                    </div>
-                   <div className="flex items-center gap-0.5 text-amber-400">
+                   <div className="flex items-center gap-0.5 text-amber-500">
                       {[1, 2, 3, 4, 5].map(i => (
-                         <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
+                         <Star key={i} size={14} className="fill-amber-400 text-amber-500" />
                       ))}
                    </div>
                 </div>
 
                 {/* Quote */}
-                <p className="text-sm sm:text-base text-gray-900 font-semibold leading-relaxed">
-                   "We closed 3x more enterprise deals after adding TrustGrid’s verified proofs. Clients trust cryptographic identity over random channel screenshots."
+                <p className="text-sm sm:text-base text-[#0A0A0A] font-semibold leading-relaxed">
+                   "We replaced our Telegram channel screenshot dumps with TrustGrid's verified wall. Customers immediately trust real identities over easily photoshopped chat text."
                 </p>
 
                 {/* Reviewer Details */}
-                <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
-                   <img 
-                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120" 
-                      alt="Sara K." 
-                      className="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm"
-                   />
+                <div className="flex items-center gap-3 pt-3 border-t border-[#F4F4F5]">
+                   <div className="w-10 h-10 rounded-full bg-[#F4F4F5] border border-gray-200 flex items-center justify-center font-bold text-xs text-[#0A0A0A] flex-shrink-0">
+                      SK
+                   </div>
                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                         <p className="text-xs font-extrabold text-black truncate">Sara Kidane</p>
-                         <CheckCircle2 size={13} className="text-emerald-600 flex-shrink-0" />
+                         <p className="text-xs font-extrabold text-[#0A0A0A] truncate">Sara Kidane</p>
+                         <TrustGridMark size={14} />
                       </div>
-                      <p className="text-[11px] text-gray-500 truncate">Product Lead • Addis Fintech</p>
+                      <p className="text-[11px] text-[#6B7280] truncate">@sara_k • Addis Ababa</p>
                    </div>
-                   <span className="text-[10px] text-gray-400 font-mono">100% Authentic</span>
+                   <span className="text-[10px] text-[#6B7280] font-mono uppercase bg-[#F4F4F5] px-2 py-0.5 rounded-md">
+                      Verified
+                   </span>
                 </div>
 
                 {/* Public Link Bar */}
-                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-200 flex items-center justify-between text-xs">
-                   <span className="font-mono text-gray-500 truncate">trustgrid.leonslab.tech/wall/addisfintech</span>
-                   <span className="px-2 py-0.5 rounded-md bg-black text-white text-[10px] font-bold">Live</span>
+                <div className="bg-[#F4F4F5] rounded-xl p-3 border border-gray-200 flex items-center justify-between text-xs">
+                   <span className="font-mono text-[#6B7280] truncate">trustgrid.leonslab.tech/wall/demo</span>
+                   <span className="px-2 py-0.5 rounded-md bg-[#0A0A0A] text-white text-[10px] font-bold">
+                      Live
+                   </span>
                 </div>
              </div>
-
           </div>
 
         </div>

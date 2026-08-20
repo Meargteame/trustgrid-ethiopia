@@ -1,122 +1,119 @@
 import React from 'react';
-import { Button } from './Button';
-import { CheckCircle2, XCircle, Send, ShieldCheck, Sparkles, Star, Code, ArrowRight } from 'lucide-react';
+import { X, Check, Send, Star, ArrowRight } from 'lucide-react';
+import { TrustGridMark } from './TrustGridLogo';
 
 export const Showcase: React.FC = () => {
   return (
-    <section id="demo" className="py-24 bg-gray-50 border-y border-gray-100 scroll-mt-16">
+    <section id="demo" className="py-24 bg-[#FFFFFF] border-b border-[#F4F4F5] scroll-mt-16">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-200/80 px-3 py-1 rounded-full">
-            Before & After
-          </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-black tracking-tight mt-4 mb-4">
-            Why Screenshots Fail & TrustGrid Wins
+        <div className="max-w-3xl mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F4F4F5] border border-gray-200 text-xs font-bold text-[#0A0A0A] mb-4">
+            <span>Why Screenshots Fail</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#0A0A0A] tracking-tight leading-tight mb-4">
+            Chat screenshots vs. <br />
+            Verified identity proof.
           </h2>
-          <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-            Customers know channel screenshots can easily be edited or fabricated. Cryptographic proof gives buyers 100% confidence.
+          <p className="text-[#6B7280] text-base leading-relaxed max-w-xl">
+            Anyone can create fake chats or edit channel screenshots. Cryptographic proof connects real reviewer identities directly to your brand.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-6 items-stretch max-w-5xl">
           
           {/* Old Way */}
-          <div className="bg-white rounded-3xl p-8 border border-red-100 shadow-sm flex flex-col justify-between relative overflow-hidden">
-             <div className="absolute top-0 left-0 right-0 h-1.5 bg-red-400"></div>
-             
+          <div className="bg-[#FFFFFF] rounded-2xl p-8 border border-gray-200 flex flex-col justify-between">
              <div>
                 <div className="flex items-center justify-between mb-6">
-                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold border border-red-200">
-                      <XCircle size={14} />
+                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F4F4F5] text-[#6B7280] text-xs font-bold border border-gray-200">
+                      <X size={13} className="text-rose-500" />
                       The Old Way: Chat Screenshots
                    </span>
-                   <span className="text-xs text-gray-400 font-mono">0% Verified</span>
+                   <span className="text-xs text-[#6B7280] font-mono">Unverified</span>
                 </div>
 
-                <div className="bg-gray-100 p-5 rounded-2xl border border-gray-200/80 mb-6 font-mono text-xs text-gray-700 space-y-2">
-                   <p className="text-gray-400 italic mb-2">// Chat screenshot posted in channel</p>
-                   <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                      <p className="font-bold text-gray-800">"Paid 10,000 ETB, fast delivery thanks!"</p>
-                      <p className="text-[10px] text-gray-400 mt-1">Sender: Anonymous user (Easily edited via Photoshop/Inspector)</p>
+                <div className="bg-[#F4F4F5] p-4 rounded-xl border border-gray-200 mb-6 font-mono text-xs text-[#6B7280] space-y-2">
+                   <div className="bg-white p-3 rounded-lg border border-gray-200">
+                      <p className="font-bold text-[#0A0A0A]">"Paid 10,000 ETB, fast delivery thanks!"</p>
+                      <p className="text-[10px] text-[#6B7280] mt-1">Sender: Anonymous / Unverified Account</p>
                    </div>
                 </div>
 
-                <ul className="space-y-3 text-xs sm:text-sm text-gray-600 font-medium">
-                   <li className="flex items-start gap-2 text-red-600">
-                      <XCircle size={16} className="flex-shrink-0 mt-0.5" />
-                      <span>Zero identity verification — easily faked with alt accounts</span>
+                <ul className="space-y-3 text-xs sm:text-sm text-[#6B7280]">
+                   <li className="flex items-start gap-2">
+                      <X size={16} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                      <span>Zero identity proof — anyone can stage a fake chat</span>
                    </li>
-                   <li className="flex items-start gap-2 text-red-600">
-                      <XCircle size={16} className="flex-shrink-0 mt-0.5" />
-                      <span>Lost in long Telegram message histories and forgotten</span>
+                   <li className="flex items-start gap-2">
+                      <X size={16} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                      <span>Lost in long Telegram message histories</span>
                    </li>
-                   <li className="flex items-start gap-2 text-red-600">
-                      <XCircle size={16} className="flex-shrink-0 mt-0.5" />
-                      <span>Cannot be embedded onto your official website or landing page</span>
+                   <li className="flex items-start gap-2">
+                      <X size={16} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                      <span>Cannot be embedded as interactive website widgets</span>
                    </li>
                 </ul>
              </div>
 
-             <div className="mt-8 pt-4 border-t border-gray-100 text-center text-xs text-gray-400">
-                Leads leave without buying due to credibility doubts.
+             <div className="mt-8 pt-4 border-t border-gray-200 text-xs text-[#6B7280]">
+                Potential customers hesitate because screenshots are easily fabricated.
              </div>
           </div>
 
           {/* The TrustGrid Way */}
-          <div className="bg-white rounded-3xl p-8 border border-emerald-200 shadow-md flex flex-col justify-between relative overflow-hidden">
-             <div className="absolute top-0 left-0 right-0 h-1.5 bg-emerald-500"></div>
-
+          <div className="bg-[#F4F4F5] rounded-2xl p-8 border border-gray-300 flex flex-col justify-between">
              <div>
                 <div className="flex items-center justify-between mb-6">
-                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-                      <ShieldCheck size={14} />
+                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFFFFF] text-[#0A0A0A] text-xs font-bold border border-gray-200">
+                      <TrustGridMark size={14} />
                       The TrustGrid Way: Verified Proof
                    </span>
-                   <span className="text-xs text-emerald-600 font-bold font-mono">100% Cryptographic</span>
+                   <span className="text-xs text-[#0A0A0A] font-bold font-mono">Verified</span>
                 </div>
 
-                {/* Live Card Simulation */}
-                <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200/80 mb-6">
+                {/* Proof Card Simulation */}
+                <div className="bg-[#FFFFFF] p-4 rounded-xl border border-gray-200 mb-6">
                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
                          <Send size={12} className="text-[#0088cc]" />
-                         <span className="text-[11px] font-bold text-blue-700">Verified via Telegram</span>
+                         <span className="text-[11px] font-bold text-[#0A0A0A]">Verified via Telegram</span>
                       </div>
-                      <div className="flex text-amber-400">
+                      <div className="flex text-amber-500">
                          {[1, 2, 3, 4, 5].map(i => <Star key={i} size={12} className="fill-amber-400" />)}
                       </div>
                    </div>
-                   <p className="text-xs font-bold text-black leading-relaxed">
+                   <p className="text-xs font-bold text-[#0A0A0A] leading-relaxed">
                       "Delivered our system 2 days ahead of schedule. Verified authenticity."
                    </p>
-                   <p className="text-[10px] text-gray-500 mt-2 font-medium">
+                   <p className="text-[10px] text-[#6B7280] mt-2 font-medium">
                       Dawit Alemu • Verified Client (@dawit_eth)
                    </p>
                 </div>
 
-                <ul className="space-y-3 text-xs sm:text-sm text-gray-700 font-medium">
-                   <li className="flex items-start gap-2 text-emerald-700">
-                      <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <span>Reviewer identity authenticated directly via Telegram or Work Email</span>
+                <ul className="space-y-3 text-xs sm:text-sm text-[#0A0A0A]">
+                   <li className="flex items-start gap-2 font-medium">
+                      <Check size={16} className="text-[#0A0A0A] flex-shrink-0 mt-0.5" />
+                      <span>Reviewer authenticated with real Telegram account (@username)</span>
                    </li>
-                   <li className="flex items-start gap-2 text-emerald-700">
-                      <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <span>Permanent, branded Public Wall of Proof with custom slug handle</span>
+                   <li className="flex items-start gap-2 font-medium">
+                      <Check size={16} className="text-[#0A0A0A] flex-shrink-0 mt-0.5" />
+                      <span>Permanent branded Wall of Proof with custom slug</span>
                    </li>
-                   <li className="flex items-start gap-2 text-emerald-700">
-                      <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <span>Embed anywhere with live responsive widgets in 1 click</span>
+                   <li className="flex items-start gap-2 font-medium">
+                      <Check size={16} className="text-[#0A0A0A] flex-shrink-0 mt-0.5" />
+                      <span>Embed anywhere as live popups, masonry grids, or badges</span>
                    </li>
                 </ul>
              </div>
 
-             <div className="mt-8 pt-4 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
-                   <Sparkles size={14} /> Boost conversion rates by 30%+
+             <div className="mt-8 pt-4 border-t border-gray-300 flex items-center justify-between">
+                <span className="text-xs font-bold text-[#0A0A0A]">
+                   Genuine credibility that builds buyer confidence.
                 </span>
-                <a href="#testimonials" className="text-xs font-extrabold text-black hover:underline inline-flex items-center gap-1">
-                   View Wall <ArrowRight size={12} />
+                <a href="#testimonials" className="text-xs font-bold text-[#0A0A0A] hover:underline inline-flex items-center gap-1">
+                   <span>View Wall</span>
+                   <ArrowRight size={12} />
                 </a>
              </div>
           </div>
