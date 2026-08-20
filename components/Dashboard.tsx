@@ -1311,76 +1311,144 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                  ))}
                               </div>
                            </div>
+                           
+                           {/* CONTEXT-AWARE CONTROLS: POPUP VS GRID */}
+                           {widgetConfig.layout === 'toast' ? (
+                               <div className="space-y-5 animate-fade-in">
+                                  {/* Position */}
+                                  <div className="space-y-2.5">
+                                     <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                        Screen Position
+                                     </label>
+                                     <div className="grid grid-cols-2 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                        {[
+                                           { id: 'bottom-left', label: 'Bottom Left' },
+                                           { id: 'bottom-right', label: 'Bottom Right' }
+                                        ].map(pos => (
+                                           <button 
+                                              key={pos.id}
+                                              onClick={() => setWidgetConfig({...widgetConfig, gap: pos.id})}
+                                              className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                                                 (widgetConfig.gap === pos.id || (!['bottom-left', 'bottom-right'].includes(widgetConfig.gap) && pos.id === 'bottom-left'))
+                                                    ? 'bg-white text-black shadow-sm' 
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                              }`}
+                                           >
+                                              {pos.label}
+                                           </button>
+                                        ))}
+                                     </div>
+                                  </div>
 
-                           {/* Columns (only for Grid) */}
-                           {widgetConfig.layout === 'grid' && (
-                              <div className="space-y-2.5">
-                                 <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
-                                    Desktop Columns
-                                 </label>
-                                 <div className="grid grid-cols-4 gap-2 bg-gray-100 p-1.5 rounded-2xl">
-                                    {[1, 2, 3, 4].map(cols => (
-                                       <button 
-                                          key={cols}
-                                          onClick={() => setWidgetConfig({...widgetConfig, columns: cols})}
-                                          className={`py-2 rounded-xl text-xs font-black transition-all ${
-                                             widgetConfig.columns === cols 
-                                                ? 'bg-white text-black shadow-sm' 
-                                                : 'text-gray-400 hover:text-gray-700'
-                                          }`}
-                                       >
-                                          {cols} {cols === 1 ? 'Col' : 'Cols'}
-                                       </button>
-                                    ))}
-                                 </div>
-                              </div>
-                           )}
+                                  {/* Cycle Duration */}
+                                  <div className="space-y-2.5">
+                                     <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                        Display Speed
+                                     </label>
+                                     <div className="grid grid-cols-3 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                        {[
+                                           { id: 4, label: 'Fast (4s)' },
+                                           { id: 6, label: 'Normal (6s)' },
+                                           { id: 10, label: 'Slow (10s)' }
+                                        ].map(spd => (
+                                           <button 
+                                              key={spd.id}
+                                              onClick={() => setWidgetConfig({...widgetConfig, cardsToShow: spd.id})}
+                                              className={`py-2 rounded-xl text-[11px] font-bold transition-all ${
+                                                 widgetConfig.cardsToShow === spd.id 
+                                                    ? 'bg-white text-black shadow-sm' 
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                              }`}
+                                           >
+                                              {spd.label}
+                                           </button>
+                                        ))}
+                                     </div>
+                                  </div>
 
-                           {/* Card Spacing (Gap) */}
-                           <div className="space-y-2.5">
-                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
-                                 Card Spacing
-                              </label>
-                              <div className="grid grid-cols-4 gap-2 bg-gray-100 p-1.5 rounded-2xl">
-                                 {[
-                                    { id: 'tight', label: 'Compact' },
-                                    { id: 'normal', label: 'Normal' },
-                                    { id: 'loose', label: 'Relaxed' },
-                                    { id: 'extra', label: 'Spacious' }
-                                 ].map(g => (
-                                    <button 
-                                       key={g.id}
-                                       onClick={() => setWidgetConfig({...widgetConfig, gap: g.id})}
-                                       className={`py-2 rounded-xl text-[11px] font-bold transition-all ${
-                                          widgetConfig.gap === g.id 
-                                             ? 'bg-white text-black shadow-sm' 
-                                             : 'text-gray-400 hover:text-gray-700'
-                                       }`}
-                                    >
-                                       {g.label}
-                                    </button>
-                                 ))}
-                              </div>
-                           </div>
+                                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/80 text-emerald-900 text-xs leading-relaxed space-y-1">
+                                     <p className="font-extrabold flex items-center gap-1.5">
+                                        <Flame size={14} className="text-amber-500 fill-amber-500" />
+                                        High Conversion Engine
+                                     </p>
+                                     <p className="text-[11px] text-emerald-800">
+                                        This floating notification will cycle through your verified customer proofs in real-time on your store or landing page.
+                                     </p>
+                                  </div>
+                               </div>
+                            ) : (
+                               <>
+                                  {/* Columns (only for Grid) */}
+                                  {widgetConfig.layout === 'grid' && (
+                                     <div className="space-y-2.5">
+                                        <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                           Desktop Columns
+                                        </label>
+                                        <div className="grid grid-cols-4 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                           {[1, 2, 3, 4].map(cols => (
+                                              <button 
+                                                 key={cols}
+                                                 onClick={() => setWidgetConfig({...widgetConfig, columns: cols})}
+                                                 className={`py-2 rounded-xl text-xs font-black transition-all ${
+                                                    widgetConfig.columns === cols 
+                                                       ? 'bg-white text-black shadow-sm' 
+                                                       : 'text-gray-400 hover:text-gray-700'
+                                                 }`}
+                                              >
+                                                 {cols} {cols === 1 ? 'Col' : 'Cols'}
+                                              </button>
+                                           ))}
+                                        </div>
+                                     </div>
+                                  )}
 
-                           {/* Maximum items */}
-                           <div className="space-y-2.5">
-                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
-                                 Maximum Reviews to Show
-                              </label>
-                              <select 
-                                 value={widgetConfig.cardsToShow}
-                                 onChange={(e) => setWidgetConfig({...widgetConfig, cardsToShow: parseInt(e.target.value)})}
-                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold text-gray-800 outline-none focus:border-black"
-                              >
-                                 <option value="3">Show 3 reviews</option>
-                                 <option value="6">Show 6 reviews</option>
-                                 <option value="9">Show 9 reviews</option>
-                                 <option value="12">Show 12 reviews</option>
-                                 <option value="24">Show 24 reviews</option>
-                              </select>
-                           </div>
-                        </div>
+                                  {/* Card Spacing (Gap) */}
+                                  <div className="space-y-2.5">
+                                     <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                        Card Spacing
+                                     </label>
+                                     <div className="grid grid-cols-4 gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                        {[
+                                           { id: 'tight', label: 'Compact' },
+                                           { id: 'normal', label: 'Normal' },
+                                           { id: 'loose', label: 'Relaxed' },
+                                           { id: 'extra', label: 'Spacious' }
+                                        ].map(g => (
+                                           <button 
+                                              key={g.id}
+                                              onClick={() => setWidgetConfig({...widgetConfig, gap: g.id})}
+                                              className={`py-2 rounded-xl text-[11px] font-bold transition-all ${
+                                                 widgetConfig.gap === g.id 
+                                                    ? 'bg-white text-black shadow-sm' 
+                                                    : 'text-gray-400 hover:text-gray-700'
+                                              }`}
+                                           >
+                                              {g.label}
+                                           </button>
+                                        ))}
+                                     </div>
+                                  </div>
+
+                                  {/* Maximum items */}
+                                  <div className="space-y-2.5">
+                                     <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                                        Maximum Reviews to Show
+                                     </label>
+                                     <select 
+                                        value={widgetConfig.cardsToShow}
+                                        onChange={(e) => setWidgetConfig({...widgetConfig, cardsToShow: parseInt(e.target.value)})}
+                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold text-gray-800 outline-none focus:border-black"
+                                     >
+                                        <option value="3">Show 3 reviews</option>
+                                        <option value="6">Show 6 reviews</option>
+                                        <option value="9">Show 9 reviews</option>
+                                        <option value="12">Show 12 reviews</option>
+                                        <option value="24">Show 24 reviews</option>
+                                     </select>
+                                  </div>
+                               </>
+                            )}
+                         </div>
                      )}
 
                      {/* TAB 2: STYLE & THEME */}
@@ -1628,78 +1696,93 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      {/* Live Canvas Viewport */}
                      <div className="flex-1 p-6 sm:p-10 flex flex-col items-center justify-center overflow-x-auto">
                         <div className={`${deviceWidth} transition-all duration-300 ${activeFont}`}>
-                           
-                           {/* Optional Header Title */}
-                           {headerTitle && (
-                              <div className="text-center mb-8">
-                                 <h2 className={`text-2xl sm:text-3xl font-black tracking-tight mb-2 ${previewBg === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                    {headerTitle}
-                                 </h2>
-                              </div>
-                           )}
+                            {/* Optional Header Title (only for Wall / Grid / Carousel / Feed) */}
+                            {headerTitle && layout !== 'toast' && (
+                               <div className="text-center mb-8">
+                                  <h2 className={`text-2xl sm:text-3xl font-black tracking-tight mb-2 ${previewBg === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                     {headerTitle}
+                                  </h2>
+                               </div>
+                            )}
+
                            {/* Dynamic Testimonial Grid / Carousel / Feed / Toast */}
                            {layout === 'toast' ? (
-                              <div className="w-full h-full min-h-[360px] relative flex flex-col justify-between p-4">
-                                 {/* Background dummy site content */}
-                                 <div className="space-y-4 opacity-40 max-w-xl mx-auto pt-6 text-center">
-                                    <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded-lg w-3/4 mx-auto animate-pulse"></div>
-                                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/2 mx-auto"></div>
-                                    <div className="h-24 bg-gray-100 dark:bg-gray-900 rounded-2xl w-full border border-gray-200 dark:border-gray-800"></div>
+                              <div className="w-full min-h-[420px] rounded-2xl relative flex flex-col justify-between p-6 sm:p-8 bg-white dark:bg-gray-900 shadow-inner border border-gray-200/70 overflow-hidden">
+                                 
+                                 {/* Simulated Live Customer Site Content */}
+                                 <div className="max-w-md mx-auto text-center space-y-4 py-8">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-[11px] font-bold text-gray-600 dark:text-gray-300">
+                                       ✨ Your Official Storefront / Landing Page
+                                    </div>
+                                    <h3 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-tight">
+                                       Grow Your Brand With High-Converting Trust
+                                    </h3>
+                                    <p className="text-xs text-gray-500 leading-relaxed max-w-sm mx-auto">
+                                       Visitors explore your products while live verified customer proof builds instant buying confidence.
+                                    </p>
+                                    <div className="pt-2 flex justify-center gap-2">
+                                       <div className="px-5 py-2.5 rounded-xl bg-black text-white text-xs font-bold shadow-sm">
+                                          Explore Products
+                                       </div>
+                                    </div>
                                  </div>
 
-                                 {/* Simulated Floating Social Proof Toast */}
-                                 <div className="max-w-[360px] w-full animate-bounce-subtle mt-auto">
-                                    {visibleItems.slice(0, 1).map((item: any) => (
-                                       <div 
-                                          key={item.id}
-                                          className={`p-4 border ${cardBgClass} ${activeRadius} ${activeShadow} backdrop-blur-md shadow-2xl relative overflow-hidden flex flex-col gap-2`}
-                                       >
-                                          <div className="flex items-center justify-between gap-2">
-                                             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                                                <Flame size={11} className="text-amber-500 fill-amber-500" />
-                                                <span>Live Verified Proof</span>
-                                             </div>
-                                             {showRating && (
-                                                <div className="flex gap-0.5 text-amber-400 text-xs">
-                                                   {[1,2,3,4,5].map(i => <span key={i}>★</span>)}
+                                 {/* Simulated Floating Social Proof Toast at chosen position */}
+                                 <div className={`w-full flex ${widgetConfig.gap === 'bottom-right' ? 'justify-end' : 'justify-start'} mt-auto z-20`}>
+                                    {visibleItems.slice(0, 1).map((item: any) => {
+                                       const cleanQuote = item.text.replace(/What did you like most about working with us\?\s*Answer:\s*/gi, '').trim() || item.text;
+                                       return (
+                                          <div 
+                                             key={item.id}
+                                             className={`max-w-[350px] w-full p-4 border ${cardBgClass} ${activeRadius} ${activeShadow} backdrop-blur-md shadow-2xl relative overflow-hidden flex flex-col gap-2.5 transition-all duration-300 hover:scale-[1.02]`}
+                                          >
+                                             <div className="flex items-center justify-between gap-2">
+                                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                                                   <Flame size={11} className="text-amber-500 fill-amber-500" />
+                                                   <span>Verified Telegram Proof</span>
                                                 </div>
-                                             )}
-                                          </div>
-
-                                          <p className={`text-xs font-semibold leading-snug line-clamp-2 break-words break-all ${cardQuoteClass}`}>
-                                             "{item.text}"
-                                          </p>
-
-                                          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800 mt-0.5">
-                                             <div className="flex items-center gap-2 min-w-0">
-                                                {showAvatar && (
-                                                   <img 
-                                                      src={item.avatarUrl} 
-                                                      alt={item.clientName} 
-                                                      className="w-6 h-6 rounded-full object-cover border border-gray-200 flex-shrink-0"
-                                                   />
+                                                {showRating && (
+                                                   <div className="flex gap-0.5 text-amber-400 text-xs">
+                                                      {[1,2,3,4,5].map(i => <span key={i}>★</span>)}
+                                                   </div>
                                                 )}
-                                                <div className="min-w-0">
-                                                   <p className={`text-[11px] font-extrabold truncate flex items-center gap-1 ${cardTextClass}`}>
-                                                      <span>{item.clientName}</span>
-                                                      <CheckCircle2 size={10} className="text-emerald-600 flex-shrink-0" />
-                                                   </p>
-                                                   {item.clientCompany && (
-                                                      <p className={`text-[9px] truncate ${cardSubtextClass}`}>{item.clientCompany}</p>
-                                                   )}
-                                                </div>
                                              </div>
-                                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                                                TrustGrid
-                                             </span>
-                                          </div>
 
-                                          {/* Animated progress bar */}
-                                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 overflow-hidden">
-                                             <div className="h-full bg-emerald-500 w-2/3"></div>
+                                             <p className={`text-xs font-semibold leading-snug line-clamp-2 break-words break-all ${cardQuoteClass}`}>
+                                                "{cleanQuote}"
+                                             </p>
+
+                                             <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800 mt-0.5">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                   {showAvatar && (
+                                                      <img 
+                                                         src={item.avatarUrl} 
+                                                         alt={item.clientName} 
+                                                         className="w-6 h-6 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                                                      />
+                                                   )}
+                                                   <div className="min-w-0">
+                                                      <p className={`text-[11px] font-extrabold truncate flex items-center gap-1 ${cardTextClass}`}>
+                                                         <span>{item.clientName}</span>
+                                                         <CheckCircle2 size={10} className="text-emerald-600 flex-shrink-0" />
+                                                      </p>
+                                                      {item.clientCompany && (
+                                                         <p className={`text-[9px] truncate ${cardSubtextClass}`}>{item.clientCompany}</p>
+                                                      )}
+                                                   </div>
+                                                </div>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                                                   TrustGrid
+                                                </span>
+                                             </div>
+
+                                             {/* Animated progress bar */}
+                                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 overflow-hidden">
+                                                <div className="h-full bg-emerald-500 w-2/3"></div>
+                                             </div>
                                           </div>
-                                       </div>
-                                    ))}
+                                       );
+                                    })}
                                  </div>
                               </div>
                            ) : (
