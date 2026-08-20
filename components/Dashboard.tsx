@@ -435,21 +435,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
-   const handleDelete = async (id: string) => {
-      if (window.confirm('Are you sure you want to delete this proof?')) {
-         try {
-            const { error } = await supabase.from('testimonials').delete().eq('id', id);
-            if (error) throw error;
-            
-            setTestimonials(testimonials.filter(t => t.id !== id));
-            showToast('Proof deleted successfully');
-         } catch (err) {
-            console.error(err);
-            showToast('Failed to delete proof', 'error');
-         }
-      }
-   };
-
    const handleApprove = async (id: string) => {
       try {
          showToast('Verifying and publishing...', 'success');
@@ -473,13 +458,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
                  ...t, 
                  status: 'verified'
              } : t
-         ));
-         
-         showToast('Proof verified and published!');
-      } catch (err: any) {
-         console.error(err);
-         showToast('Failed to verify proof', 'error');
-         if (err.message?.includes('policies')) setSetupRequired(true);
+          ));
+          
+          showToast('Proof verified and published!');
+       } catch (err: any) {
+          console.error(err);
+          showToast('Failed to verify proof', 'error');
+          if (err.message?.includes('policies')) setSetupRequired(true);
+       }
+    };
+
+   const handleDelete = async (id: string) => {
       if (!window.confirm("Are you sure you want to permanently delete this testimonial? This action cannot be undone.")) return;
        
       try {

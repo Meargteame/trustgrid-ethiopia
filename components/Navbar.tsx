@@ -24,8 +24,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin }) => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-10">
             <a href="#features" className="text-gray-600 hover:text-black font-semibold text-sm transition-colors">Features</a>
-            <a href="#demo" className="text-gray-600 hover:text-black font-semibold text-sm transition-colors">AI Demo</a>
-            <a href="#testimonials" className="text-gray-600 hover:text-black font-semibold text-sm transition-colors">Reviews</a>
+            <a href="#demo" className="text-gray-600 hover:text-black font-semibold text-sm transition-colors">Live Showcase</a>
+            <a href="#testimonials" className="text-gray-600 hover:text-black font-semibold text-sm transition-colors">Verified Wall</a>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -49,8 +49,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin }) => {
         <div className="md:hidden bg-white border-t border-gray-100 absolute w-full top-20 left-0 shadow-xl z-50">
           <div className="px-6 py-8 space-y-4">
             <a href="#features" className="block text-lg font-bold text-gray-900" onClick={() => setIsOpen(false)}>Features</a>
-            <a href="#demo" className="block text-lg font-bold text-gray-900" onClick={() => setIsOpen(false)}>AI Demo</a>
-            <a href="#testimonials" className="block text-lg font-bold text-gray-900" onClick={() => setIsOpen(false)}>Reviews</a>
+            <a href="#demo" className="block text-lg font-bold text-gray-900" onClick={() => setIsOpen(false)}>Live Showcase</a>
+            <a href="#testimonials" className="block text-lg font-bold text-gray-900" onClick={() => setIsOpen(false)}>Verified Wall</a>
             <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
               <Button fullWidth variant="primary" onClick={onLogin}>Login with Telegram</Button>
             </div>

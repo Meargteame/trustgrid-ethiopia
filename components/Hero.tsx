@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from './Button';
+import { CheckCircle2, Shield, Star, Send, ArrowRight, Video } from 'lucide-react';
 
 interface HeroProps {
   onLogin: () => void;
@@ -7,75 +8,105 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onLogin }) => {
   return (
-    <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden bg-white bg-grid">
+    <section className="relative pt-28 pb-20 lg:pt-36 lg:pb-28 overflow-hidden bg-white bg-grid">
       
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
           {/* Left Content */}
-          <div className="relative z-10 text-left">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-black tracking-tight mb-6 leading-[1.05]">
-              Fuel up and build <br/>
-              <span className="relative">
-                 Real Trust!
-                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-brand-lime -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
-                   <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
-                 </svg>
+          <div className="lg:col-span-7 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-xs font-bold text-gray-800 mb-6 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              The Trust & Verification Infrastructure for Modern Businesses
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-black tracking-tight mb-6 leading-[1.1]">
+              Turn Client Praise Into <br/>
+              <span className="relative text-black">
+                Verified Social Proof.
+                <svg className="absolute w-full h-3 -bottom-1 left-0 text-brand-lime -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                </svg>
               </span>
             </h1>
 
-            <p className="mt-6 text-lg text-gray-600 mb-10 leading-relaxed max-w-lg">
-              Unlock the power of verified testimonials. Turn messy chat screenshots into a professional wall of proof with our AI-powered verification tools.
+            <p className="text-base sm:text-lg text-gray-600 mb-8 leading-relaxed max-w-xl">
+              Stop relying on easily faked chat screenshots that clients doubt. Collect authentic customer feedback verified via <strong>Telegram & Work Email</strong>, and showcase your live Wall of Proof anywhere.
             </p>
 
-            <Button size="lg" onClick={onLogin}>
-              Login with Telegram
-            </Button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Button size="lg" onClick={onLogin} className="shadow-md">
+                Claim Your Public Wall
+                <ArrowRight size={16} className="ml-2" />
+              </Button>
+              <a 
+                href="#demo"
+                className="inline-flex items-center justify-center px-6 py-3.5 text-sm font-bold text-gray-700 hover:text-black bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition-colors"
+              >
+                Explore Live Demo
+              </a>
+            </div>
+
+            <div className="mt-10 flex items-center gap-6 text-xs font-bold text-gray-500">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 size={16} className="text-emerald-600" />
+                <span>Telegram Identity Verified</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Shield size={16} className="text-emerald-600" />
+                <span>Zero-Code Embed Widgets</span>
+              </div>
+            </div>
           </div>
 
-          {/* Right Content - Phone Mockup */}
-          <div className="relative flex justify-center lg:justify-end">
-             {/* Sunburst Graphic */}
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] z-0 pointer-events-none">
-                <svg viewBox="0 0 200 200" className="w-full h-full animate-spin-slow">
-                   <g transform="translate(100,100)">
-                      {[...Array(12)].map((_, i) => (
-                        <path key={i} d="M0,0 L20,-100 L40,0 Z" fill="#FCE676" transform={`rotate(${i * 30})`} opacity="0.5" />
-                      ))}
-                   </g>
-                </svg>
-             </div>
+          {/* Right Content - Modern Live Card Preview */}
+          <div className="lg:col-span-5 relative flex justify-center">
+             
+             {/* Decorative Backdrop Glow */}
+             <div className="absolute -inset-4 bg-gradient-to-tr from-brand-lime/30 to-amber-200/30 rounded-3xl blur-2xl -z-10 opacity-70"></div>
 
-             {/* Phone Card UI */}
-             <div className="relative z-10 bg-white border-4 border-black rounded-[2.5rem] shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] w-[320px] overflow-hidden">
-                <div className="h-8 bg-white border-b-2 border-gray-100 flex items-center justify-between px-6 pt-2">
-                   <span className="text-[10px] font-bold">9:41</span>
-                   <div className="flex gap-1">
-                      <div className="w-3 h-3 bg-black rounded-full"></div>
-                      <div className="w-3 h-3 border border-black rounded-full"></div>
+             {/* Live Verified Card Simulation */}
+             <div className="bg-white border border-gray-200/80 rounded-3xl p-6 sm:p-7 shadow-xl w-full max-w-md relative overflow-hidden flex flex-col space-y-4">
+                
+                {/* Header: Verified Status */}
+                <div className="flex items-center justify-between">
+                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold">
+                      <Send size={12} className="text-[#0088cc]" />
+                      <span>Verified via Telegram</span>
+                   </div>
+                   <div className="flex items-center gap-0.5 text-amber-400">
+                      {[1, 2, 3, 4, 5].map(i => (
+                         <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
+                      ))}
                    </div>
                 </div>
-                
-                <div className="p-8 flex flex-col items-center text-center pb-12">
-                   <h3 className="font-bold text-2xl mb-6 self-start">TrustGrid.</h3>
-                   
-                   {/* TODO: Replace with real QR code generation (e.g. using a library like `qrcode.react`).
-                        Currently this is just a static icon — there is no actual QR code or scannable link. */}
-                   <div className="bg-gray-100 p-6 rounded-2xl mb-6 flex items-center justify-center">
-                      <div className="text-center">
-                        <p className="text-sm font-bold text-gray-800 mb-1">Your Wall of Proof</p>
-                        <p className="text-xs text-gray-500">Sign up to get your shareable link</p>
+
+                {/* Quote */}
+                <p className="text-sm sm:text-base text-gray-900 font-semibold leading-relaxed">
+                   "We closed 3x more enterprise deals after adding TrustGrid’s verified proofs. Clients trust cryptographic identity over random channel screenshots."
+                </p>
+
+                {/* Reviewer Details */}
+                <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+                   <img 
+                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120" 
+                      alt="Sara K." 
+                      className="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm"
+                   />
+                   <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                         <p className="text-xs font-extrabold text-black truncate">Sara Kidane</p>
+                         <CheckCircle2 size={13} className="text-emerald-600 flex-shrink-0" />
                       </div>
+                      <p className="text-[11px] text-gray-500 truncate">Product Lead • Addis Fintech</p>
                    </div>
+                   <span className="text-[10px] text-gray-400 font-mono">100% Authentic</span>
+                </div>
 
-                   <p className="text-sm text-gray-500 mb-6 max-w-[200px]">
-                     Collect and display verified testimonials for your business
-                   </p>
-
-                   <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-200 flex items-center justify-between">
-                      <span className="text-xs font-mono text-gray-500 truncate mr-2">trustgrid.leonslab.tech/your-handle</span>
-                      <Button size="sm" className="!py-1 !px-3 !text-xs !border-0 bg-brand-lime" onClick={onLogin}>Login with Telegram</Button>
-                   </div>
+                {/* Public Link Bar */}
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-200 flex items-center justify-between text-xs">
+                   <span className="font-mono text-gray-500 truncate">trustgrid.leonslab.tech/wall/addisfintech</span>
+                   <span className="px-2 py-0.5 rounded-md bg-black text-white text-[10px] font-bold">Live</span>
                 </div>
              </div>
 

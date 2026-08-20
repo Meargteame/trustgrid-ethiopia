@@ -12,7 +12,7 @@ export const Footer: React.FC = () => {
               TrustGrid.
             </span>
             <p className="text-xs text-gray-500 leading-relaxed mb-6">
-              Build verified proof for your business. Turn customer testimonials into a trusted wall of proof with AI-powered verification.
+              Build verified proof for your business. Turn customer testimonials into a trusted wall of proof with Telegram & email identity verification.
             </p>
             <a href="mailto:trustgrid.ethiopia@gmail.com" className="text-xs font-bold text-black border-b border-black pb-0.5">
               trustgrid.ethiopia@gmail.com
@@ -23,8 +23,8 @@ export const Footer: React.FC = () => {
             <h4 className="font-bold text-sm mb-4">Product</h4>
             <ul className="space-y-3 text-xs text-gray-500">
               <li><a href="#features" className="hover:text-black transition-colors">Features</a></li>
-              <li><a href="#demo" className="hover:text-black transition-colors">AI Demo</a></li>
-              <li><a href="#testimonials" className="hover:text-black transition-colors">Reviews</a></li>
+              <li><a href="#demo" className="hover:text-black transition-colors">Live Showcase</a></li>
+              <li><a href="#testimonials" className="hover:text-black transition-colors">Verified Wall</a></li>
             </ul>
           </div>
 
