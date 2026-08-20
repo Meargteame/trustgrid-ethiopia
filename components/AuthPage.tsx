@@ -8,15 +8,6 @@ interface AuthPageProps {
   onBack: () => void;
 }
 
-const FREE_EMAIL_DOMAINS = [
-  'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.fr',
-  'hotmail.com', 'hotmail.co.uk', 'hotmail.fr', 'outlook.com', 'outlook.fr',
-  'icloud.com', 'me.com', 'mac.com', 'aol.com', 'mail.ru', 'bk.ru',
-  'inbox.ru', 'list.ru', 'protonmail.com', 'proton.me', 'pm.me',
-  'zoho.com', 'yandex.com', 'yandex.ru', 'live.com', 'msn.com',
-  'gmx.com', 'gmx.de', 'gmx.net', 'web.de', 't-online.de', 'inbox.com'
-];
-
 export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
   const telegramWrapperRef = useRef<HTMLDivElement>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -25,7 +16,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
   const [emailLoading, setEmailLoading] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [activeMode, setActiveMode] = useState<'telegram' | 'email'>('telegram');
+  const [activeMode, setActiveMode] = useState<'telegram' | 'email'>('email');
 
   useEffect(() => {
     // Add the callback to window so the Telegram widget script can call it
@@ -63,26 +54,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
     }
   }, []);
 
-  const validateWorkEmail = (emailStr: string): boolean => {
-    const trimmed = emailStr.trim().toLowerCase();
-    const parts = trimmed.split('@');
-    if (parts.length !== 2 || !parts[1].includes('.')) {
-      setErrorMsg('Please enter a valid email address.');
-      return false;
-    }
-    const domain = parts[1];
-    if (FREE_EMAIL_DOMAINS.includes(domain)) {
-      setErrorMsg('Please enter a company work email (e.g. name@yourbrand.com). Personal email accounts (@gmail, @yahoo, @outlook) are not permitted.');
-      return false;
-    }
-    return true;
-  };
-
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-
-    if (!validateWorkEmail(email)) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setErrorMsg('Please enter a valid email address.');
       return;
     }
 
@@ -91,7 +67,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
       setErrorMsg(null);
       
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim().toLowerCase(),
+        email: cleanEmail,
         options: {
           emailRedirectTo: window.location.origin
         }
@@ -172,7 +148,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
             </h1>
             
             <p className="mt-4 text-[#6B7280] text-base leading-relaxed">
-              Authenticate your merchant account to manage your Wall of Proof, customize embed widgets, and automate Telegram customer verification.
+              Authenticate your account to manage your Wall of Proof, customize embed widgets, and automate Telegram customer verification.
             </p>
           </div>
 
@@ -235,6 +211,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
             <div className="flex bg-[#F4F4F5] p-1 rounded-xl border border-gray-200">
               <button
                 type="button"
+                onClick={() => { setActiveMode('email'); setErrorMsg(null); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                  activeMode === 'email'
+                    ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
+                    : 'text-[#6B7280] hover:text-[#0A0A0A]'
+                }`}
+              >
+                Email Login
+              </button>
+              <button
+                type="button"
                 onClick={() => { setActiveMode('telegram'); setErrorMsg(null); }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                   activeMode === 'telegram'
@@ -244,38 +231,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
               >
                 Telegram Login
               </button>
-              <button
-                type="button"
-                onClick={() => { setActiveMode('email'); setErrorMsg(null); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                  activeMode === 'email'
-                    ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
-                    : 'text-[#6B7280] hover:text-[#0A0A0A]'
-                }`}
-              >
-                Work Email
-              </button>
             </div>
-
-            {/* TELEGRAM LOGIN MODE */}
-            {activeMode === 'telegram' && (
-              <div className="space-y-4 animate-fade-in text-center">
-                <p className="text-xs text-[#6B7280]">
-                  Click below to authenticate with your official Telegram account:
-                </p>
-
-                {/* Telegram Official Button Widget Container */}
-                <div className="py-4 flex justify-center items-center min-h-[60px]">
-                  <div ref={telegramWrapperRef}></div>
-                </div>
-
-                <div className="p-3 bg-[#F4F4F5] rounded-xl border border-gray-200 text-center">
-                  <p className="text-[11px] text-[#6B7280]">
-                    🛡️ Instant cryptographic identity verification via Telegram
-                  </p>
-                </div>
-              </div>
-            )}
 
             {/* EMAIL LOGIN MODE */}
             {activeMode === 'email' && (
@@ -289,7 +245,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                       </p>
                     </div>
 
-                    {/* Enter Code Option (Solves redirect issues) */}
+                    {/* Enter Code Option */}
                     <form onSubmit={handleVerifyOtp} className="space-y-3">
                       <div className="space-y-1">
                         <label className="block text-xs font-bold text-[#6B7280] uppercase">
@@ -330,7 +286,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                 ) : (
                   <form onSubmit={handleEmailSignIn} className="space-y-3">
                     <div className="space-y-1">
-                      <label className="block text-xs font-bold text-[#6B7280] uppercase">Company Work Email</label>
+                      <label className="block text-xs font-bold text-[#6B7280] uppercase">Email Address</label>
                       <div className="relative">
                         <Mail size={15} className="absolute left-3.5 top-3.5 text-[#6B7280]" />
                         <input
@@ -338,12 +294,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="name@yourcompany.com"
+                          placeholder="you@gmail.com or you@company.com"
                           className="w-full pl-10 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
                         />
                       </div>
                       <p className="text-[11px] text-[#6B7280]">
-                        Only company domain emails allowed (e.g. <code>@leonslab.tech</code>).
+                        We'll send a passwordless login link and 6-digit code.
                       </p>
                     </div>
 
@@ -353,10 +309,30 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                       className="w-full py-3 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {emailLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-                      <span>{emailLoading ? 'Sending Work Login Link...' : 'Send Work Magic Link'}</span>
+                      <span>{emailLoading ? 'Sending Login Link...' : 'Send Magic Login Link'}</span>
                     </button>
                   </form>
                 )}
+              </div>
+            )}
+
+            {/* TELEGRAM LOGIN MODE */}
+            {activeMode === 'telegram' && (
+              <div className="space-y-4 animate-fade-in text-center">
+                <p className="text-xs text-[#6B7280]">
+                  Click below to authenticate with your official Telegram account:
+                </p>
+
+                {/* Telegram Official Button Widget Container */}
+                <div className="py-4 flex justify-center items-center min-h-[60px]">
+                  <div ref={telegramWrapperRef}></div>
+                </div>
+
+                <div className="p-3 bg-[#F4F4F5] rounded-xl border border-gray-200 text-center">
+                  <p className="text-[11px] text-[#6B7280]">
+                    🛡️ Instant cryptographic identity verification via Telegram
+                  </p>
+                </div>
               </div>
             )}
 
