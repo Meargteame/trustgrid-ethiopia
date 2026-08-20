@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, Mail, Palette, Save, Loader2, Globe, Upload } from 'lucide-react';
+import { User, Mail, Palette, Save, Loader2, Globe, Upload, Image, CheckCircle2, X } from 'lucide-react';
 import { Button } from './Button';
+import { Toast } from './Toast';
 
 interface SettingsTabProps {
   onProfileUpdate?: () => void;
@@ -10,15 +11,18 @@ interface SettingsTabProps {
 export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     companyName: '',
     website: '',
     primaryColor: '#D4F954',
     logoUrl: '',
-    email: '', // Read-only mostly, but good to show
+    email: '',
     username: ''
   });
-  const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -48,12 +52,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
           companyName: data.company_name || '',
           website: data.website || '',
           primaryColor: data.primary_color || '#D4F954',
-          logoUrl: data.logo_url || '',
+          logoUrl: data.logo_url || data.avatar_url || '',
           email: data.email || user.email || '',
           username: data.username || ''
         });
       } else {
-        // Fallback to user metadata if profile doesn't exist yet
         setFormData(prev => ({
             ...prev,
             email: user.email || '',
@@ -71,10 +74,42 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setUploadingLogo(true);
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not logged in");
+
+        const ext = file.name.split('.').pop() || 'png';
+        const fileName = `${user.id}/logo_${Date.now()}.${ext}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        setFormData(prev => ({ ...prev, logoUrl: publicUrl }));
+        setToast({ message: "Logo uploaded successfully!", type: "success" });
+      } catch (err: any) {
+        console.error("Logo upload error:", err);
+        setToast({ message: err.message || "Failed to upload logo image.", type: "error" });
+      } finally {
+        setUploadingLogo(false);
+      }
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -89,6 +124,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
         website: formData.website,
         primary_color: formData.primaryColor,
         logo_url: formData.logoUrl,
+        avatar_url: formData.logoUrl,
         username: formData.username,
         updated_at: new Date().toISOString(),
       };
@@ -99,106 +135,118 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
 
       if (error) throw error;
 
-      setMessage({ text: 'Settings saved successfully!', type: 'success' });
+      setToast({ message: 'Settings saved successfully!', type: 'success' });
       
       if (onProfileUpdate) {
         onProfileUpdate();
       }
     } catch (error: any) {
-        console.error('Error updating profile:', error);
-      setMessage({ text: error.message || 'Error saving settings.', type: 'error' });
+      console.error('Error updating profile:', error);
+      setToast({ message: error.message || 'Error saving settings.', type: 'error' });
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <div className="w-10 h-10 rounded-full border-3 border-gray-200 border-t-black animate-spin"></div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Loading Profile...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-2xl mx-auto animate-fade-in pb-20">
-      <header className="mb-10">
-        <h1 className="text-3xl font-extrabold text-black mb-1">Account & Branding</h1>
-        <p className="text-gray-500 text-sm">Manage your company profile and brand appearance.</p>
-      </header>
+    <div className="max-w-2xl mx-auto animate-fade-in pb-20 font-sans">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
-         {message && (
-            <div className={`mb-6 p-4 rounded-xl flex items-center gap-2 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-               <span className="font-bold text-sm">{message.text}</span>
-            </div>
-         )}
+      <header className="mb-8">
+        <h1 className="text-3xl font-extrabold text-black mb-1">Account & Branding</h1>
+        <p className="text-gray-500 text-sm">Manage your company credentials and wall presentation.</p>
+      </header>
          
-      <form onSubmit={handleSave} className="space-y-8">
+      <form onSubmit={handleSave} className="space-y-6">
         {/* Company Details */}
-        <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <User size={20} /> Company Information
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <h3 className="text-base font-extrabold mb-4 text-black flex items-center gap-2">
+            <User size={18} className="text-gray-600" /> Company Information
           </h3>
+          
           <div className="grid gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Company Name</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Company Name</label>
               <input
                 type="text"
                 value={formData.companyName}
                 onChange={(e) => handleChange('companyName', e.target.value)}
-                className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
-                placeholder="e.g. Acme Corp"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all placeholder-gray-400"
+                placeholder="e.g. Acme Studio"
               />
             </div>
             
              <div>
-               <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Website</label>
+               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Website URL</label>
                <div className="relative">
-                 <Globe size={16} className="absolute left-3 top-3 text-gray-400" />
+                 <Globe size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
                  <input
                    type="url"
                    value={formData.website}
                    onChange={(e) => handleChange('website', e.target.value)}
-                   className="w-full pl-10 px-4 py-2 rounded-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
+                   className="w-full pl-10 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all placeholder-gray-400"
                    placeholder="https://acme.com"
                  />
                </div>
              </div>
 
              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Public Handle (slug)</label>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Public Handle (slug)</label>
                 <div className="flex items-center">
-                   <span className="text-gray-400 text-sm bg-gray-100 border border-r-0 border-gray-300 px-3 py-2 rounded-l-xl">trustgrid.et/</span>
+                   <span className="text-gray-400 text-xs font-bold bg-gray-50 border border-r-0 border-gray-200 px-3.5 py-3 rounded-l-xl">
+                      trustgrid.pro/wall/
+                   </span>
                    <input
                       type="text"
                       value={formData.username}
                       onChange={(e) => handleChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      className="w-full px-4 py-2 rounded-r-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
-                      placeholder="company-name"
+                      className="w-full px-4 py-2.5 rounded-r-xl border border-gray-200 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all placeholder-gray-400"
+                      placeholder="username"
                    />
                 </div>
+                <p className="text-[11px] text-gray-400 mt-1">This forms your permanent public Wall and Collection URLs.</p>
              </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contact Email</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Contact Email</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-3 text-gray-400" />
+                <Mail size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
                 <input
                   type="email"
                   value={formData.email}
                   disabled
-                  className="w-full pl-10 px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+                  className="w-full pl-10 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 text-sm cursor-not-allowed"
                 />
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">Email cannot be changed directly.</p>
+              <p className="text-[10px] text-gray-400 mt-1">Email is tied to your account authentication.</p>
             </div>
           </div>
         </div>
 
         {/* Branding Section */}
-        <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <Palette size={20} /> Branding
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <h3 className="text-base font-extrabold mb-4 text-black flex items-center gap-2">
+            <Palette size={18} className="text-gray-600" /> Brand Identity & Logo
           </h3>
+          
           <div className="grid gap-6">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Brand Color</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Accent Color</label>
               <div className="flex items-center gap-4">
                   <div className="flex gap-2">
                     {['#D4F954', '#3B82F6', '#A855F7', '#EF4444', '#10B981', '#111111'].map((color) => (
@@ -211,56 +259,101 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
                       />
                     ))}
                   </div>
-                  <div className="flex items-center border border-gray-300 rounded-lg px-2 bg-white">
-                      <span className="text-gray-500 text-sm mr-1">#</span>
+                  <div className="flex items-center border border-gray-200 rounded-xl px-2.5 bg-white">
+                      <span className="text-gray-400 text-xs mr-1 font-mono">#</span>
                       <input 
                         type="text" 
                         value={formData.primaryColor.replace('#', '')}
                         onChange={(e) => handleChange('primaryColor', '#' + e.target.value)}
-                        className="w-20 py-1 outline-none text-sm font-mono uppercase"
+                        className="w-20 py-1.5 outline-none text-xs font-mono uppercase text-black font-bold"
                         maxLength={6}
                       />
                   </div>
-                  <div className="w-10 h-10 rounded-lg border border-gray-200 shadow-sm" style={{ backgroundColor: formData.primaryColor }}></div>
+                  <div className="w-9 h-9 rounded-xl border border-gray-200 shadow-sm" style={{ backgroundColor: formData.primaryColor }}></div>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Logo URL</label>
-              <div className="flex gap-2">
-                 <input
-                    type="url"
-                    value={formData.logoUrl}
-                    onChange={(e) => handleChange('logoUrl', e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                    className="flex-1 px-4 py-2 rounded-xl border border-gray-300 focus:border-black focus:ring-0 outline-none transition-colors"
-                 />
-              </div>
-              <p className="text-[10px] text-gray-500 mt-2">
-                 Paste a direct link to your logo image. (File upload coming soon)
-              </p>
-            </div>
-            
-            {/* Logo Preview */}
-            {formData.logoUrl && (
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <div className="w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
-                        <img src={formData.logoUrl} alt="Logo Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold text-black">Logo Preview</p>
-                        <p className="text-[10px] text-gray-500">This will be displayed on your widgets and invoices.</p>
-                    </div>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Company Logo</label>
+              
+              <input 
+                type="file" 
+                ref={logoInputRef}
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="hidden" 
+              />
+
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                {formData.logoUrl ? (
+                  <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm flex-shrink-0 relative group">
+                    <img 
+                      src={formData.logoUrl} 
+                      alt="Logo Preview" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => (e.currentTarget.style.display = 'none')} 
+                    />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-white border border-dashed border-gray-300 flex items-center justify-center flex-shrink-0 text-gray-400">
+                    <Image size={24} />
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-black mb-1">
+                    {formData.logoUrl ? "Logo Active" : "No Logo Uploaded"}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mb-3">
+                    Displayed on your public wall, embed widgets, and review forms.
+                  </p>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={uploadingLogo}
+                      onClick={() => logoInputRef.current?.click()}
+                      className="px-3 py-1.5 bg-black text-white rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {uploadingLogo ? (
+                        <>
+                          <Loader2 size={12} className="animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={12} />
+                          Upload Image
+                        </>
+                      )}
+                    </button>
+
+                    {formData.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => handleChange('logoUrl', '')}
+                        className="px-2.5 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-bold transition-colors"
+                        title="Remove Logo"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-            )}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
-            <Button type="submit" size="lg" disabled={saving}>
-               {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2" size={18} />}
-               {saving ? 'Saving...' : 'Save Changes'}
-            </Button>
+        <div className="flex justify-end pt-2">
+            <button 
+              type="submit" 
+              disabled={saving}
+              className="px-6 py-3.5 bg-black text-white font-extrabold text-xs rounded-xl hover:bg-gray-800 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+            >
+               {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+               {saving ? 'Saving...' : 'Save Settings'}
+            </button>
         </div>
       </form>
     </div>

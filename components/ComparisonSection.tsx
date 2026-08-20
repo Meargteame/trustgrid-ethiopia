@@ -4,7 +4,7 @@ import { CheckCircle2, MessageSquare } from 'lucide-react';
 
 export const Showcase: React.FC = () => {
   return (
-    <section className="py-24 bg-gray-50 border-y border-gray-100">
+    <section id="demo" className="py-24 bg-gray-50 border-y border-gray-100 scroll-mt-16">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           

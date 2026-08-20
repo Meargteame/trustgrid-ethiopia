@@ -23,7 +23,7 @@ export const Testimonials: React.FC = () => {
         const { data, error } = await supabase
           .from('testimonials')
           .select('id, name, text, company, avatar_url, status')
-          .eq('status', 'verified')
+          .in('status', ['verified', 'approved', 'published'])
           .order('created_at', { ascending: false })
           .limit(4);
 
