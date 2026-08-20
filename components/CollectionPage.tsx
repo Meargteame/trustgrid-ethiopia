@@ -21,6 +21,7 @@ import {
 import { supabase } from '../lib/supabase';
 import { Toast } from './Toast';
 import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
+import { broadcastToTelegram } from '../lib/telegramBroadcast';
 
 // --- Types ---
 
@@ -383,6 +384,26 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
             throw new Error("You have already reviewed this business with this Telegram account.");
         }
         throw insertError;
+      }
+
+      // Automated Telegram Channel Broadcast
+      if (profile.id) {
+        const localChannel = localStorage.getItem(`tg_channel_${profile.id}`);
+        const localToken = localStorage.getItem(`tg_bot_token_${profile.id}`);
+        if (localChannel) {
+          const ratingVal = ratingParams ? (answers[ratingParams.id] || 5) : 5;
+          broadcastToTelegram(
+            { telegramChannel: localChannel, telegramBotToken: localToken || undefined },
+            {
+              clientName: reviewerName,
+              clientCompany: reviewerCompany,
+              text: textResponses || "Verified Customer Review",
+              rating: ratingVal,
+              score: score,
+              wallUrl: `${window.location.origin}/wall/${profile.username || 'demo'}`
+            }
+          ).catch(console.error);
+        }
       }
 
       setSubmitted(true);

@@ -20,6 +20,7 @@ import { EmbedCodeModal } from './EmbedCodeModal';
 import { WidgetEmbedModal } from './WidgetEmbedModal';
 import { InviteMemberModal } from './InviteMemberModal';
 import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
+import { broadcastToTelegram } from '../lib/telegramBroadcast';
 
 const INITIAL_TEAM: TeamMember[] = [];
 
@@ -464,6 +465,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
           ));
           
           showToast('Proof verified and published!');
+
+          // Automatic Telegram Channel Broadcast
+          if (testimonial && profileData.id) {
+             const localChannel = localStorage.getItem(`tg_channel_${profileData.id}`);
+             const localToken = localStorage.getItem(`tg_bot_token_${profileData.id}`);
+             if (localChannel) {
+                broadcastToTelegram(
+                   { telegramChannel: localChannel, telegramBotToken: localToken || undefined },
+                   {
+                      clientName: testimonial.clientName,
+                      clientCompany: testimonial.clientCompany,
+                      text: testimonial.text,
+                      rating: testimonial.rating || 5,
+                      score: testimonial.trustScore || 100,
+                      wallUrl: `${window.location.origin}/wall/${profileData.username || 'leonslab'}`
+                   }
+                ).then(res => {
+                   if (res.success) {
+                      showToast(`Auto-broadcasted to Telegram ${localChannel}!`, 'success');
+                   }
+                }).catch(console.error);
+             }
+          }
        } catch (err: any) {
           console.error(err);
           showToast('Failed to verify proof', 'error');

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, Mail, Palette, Save, Loader2, Globe, Upload, Image, CheckCircle2, X } from 'lucide-react';
-import { Button } from './Button';
+import { User, Mail, Palette, Save, Loader2, Globe, Upload, Image, CheckCircle2, X, Send, AlertCircle } from 'lucide-react';
 import { Toast } from './Toast';
+import { TrustGridMark } from './TrustGridLogo';
+import { broadcastToTelegram } from '../lib/telegramBroadcast';
 
 interface SettingsTabProps {
   onProfileUpdate?: () => void;
@@ -11,16 +12,19 @@ interface SettingsTabProps {
 export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testingBroadcast, setTestingBroadcast] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     companyName: '',
     website: '',
-    primaryColor: '#D4F954',
+    primaryColor: '#D7FF3D',
     logoUrl: '',
     email: '',
-    username: ''
+    username: '',
+    telegramChannel: '',
+    telegramBotToken: ''
   });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
@@ -37,6 +41,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
         return;
       }
 
+      // 1. Fetch from Supabase
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -47,20 +52,28 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
         console.error('Error fetching profile:', error);
       }
 
+      // 2. Read fallback storage for Telegram broadcast configs
+      const localChannel = localStorage.getItem(`tg_channel_${user.id}`) || '';
+      const localToken = localStorage.getItem(`tg_bot_token_${user.id}`) || '';
+
       if (data) {
         setFormData({
           companyName: data.company_name || '',
           website: data.website || '',
-          primaryColor: data.primary_color || '#D4F954',
+          primaryColor: data.primary_color || '#D7FF3D',
           logoUrl: data.logo_url || data.avatar_url || '',
           email: data.email || user.email || '',
-          username: data.username || ''
+          username: data.username || '',
+          telegramChannel: (data as any).telegram_channel || localChannel,
+          telegramBotToken: (data as any).telegram_bot_token || localToken
         });
       } else {
         setFormData(prev => ({
-            ...prev,
-            email: user.email || '',
-            companyName: user.user_metadata?.company_name || ''
+          ...prev,
+          email: user.email || '',
+          companyName: user.user_metadata?.company_name || '',
+          telegramChannel: localChannel,
+          telegramBotToken: localToken
         }));
       }
     } catch (err) {
@@ -86,7 +99,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
         const ext = file.name.split('.').pop() || 'png';
         const fileName = `${user.id}/logo_${Date.now()}.${ext}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, file, { upsert: true });
 
@@ -118,7 +131,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
         throw new Error('No user logged in');
       }
 
-      const updates = {
+      // Persist Telegram config to local storage cache as well
+      localStorage.setItem(`tg_channel_${user.id}`, formData.telegramChannel);
+      localStorage.setItem(`tg_bot_token_${user.id}`, formData.telegramBotToken);
+
+      const updates: any = {
         id: user.id,
         company_name: formData.companyName,
         website: formData.website,
@@ -129,11 +146,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
         updated_at: new Date().toISOString(),
       };
 
+      // Try updating with telegram channel fields
       const { error } = await supabase
         .from('profiles')
-        .upsert(updates);
+        .upsert({
+          ...updates,
+          telegram_channel: formData.telegramChannel,
+          telegram_bot_token: formData.telegramBotToken
+        });
 
-      if (error) throw error;
+      if (error) {
+        // Fallback if telegram columns do not exist yet in DB schema
+        await supabase.from('profiles').upsert(updates);
+      }
 
       setToast({ message: 'Settings saved successfully!', type: 'success' });
       
@@ -148,17 +173,59 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
     }
   };
 
+  const handleTestBroadcast = async () => {
+    if (!formData.telegramChannel) {
+      setToast({ message: 'Please enter a Telegram Channel username or Chat ID first.', type: 'warning' });
+      return;
+    }
+
+    setTestingBroadcast(true);
+    try {
+      const result = await broadcastToTelegram(
+        {
+          telegramChannel: formData.telegramChannel,
+          telegramBotToken: formData.telegramBotToken
+        },
+        {
+          clientName: 'Yonas Alemayehu',
+          clientRole: 'Founder',
+          clientCompany: formData.companyName || 'Addis Tech Hub',
+          text: 'TrustGrid made collecting and displaying verified customer proof completely seamless for our business in Addis Ababa. 100% recommended!',
+          rating: 5,
+          score: 100,
+          wallUrl: `${window.location.origin}/wall/${formData.username || 'demo'}`
+        }
+      );
+
+      if (result.success) {
+        setToast({ 
+          message: `✅ Test broadcast successfully posted to ${formData.telegramChannel}!`, 
+          type: 'success' 
+        });
+      } else {
+        setToast({ 
+          message: result.error || 'Failed to post test message to Telegram.', 
+          type: 'error' 
+        });
+      }
+    } catch (err: any) {
+      setToast({ message: err.message || 'Broadcast error.', type: 'error' });
+    } finally {
+      setTestingBroadcast(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <div className="w-10 h-10 rounded-full border-3 border-gray-200 border-t-black animate-spin"></div>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Loading Profile...</p>
+        <Loader2 className="w-8 h-8 animate-spin text-[#0A0A0A]" />
+        <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider">Loading Settings...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto animate-fade-in pb-20 font-sans">
+    <div className="max-w-3xl mx-auto animate-fade-in pb-20 font-sans">
       {toast && (
         <Toast
           message={toast.message}
@@ -167,114 +234,130 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
         />
       )}
 
-      <header className="mb-8">
-        <h1 className="text-3xl font-extrabold text-black mb-1">Account & Branding</h1>
-        <p className="text-gray-500 text-sm">Manage your company credentials and wall presentation.</p>
+      {/* Header */}
+      <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-[#0A0A0A] tracking-tight mb-1">Workspace Settings</h1>
+          <p className="text-[#6B7280] text-sm">Manage your brand identity, public wall links, and Telegram broadcast automation.</p>
+        </div>
+
+        <button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="px-5 py-2.5 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors flex items-center gap-2 disabled:opacity-50 flex-shrink-0"
+        >
+          {saving ? <Loader2 className="animate-spin" size={15} /> : <Save size={15} />}
+          <span>{saving ? 'Saving...' : 'Save Settings'}</span>
+        </button>
       </header>
          
       <form onSubmit={handleSave} className="space-y-6">
-        {/* Company Details */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-base font-extrabold mb-4 text-black flex items-center gap-2">
-            <User size={18} className="text-gray-600" /> Company Information
-          </h3>
+        
+        {/* SECTION 1: Company Profile & Links */}
+        <section className="bg-[#FFFFFF] border border-gray-200 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+            <User size={18} className="text-[#0A0A0A]" />
+            <h2 className="text-base font-black text-[#0A0A0A]">Company Information</h2>
+          </div>
           
-          <div className="grid gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Company Name</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-[#6B7280] uppercase">Company Name</label>
               <input
                 type="text"
                 value={formData.companyName}
                 onChange={(e) => handleChange('companyName', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all placeholder-gray-400"
-                placeholder="e.g. Acme Studio"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                placeholder="e.g. Leons Lab Studio"
               />
             </div>
             
-             <div>
-               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Website URL</label>
-               <div className="relative">
-                 <Globe size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
-                 <input
-                   type="url"
-                   value={formData.website}
-                   onChange={(e) => handleChange('website', e.target.value)}
-                   className="w-full pl-10 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all placeholder-gray-400"
-                   placeholder="https://acme.com"
-                 />
-               </div>
-             </div>
-
-             <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Public Handle (slug)</label>
-                <div className="flex items-center">
-                   <span className="text-gray-400 text-xs font-bold bg-gray-50 border border-r-0 border-gray-200 px-3.5 py-3 rounded-l-xl">
-                      trustgrid.leonslab.tech/wall/
-                   </span>
-                   <input
-                      type="text"
-                      value={formData.username}
-                      onChange={(e) => handleChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      className="w-full px-4 py-2.5 rounded-r-xl border border-gray-200 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all placeholder-gray-400"
-                      placeholder="username"
-                   />
-                </div>
-                <p className="text-[11px] text-gray-400 mt-1">This forms your permanent public Wall and Collection URLs.</p>
-             </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Contact Email</label>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-[#6B7280] uppercase">Website URL</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-3.5 text-gray-400" />
+                <Globe size={15} className="absolute left-3.5 top-3.5 text-[#6B7280]" />
+                <input
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => handleChange('website', e.target.value)}
+                  className="w-full pl-10 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                  placeholder="https://leonslab.tech"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <label className="block text-xs font-bold text-[#6B7280] uppercase">Public Handle (slug)</label>
+              <div className="flex items-center">
+                <span className="text-[#6B7280] text-xs font-mono bg-[#F4F4F5] border border-r-0 border-gray-200 px-3.5 py-2.5 rounded-l-xl flex-shrink-0">
+                  {window.location.origin}/wall/
+                </span>
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => handleChange('username', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  className="w-full px-4 py-2.5 rounded-r-xl border border-gray-200 text-sm font-bold focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                  placeholder="leonslab"
+                />
+              </div>
+              <p className="text-[11px] text-[#6B7280]">Your public wall of proof will be available at this permanent address.</p>
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <label className="block text-xs font-bold text-[#6B7280] uppercase">Contact Email</label>
+              <div className="relative">
+                <Mail size={15} className="absolute left-3.5 top-3.5 text-[#6B7280]" />
                 <input
                   type="email"
                   value={formData.email}
                   disabled
-                  className="w-full pl-10 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 text-sm cursor-not-allowed"
+                  className="w-full pl-10 px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F4F4F5] text-[#6B7280] text-sm cursor-not-allowed"
                 />
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">Email is tied to your account authentication.</p>
+              <p className="text-[10px] text-[#6B7280]">Account authentication email.</p>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Branding Section */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-base font-extrabold mb-4 text-black flex items-center gap-2">
-            <Palette size={18} className="text-gray-600" /> Brand Identity & Logo
-          </h3>
+        {/* SECTION 2: Brand Identity & Colors */}
+        <section className="bg-[#FFFFFF] border border-gray-200 rounded-2xl p-6 space-y-5">
+          <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+            <Palette size={18} className="text-[#0A0A0A]" />
+            <h2 className="text-base font-black text-[#0A0A0A]">Brand Identity & Logo</h2>
+          </div>
           
-          <div className="grid gap-6">
+          <div className="space-y-5">
             <div>
               <label className="block text-xs font-bold text-[#6B7280] uppercase mb-2">Accent Color</label>
-              <div className="flex items-center gap-4">
-                  <div className="flex gap-2">
-                    {['#D7FF3D', '#3B82F6', '#A855F7', '#EF4444', '#10B981', '#0A0A0A'].map((color) => (
-                      <button
-                        type="button"
-                        key={color}
-                        onClick={() => handleChange('primaryColor', color)}
-                        className={`w-8 h-8 rounded-full border border-gray-200 transition-all ${formData.primaryColor === color ? 'ring-2 ring-offset-2 ring-[#0A0A0A] scale-110' : 'hover:scale-105'}`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex items-center border border-gray-200 rounded-xl px-2.5 bg-white">
-                      <span className="text-gray-400 text-xs mr-1 font-mono">#</span>
-                      <input 
-                        type="text" 
-                        value={formData.primaryColor.replace('#', '')}
-                        onChange={(e) => handleChange('primaryColor', '#' + e.target.value)}
-                        className="w-20 py-1.5 outline-none text-xs font-mono uppercase text-black font-bold"
-                        maxLength={6}
-                      />
-                  </div>
-                  <div className="w-9 h-9 rounded-xl border border-gray-200 shadow-sm" style={{ backgroundColor: formData.primaryColor }}></div>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex gap-2">
+                  {['#D7FF3D', '#3B82F6', '#A855F7', '#EF4444', '#10B981', '#0A0A0A'].map((color) => (
+                    <button
+                      type="button"
+                      key={color}
+                      onClick={() => handleChange('primaryColor', color)}
+                      className={`w-8 h-8 rounded-full border border-gray-200 transition-all ${formData.primaryColor === color ? 'ring-2 ring-offset-2 ring-[#0A0A0A] scale-110' : 'hover:scale-105'}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+                
+                <div className="flex items-center border border-gray-200 rounded-xl px-2.5 bg-[#FFFFFF]">
+                  <span className="text-[#6B7280] text-xs mr-1 font-mono">#</span>
+                  <input 
+                    type="text" 
+                    value={formData.primaryColor.replace('#', '')}
+                    onChange={(e) => handleChange('primaryColor', '#' + e.target.value)}
+                    className="w-20 py-2 outline-none text-xs font-mono uppercase text-[#0A0A0A] font-bold"
+                    maxLength={6}
+                  />
+                </div>
+                <div className="w-8 h-8 rounded-lg border border-gray-200" style={{ backgroundColor: formData.primaryColor }}></div>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Company Logo</label>
+              <label className="block text-xs font-bold text-[#6B7280] uppercase mb-2">Company Logo</label>
               
               <input 
                 type="file" 
@@ -284,9 +367,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
                 className="hidden" 
               />
 
-              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+              <div className="flex items-center gap-4 p-4 bg-[#F4F4F5] rounded-xl border border-gray-200">
                 {formData.logoUrl ? (
-                  <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm flex-shrink-0 relative group">
+                  <div className="w-16 h-16 rounded-xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                     <img 
                       src={formData.logoUrl} 
                       alt="Logo Preview" 
@@ -295,16 +378,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
                     />
                   </div>
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-white border border-dashed border-gray-300 flex items-center justify-center flex-shrink-0 text-gray-400">
+                  <div className="w-16 h-16 rounded-xl bg-white border border-dashed border-gray-300 flex items-center justify-center flex-shrink-0 text-gray-400">
                     <Image size={24} />
                   </div>
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-black mb-1">
+                  <p className="text-xs font-bold text-[#0A0A0A] mb-1">
                     {formData.logoUrl ? "Logo Active" : "No Logo Uploaded"}
                   </p>
-                  <p className="text-[11px] text-gray-400 mb-3">
+                  <p className="text-[11px] text-[#6B7280] mb-3">
                     Displayed on your public wall, embed widgets, and review forms.
                   </p>
 
@@ -313,17 +396,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
                       type="button"
                       disabled={uploadingLogo}
                       onClick={() => logoInputRef.current?.click()}
-                      className="px-3 py-1.5 bg-black text-white rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      className="px-3.5 py-1.5 bg-[#0A0A0A] text-[#FFFFFF] rounded-lg text-xs font-bold hover:bg-[#222222] transition-colors flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {uploadingLogo ? (
                         <>
-                          <Loader2 size={12} className="animate-spin" />
-                          Uploading...
+                          <Loader2 size={13} className="animate-spin" />
+                          <span>Uploading...</span>
                         </>
                       ) : (
                         <>
-                          <Upload size={12} />
-                          Upload Image
+                          <Upload size={13} />
+                          <span>Upload Image</span>
                         </>
                       )}
                     </button>
@@ -332,7 +415,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
                       <button
                         type="button"
                         onClick={() => handleChange('logoUrl', '')}
-                        className="px-2.5 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-bold transition-colors"
+                        className="px-2.5 py-1.5 bg-gray-200 hover:bg-gray-300 text-[#0A0A0A] rounded-lg text-xs font-bold transition-colors"
                         title="Remove Logo"
                       >
                         <X size={14} />
@@ -343,64 +426,88 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
               </div>
             </div>
           </div>
+        </section>
 
-          {/* Telegram Channel Auto-Broadcast Section */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-4">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0088cc] flex items-center justify-center font-bold">
-                ✈️
+        {/* SECTION 3: Telegram Channel Broadcast (Dedicated Standalone Card) */}
+        <section className="bg-[#FFFFFF] border border-gray-200 rounded-2xl p-6 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#F4F4F5] border border-gray-200 flex items-center justify-center">
+                <TrustGridMark size={16} />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-black">Telegram Channel Broadcast</h3>
-                <p className="text-xs text-gray-500">Auto-post 5-star verified reviews directly to your Telegram channel or group</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-gray-700 uppercase">Telegram Channel Username / ID</label>
-                <input
-                  type="text"
-                  value={(formData as any).telegramChannel || ''}
-                  onChange={(e) => handleChange('telegramChannel', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
-                  placeholder="@your_channel_username"
-                />
-                <p className="text-[11px] text-gray-400">e.g. <code>@addis_fintech</code> or Channel Chat ID</p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-gray-700 uppercase">Custom Bot Token (Optional)</label>
-                <input
-                  type="password"
-                  value={(formData as any).telegramBotToken || ''}
-                  onChange={(e) => handleChange('telegramBotToken', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
-                  placeholder="123456789:ABCdefGHIjkl..."
-                />
-                <p className="text-[11px] text-gray-400">Leave blank to use the official TrustGrid Bot.</p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-blue-50/60 rounded-xl border border-blue-100 flex items-start gap-3">
-              <div className="text-lg mt-0.5">📢</div>
-              <div className="text-xs text-blue-900 leading-relaxed">
-                <strong className="block mb-0.5">How it works:</strong>
-                Add your bot as an admin to your channel with <em>"Post Messages"</em> permission. Whenever a customer submits a 5-star verified review, it will automatically broadcast formatted social proof into your channel!
+                <h2 className="text-base font-black text-[#0A0A0A]">Telegram Channel Broadcast</h2>
+                <p className="text-xs text-[#6B7280]">Auto-push 5-star verified reviews directly to your Telegram channel or group</p>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-end pt-2">
-            <button 
-              type="submit" 
-              disabled={saving}
-              className="px-6 py-3.5 bg-black text-white font-extrabold text-xs rounded-xl hover:bg-gray-800 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-[#6B7280] uppercase">Telegram Channel Username / Chat ID</label>
+              <input
+                type="text"
+                value={formData.telegramChannel}
+                onChange={(e) => handleChange('telegramChannel', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                placeholder="@your_channel"
+              />
+              <p className="text-[11px] text-[#6B7280]">e.g. <code>@leonslab</code> or <code>-1001234567890</code></p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-[#6B7280] uppercase">Custom Bot Token (Optional)</label>
+              <input
+                type="password"
+                value={formData.telegramBotToken}
+                onChange={(e) => handleChange('telegramBotToken', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                placeholder="123456789:ABCdefGHIjkl..."
+              />
+              <p className="text-[11px] text-[#6B7280]">Leave blank to use the official TrustGrid Bot.</p>
+            </div>
+          </div>
+
+          {/* How It Works Guide Banner */}
+          <div className="p-4 bg-[#F4F4F5] rounded-xl border border-gray-200 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#0A0A0A]">
+              <span>📢</span>
+              <span>How Channel Broadcasting Works:</span>
+            </div>
+            <ol className="text-xs text-[#6B7280] space-y-1 list-decimal list-inside leading-relaxed pl-1">
+              <li>Add your bot as an <strong>Administrator</strong> to your channel with <em>"Post Messages"</em> permission.</li>
+              <li>Enter your channel username above (e.g. <code>@your_channel</code>).</li>
+              <li>Whenever a client submits or you approve a 5-star verified review, TrustGrid automatically formats and broadcasts the verified social proof into your channel!</li>
+            </ol>
+          </div>
+
+          {/* Interactive Test Broadcast Button */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+            <p className="text-xs text-[#6B7280]">
+              Test your channel connection before going live:
+            </p>
+            <button
+              type="button"
+              onClick={handleTestBroadcast}
+              disabled={testingBroadcast || !formData.telegramChannel}
+              className="px-4 py-2 bg-[#F4F4F5] hover:bg-gray-200 border border-gray-200 text-[#0A0A0A] rounded-xl text-xs font-bold transition-colors flex items-center gap-2 disabled:opacity-40 flex-shrink-0"
             >
-               {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-               {saving ? 'Saving...' : 'Save Settings'}
+              {testingBroadcast ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              <span>{testingBroadcast ? 'Broadcasting...' : 'Send Test Review to Channel'}</span>
             </button>
+          </div>
+        </section>
+
+        {/* Bottom Save Action */}
+        <div className="flex justify-end pt-2">
+          <button 
+            type="submit" 
+            disabled={saving}
+            className="px-6 py-3 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="animate-spin" size={15} /> : <Save size={15} />}
+            <span>{saving ? 'Saving...' : 'Save Settings'}</span>
+          </button>
         </div>
       </form>
     </div>
