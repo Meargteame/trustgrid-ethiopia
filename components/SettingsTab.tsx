@@ -343,6 +343,53 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
               </div>
             </div>
           </div>
+
+          {/* Telegram Channel Auto-Broadcast Section */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-4">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0088cc] flex items-center justify-center font-bold">
+                ✈️
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-black">Telegram Channel Broadcast</h3>
+                <p className="text-xs text-gray-500">Auto-post 5-star verified reviews directly to your Telegram channel or group</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-700 uppercase">Telegram Channel Username / ID</label>
+                <input
+                  type="text"
+                  value={(formData as any).telegramChannel || ''}
+                  onChange={(e) => handleChange('telegramChannel', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
+                  placeholder="@your_channel_username"
+                />
+                <p className="text-[11px] text-gray-400">e.g. <code>@addis_fintech</code> or Channel Chat ID</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-700 uppercase">Custom Bot Token (Optional)</label>
+                <input
+                  type="password"
+                  value={(formData as any).telegramBotToken || ''}
+                  onChange={(e) => handleChange('telegramBotToken', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
+                  placeholder="123456789:ABCdefGHIjkl..."
+                />
+                <p className="text-[11px] text-gray-400">Leave blank to use the official TrustGrid Bot.</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-blue-50/60 rounded-xl border border-blue-100 flex items-start gap-3">
+              <div className="text-lg mt-0.5">📢</div>
+              <div className="text-xs text-blue-900 leading-relaxed">
+                <strong className="block mb-0.5">How it works:</strong>
+                Add your bot as an admin to your channel with <em>"Post Messages"</em> permission. Whenever a customer submits a 5-star verified review, it will automatically broadcast formatted social proof into your channel!
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end pt-2">

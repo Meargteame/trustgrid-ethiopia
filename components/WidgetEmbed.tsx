@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { TestimonialData } from '../types';
-import { CheckCircle2, Star, Quote, Play, ExternalLink, Shield, Sparkles } from 'lucide-react';
+import { CheckCircle2, Star, Quote, Play, ExternalLink, Shield, Sparkles, X, Flame } from 'lucide-react';
 
 interface WidgetEmbedProps {
   companyHandle: string;
@@ -13,6 +13,11 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
+
+  // Toast / Popup state
+  const [toastIndex, setToastIndex] = useState(0);
+  const [toastVisible, setToastVisible] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Parse custom parameters from the iframe URL query string
   const queryParams = new URLSearchParams(window.location.search);
@@ -26,6 +31,7 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
   const font = queryParams.get('font') || 'sans';
   const columns = parseInt(queryParams.get('cols') || '3', 10);
   const gap = parseInt(queryParams.get('gap') || '6', 10);
+  const toastPosition = queryParams.get('pos') || 'bottom-left'; // 'bottom-left' | 'bottom-right'
 
   useEffect(() => {
     const fetchTestimonials = async () => {
@@ -46,12 +52,12 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
 
         setProfileInfo(profile);
 
-        // 2. Get Testimonials (query verified, approved, published, or recent pending)
+        // 2. Get Testimonials (query verified, approved, published)
         const { data: testimonialsData, error: testimonialsError } = await supabase
           .from('testimonials')
           .select('*')
           .eq('user_id', profile.id)
-          .or('status.eq.verified,status.eq.published,status.eq.approved,status.eq.pending')
+          .or('status.eq.verified,status.eq.published,status.eq.approved')
           .order('created_at', { ascending: false });
 
         if (testimonialsError) {
@@ -91,92 +97,104 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
     }
   }, [companyHandle]);
 
+  // Toast cycling timer
+  useEffect(() => {
+    if (layout !== 'toast' || testimonials.length <= 1 || isPaused) return;
+
+    const timer = setInterval(() => {
+      setToastVisible(false);
+      setTimeout(() => {
+        setToastIndex((prev) => (prev + 1) % testimonials.length);
+        setToastVisible(true);
+      }, 400); // fade transition
+    }, 6000);
+
+    return () => clearInterval(timer);
+  }, [layout, testimonials.length, isPaused]);
+
   if (loading) {
     return (
-      <div className="min-h-[220px] flex flex-col items-center justify-center bg-transparent gap-3 p-8">
-        <div className="w-12 h-12 rounded-full border-4 border-black border-t-[#D4F954] animate-spin shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"></div>
-        <p className="text-xs font-black text-black tracking-wide uppercase">Loading Verified Proofs...</p>
+      <div className="min-h-[160px] flex flex-col items-center justify-center bg-transparent gap-2 p-6">
+        <div className="w-8 h-8 rounded-full border-2 border-black border-t-[#D4F954] animate-spin"></div>
+        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Loading Verified Proof...</p>
       </div>
     );
   }
 
-  // --- Dynamic Styles based on Params ---
-  let fontClass = 'font-sans';
-  if (font === 'serif') fontClass = 'font-serif';
-  if (font === 'mono') fontClass = 'font-mono';
+  if (error || !profileInfo) {
+    return (
+      <div className="p-8 text-center bg-white rounded-2xl border border-gray-200 shadow-sm max-w-md mx-auto my-6">
+        <p className="text-sm font-bold text-black mb-1">Widget Unavailable</p>
+        <p className="text-xs text-gray-500">{error || "Could not load verification records for this handle."}</p>
+      </div>
+    );
+  }
 
-  // Theme Colors
+  // Visual Theme Tokens
   let bgClass = 'bg-white';
   let textClass = 'text-black';
-  let borderClass = 'border border-gray-200 hover:border-gray-300';
   let subTextClass = 'text-gray-500';
-  let quoteColor = 'text-gray-900';
-  let badgeBg = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-  
+  let borderClass = 'border-gray-200';
+  let quoteColor = 'text-gray-800';
+
   if (theme === 'dark') {
     bgClass = 'bg-gray-950';
     textClass = 'text-white';
-    borderClass = 'border border-gray-800 hover:border-gray-700';
     subTextClass = 'text-gray-400';
+    borderClass = 'border-gray-800';
     quoteColor = 'text-gray-200';
-    badgeBg = 'bg-emerald-950/60 text-emerald-400 border border-emerald-800';
-  } else if (theme === 'transparent') {
-    bgClass = 'bg-white/90 backdrop-blur-md';
+  } else if (theme === 'lime') {
+    bgClass = 'bg-[#D4F954]';
     textClass = 'text-black';
-    borderClass = 'border border-gray-200/80 hover:border-gray-300';
-    subTextClass = 'text-gray-600';
+    subTextClass = 'text-gray-800';
+    borderClass = 'border-black';
     quoteColor = 'text-black';
-    badgeBg = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
   }
 
-  // Border Radius
-  let radClass = 'rounded-2xl';
-  if (borderRadius === 'none') radClass = 'rounded-none';
-  if (borderRadius === 'md') radClass = 'rounded-xl';
-  if (borderRadius === '2xl') radClass = 'rounded-2xl';
-  if (borderRadius === '3xl') radClass = 'rounded-3xl';
+  // Radius Tokens
+  const radClass = {
+    'none': 'rounded-none',
+    'md': 'rounded-md',
+    'lg': 'rounded-xl',
+    'xl': 'rounded-2xl',
+    '2xl': 'rounded-3xl',
+  }[borderRadius] || 'rounded-2xl';
 
-  // Shadow
-  let shadClass = 'shadow-sm hover:shadow-md';
-  if (shadow === 'none') shadClass = 'shadow-none';
-  if (shadow === 'sm') shadClass = 'shadow-sm';
-  if (shadow === 'lg') shadClass = 'shadow-lg';
+  // Shadow Tokens
+  const shadClass = {
+    'none': 'shadow-none',
+    'sm': 'shadow-sm',
+    'md': 'shadow-md',
+    'lg': 'shadow-lg',
+    'xl': 'shadow-xl',
+  }[shadow] || 'shadow-md';
 
-  // Gap translation
-  let gapClass = 'gap-6';
-  if (gap <= 4) gapClass = 'gap-4';
-  if (gap >= 8) gapClass = 'gap-8';
+  // Font Tokens
+  const fontClass = {
+    'sans': 'font-sans',
+    'serif': 'font-serif',
+    'mono': 'font-mono',
+  }[font] || 'font-sans';
 
-  // Empty state if 0 testimonials
-  if (error || testimonials.length === 0) {
-    const brandTitle = profileInfo?.company_name || profileInfo?.full_name || companyHandle;
-    const collectUrl = `/collect/${companyHandle}`;
+  // Gap Tokens
+  const gapClass = {
+    '2': 'gap-2',
+    '4': 'gap-4',
+    '6': 'gap-6',
+    '8': 'gap-8',
+  }[gap.toString()] || 'gap-6';
 
+  const brandTitle = profileInfo.company_name || profileInfo.full_name || `@${profileInfo.username}`;
+  const collectUrl = `/collect/${profileInfo.username}`;
+  const wallUrl = `/wall/${profileInfo.username}`;
+
+  // Empty state
+  if (testimonials.length === 0) {
     return (
-      <div className={`w-full min-h-[260px] bg-transparent ${fontClass} p-4 sm:p-6 flex flex-col items-center justify-center antialiased`}>
-        <div className={`max-w-md w-full p-8 ${bgClass} ${textClass} ${borderClass} ${radClass} ${shadClass} text-center flex flex-col items-center relative transition-all`}>
-          
-          <div className="relative mb-4">
-            {profileInfo?.avatar_url ? (
-              <img 
-                src={profileInfo.avatar_url} 
-                alt={brandTitle} 
-                className="w-16 h-16 rounded-full object-cover border border-gray-200 shadow-sm p-0.5 bg-white" 
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-[#FCE676] text-black flex items-center justify-center font-black text-xl shadow-sm border border-black/15">
-                {brandTitle?.charAt(0)?.toUpperCase() || '⭐'}
-              </div>
-            )}
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-sm">
-              <CheckCircle2 size={14} className="stroke-[3]" />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1 text-amber-500 mb-2">
-            {[1,2,3,4,5].map(i => (
-              <Star key={i} size={16} className="fill-amber-400 text-amber-500" />
-            ))}
+      <div className={`w-full bg-transparent ${fontClass} p-6 antialiased flex items-center justify-center`}>
+        <div className={`w-full max-w-md ${bgClass} ${textClass} border ${borderClass} ${radClass} ${shadClass} p-8 text-center flex flex-col items-center shadow-lg`}>
+          <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center mb-4">
+            <Sparkles size={22} className="text-yellow-400" />
           </div>
 
           <h3 className="font-extrabold text-xl mb-1 tracking-tight">{brandTitle}</h3>
@@ -203,7 +221,97 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
     );
   }
 
-  // Layout handling
+  // ----------------------------------------------------
+  // LAYOUT: LIVE SOCIAL PROOF TOAST (FOMO POPUP)
+  // ----------------------------------------------------
+  if (layout === 'toast') {
+    const currentItem = testimonials[toastIndex] || testimonials[0];
+    const posClass = toastPosition === 'bottom-right' ? 'right-4 bottom-4' : 'left-4 bottom-4';
+
+    return (
+      <div 
+        className={`fixed z-50 ${posClass} max-w-[360px] w-[calc(100%-2rem)] transition-all duration-300 transform ${
+          toastVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-95 pointer-events-none'
+        }`}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        <div className={`p-4 border ${bgClass} ${textClass} ${borderClass} ${radClass} ${shadClass} backdrop-blur-md shadow-2xl relative overflow-hidden flex flex-col gap-2.5`}>
+          
+          {/* Top Row: Icon + Stars + Close */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+              <Flame size={11} className="text-amber-500 fill-amber-500" />
+              <span>Verified Proof</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {showRating && (
+                <div className="flex gap-0.5 text-amber-400">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} size={11} className="fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+              )}
+              <button 
+                onClick={() => setToastVisible(false)}
+                className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-black transition-colors"
+                title="Dismiss"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          </div>
+
+          {/* Review Text */}
+          <p className={`text-xs font-semibold leading-snug line-clamp-2 break-words break-all [overflow-wrap:anywhere] ${quoteColor}`}>
+            "{currentItem.text}"
+          </p>
+
+          {/* Footer: Reviewer Info + Verification + TrustGrid Tag */}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-0.5">
+            <div className="flex items-center gap-2 min-w-0">
+              {showAvatar && (
+                <img 
+                  src={currentItem.avatarUrl} 
+                  alt={currentItem.clientName} 
+                  className="w-6 h-6 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                />
+              )}
+              <div className="min-w-0">
+                <p className={`text-[11px] font-extrabold truncate flex items-center gap-1 ${textClass}`}>
+                  <span>{currentItem.clientName}</span>
+                  <CheckCircle2 size={10} className="text-emerald-600 flex-shrink-0" />
+                </p>
+                {currentItem.clientCompany && (
+                  <p className={`text-[9px] truncate ${subTextClass}`}>{currentItem.clientCompany}</p>
+                )}
+              </div>
+            </div>
+
+            <a 
+              href={wallUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[9px] font-bold text-gray-400 hover:text-black transition-colors uppercase tracking-wider flex items-center gap-0.5 flex-shrink-0"
+            >
+              <span>TrustGrid</span>
+              <ExternalLink size={9} />
+            </a>
+          </div>
+
+          {/* Progress Indicator Bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 overflow-hidden">
+            <div className="h-full bg-emerald-500 animate-[progress_6s_linear_infinite]"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // STANDARD LAYOUTS: GRID / FEED / CAROUSEL
+  // ----------------------------------------------------
   let containerClass = '';
   if (layout === 'grid') {
     let colClass = 'md:grid-cols-3';
@@ -278,33 +386,50 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
               </p>
             </div>
 
-            {/* Reviewer Profile Card */}
-            <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800/80 mt-auto">
-              {showAvatar && (
-                <img 
-                  src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}&background=FCE676&color=111111`} 
-                  alt={item.clientName} 
-                  className="w-10 h-10 rounded-full object-cover bg-gray-100 border border-gray-200 shadow-sm flex-shrink-0" 
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <h4 className="font-extrabold text-sm truncate leading-tight flex items-center gap-1.5">
-                  {item.clientName}
-                  {item.verificationMethod === 'telegram' && (
-                    <CheckCircle2 size={13} className="text-blue-600 flex-shrink-0" />
-                  )}
-                </h4>
-                {item.clientCompany ? (
-                  <p className={`text-xs font-bold truncate ${subTextClass}`}>{item.clientCompany}</p>
-                ) : item.reviewerTelegramUsername ? (
-                  <p className="text-xs text-blue-600 font-bold truncate">@{item.reviewerTelegramUsername}</p>
-                ) : (
-                  <p className={`text-xs font-bold ${subTextClass}`}>Verified Client</p>
+            {/* Author Profile Row */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100/50 mt-auto">
+              <div className="flex items-center gap-3">
+                {showAvatar && (
+                  <img 
+                    src={item.avatarUrl} 
+                    alt={item.clientName} 
+                    className="w-9 h-9 rounded-full object-cover border border-gray-200/80 bg-gray-100" 
+                  />
                 )}
+                <div>
+                  <h4 className="font-extrabold text-sm tracking-tight leading-tight">{item.clientName}</h4>
+                  <p className={`text-xs ${subTextClass}`}>{item.clientCompany || 'Verified Customer'}</p>
+                </div>
               </div>
+
+              {/* External source icon */}
+              {item.sourceUrl && (
+                <a 
+                  href={item.sourceUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-gray-400 hover:text-black p-1 transition-colors"
+                  title="View original verification source"
+                >
+                  <ExternalLink size={14} />
+                </a>
+              )}
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Global verification footer credit */}
+      <div className="mt-8 text-center">
+        <a 
+          href={wallUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-[11px] font-bold text-gray-500 hover:text-black hover:border-gray-400 shadow-sm transition-all"
+        >
+          <Shield size={13} className="text-emerald-500" />
+          <span>Verified with <strong className="text-black">TrustGrid</strong></span>
+        </a>
       </div>
     </div>
   );

@@ -40,7 +40,18 @@ export const WidgetEmbedModal: React.FC<WidgetEmbedModalProps> = ({ username, co
   const embedUrl = `${window.location.origin}/embed/${username || ''}?${params.toString()}`;
   const wallUrl = `${window.location.origin}/wall/${username || ''}`;
 
-  const iframeSnippet = `<!-- TrustGrid Verified Reviews Widget -->
+  const iframeSnippet = config.layout === 'toast' 
+    ? `<!-- TrustGrid Live Social Proof Toast Widget -->
+<iframe
+  src="${embedUrl}"
+  width="380"
+  height="180"
+  frameborder="0"
+  scrolling="no"
+  style="border:none; position:fixed; bottom:20px; left:20px; z-index:99999; pointer-events:auto; background:transparent;"
+  title="TrustGrid Live Social Proof Toast"
+></iframe>`
+    : `<!-- TrustGrid Verified Reviews Widget -->
 <iframe
   src="${embedUrl}"
   width="100%"

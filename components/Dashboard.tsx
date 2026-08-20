@@ -6,7 +6,7 @@ import {
    Image as ImageIcon, X, Palette, User, Mail, Shield,
    Trash2, LogOut, Check, Loader2, RefreshCw, BarChart3, ExternalLink,
    Share2, Users, Monitor, Layout, Maximize2, Columns, List, MessageSquare, Linkedin,
-   Eye, EyeOff
+   Eye, EyeOff, Flame
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TestimonialData, TeamMember, WidgetTheme, WidgetLayout } from '../types';
@@ -536,7 +536,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       }
    };
 
-   // handleVerify declaration removed (duplicate)
+   const handleBroadcastToTelegram = (t: TestimonialData) => {
+      const wallUrl = `${window.location.origin}/wall/${profileData.username || ''}`;
+      const stars = '⭐️⭐️⭐️⭐️⭐️';
+      const text = `${stars}\n\n"${t.text}"\n\n— ${t.clientName}${t.clientCompany ? ` (${t.clientCompany})` : ''}\n\n✅ 100% Cryptographically Verified by TrustGrid\n🔗 View Wall: ${wallUrl}`;
+      const tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent(wallUrl)}&text=${encodeURIComponent(text)}`;
+      window.open(tgShareUrl, '_blank');
+      showToast('Opening Telegram to broadcast verified proof!', 'success');
+   };
 
    const handleCustomizeStyle = async (id: string) => {
       const testimonial = testimonials.find(t => t.id === id);
@@ -995,6 +1002,13 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                        <Palette size={15} />
                                     </button>
                                     <button
+                                       onClick={() => handleBroadcastToTelegram(t)}
+                                       className={`p-1.5 rounded-lg hover:bg-blue-50 hover:text-[#0088cc] transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
+                                       title="Broadcast to Telegram Channel"
+                                    >
+                                       <Send size={15} />
+                                    </button>
+                                    <button
                                        onClick={() => setShareModalData(t)}
                                        className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-400 hover:text-black'}`}
                                        title="Share to Social"
@@ -1275,11 +1289,12 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                               <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
                                  Display Mode
                               </label>
-                              <div className="grid grid-cols-3 gap-2.5">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                                  {[
                                     { id: 'grid', label: 'Grid Wall', icon: <LayoutGrid size={18} /> },
                                     { id: 'carousel', label: 'Slider Row', icon: <Columns size={18} /> },
-                                    { id: 'feed', label: 'Single Feed', icon: <List size={18} /> }
+                                    { id: 'feed', label: 'Single Feed', icon: <List size={18} /> },
+                                    { id: 'toast', label: 'Live Popup', icon: <Flame size={18} className="text-amber-500" /> }
                                  ].map((opt) => (
                                     <button
                                        key={opt.id}
@@ -1622,75 +1637,140 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                  </h2>
                               </div>
                            )}
+                           {/* Dynamic Testimonial Grid / Carousel / Feed / Toast */}
+                           {layout === 'toast' ? (
+                              <div className="w-full h-full min-h-[360px] relative flex flex-col justify-between p-4">
+                                 {/* Background dummy site content */}
+                                 <div className="space-y-4 opacity-40 max-w-xl mx-auto pt-6 text-center">
+                                    <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded-lg w-3/4 mx-auto animate-pulse"></div>
+                                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/2 mx-auto"></div>
+                                    <div className="h-24 bg-gray-100 dark:bg-gray-900 rounded-2xl w-full border border-gray-200 dark:border-gray-800"></div>
+                                 </div>
 
-                           {/* Dynamic Testimonial Grid / Carousel / Feed */}
-                           <div className={`w-full transition-all duration-300 ${
-                              layout === 'grid' 
-                                 ? `grid ${gridColsClass} ${gapSpacing}` 
-                                 : layout === 'carousel'
-                                    ? `flex overflow-x-auto pb-4 ${gapSpacing} snap-x snap-mandatory scrollbar-none`
-                                    : `flex flex-col ${gapSpacing} max-w-xl mx-auto`
-                           }`}>
-                              {visibleItems.map((item: any) => (
-                                 <div 
-                                    key={item.id} 
-                                    className={`p-5 sm:p-6 transition-all duration-300 flex flex-col h-full border ${cardBgClass} ${activeRadius} ${activeShadow} ${
-                                       layout === 'carousel' ? 'min-w-[280px] sm:min-w-[320px] snap-start flex-shrink-0' : 'w-full'
-                                    } hover:-translate-y-1 hover:shadow-lg`}
-                                 >
-                                    {/* Star Rating & Date */}
-                                    <div className="flex justify-between items-start mb-3 gap-2">
-                                       {showRating && (
-                                          <div className="flex gap-1 text-amber-400 text-sm">
-                                             {[1,2,3,4,5].map(i => (
-                                                <span key={i} className="text-amber-400">★</span>
-                                             ))}
-                                          </div>
-                                       )}
-                                       {showDate && (
-                                          <div className={`text-[11px] font-medium opacity-50 ${cardSubtextClass}`}>
-                                             {item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Verified Proof'}
-                                          </div>
-                                       )}
-                                    </div>
-
-                                    {/* Review Text */}
-                                    <p className={`text-sm sm:text-base leading-relaxed mb-5 flex-1 break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap ${cardQuoteClass}`}>
-                                       "{item.text}"
-                                    </p>
-
-                                    {/* Reviewer Profile & Badges */}
-                                    <div className="flex items-center justify-between pt-4 border-t border-gray-500/10 mt-auto gap-2">
-                                       <div className="flex items-center gap-3 min-w-0">
-                                          {showAvatar && (
-                                             <img 
-                                                src={item.avatarUrl} 
-                                                className="w-9 h-9 rounded-full object-cover bg-gray-200 border border-gray-100 flex-shrink-0" 
-                                                alt={item.clientName}
-                                             />
-                                          )}
-                                          <div className="min-w-0">
-                                             <p className={`text-xs sm:text-sm font-bold truncate ${cardTextClass}`}>
-                                                {item.clientName}
-                                             </p>
-                                             {item.clientCompany && (
-                                                <p className={`text-[11px] opacity-70 truncate ${cardSubtextClass}`}>
-                                                   {item.clientCompany}
-                                                </p>
+                                 {/* Simulated Floating Social Proof Toast */}
+                                 <div className="max-w-[360px] w-full animate-bounce-subtle mt-auto">
+                                    {visibleItems.slice(0, 1).map((item: any) => (
+                                       <div 
+                                          key={item.id}
+                                          className={`p-4 border ${cardBgClass} ${activeRadius} ${activeShadow} backdrop-blur-md shadow-2xl relative overflow-hidden flex flex-col gap-2`}
+                                       >
+                                          <div className="flex items-center justify-between gap-2">
+                                             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                                                <Flame size={11} className="text-amber-500 fill-amber-500" />
+                                                <span>Live Verified Proof</span>
+                                             </div>
+                                             {showRating && (
+                                                <div className="flex gap-0.5 text-amber-400 text-xs">
+                                                   {[1,2,3,4,5].map(i => <span key={i}>★</span>)}
+                                                </div>
                                              )}
                                           </div>
+
+                                          <p className={`text-xs font-semibold leading-snug line-clamp-2 break-words break-all ${cardQuoteClass}`}>
+                                             "{item.text}"
+                                          </p>
+
+                                          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800 mt-0.5">
+                                             <div className="flex items-center gap-2 min-w-0">
+                                                {showAvatar && (
+                                                   <img 
+                                                      src={item.avatarUrl} 
+                                                      alt={item.clientName} 
+                                                      className="w-6 h-6 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                                                   />
+                                                )}
+                                                <div className="min-w-0">
+                                                   <p className={`text-[11px] font-extrabold truncate flex items-center gap-1 ${cardTextClass}`}>
+                                                      <span>{item.clientName}</span>
+                                                      <CheckCircle2 size={10} className="text-emerald-600 flex-shrink-0" />
+                                                   </p>
+                                                   {item.clientCompany && (
+                                                      <p className={`text-[9px] truncate ${cardSubtextClass}`}>{item.clientCompany}</p>
+                                                   )}
+                                                </div>
+                                             </div>
+                                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                                                TrustGrid
+                                             </span>
+                                          </div>
+
+                                          {/* Animated progress bar */}
+                                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100 overflow-hidden">
+                                             <div className="h-full bg-emerald-500 w-2/3"></div>
+                                          </div>
+                                       </div>
+                                    ))}
+                                 </div>
+                              </div>
+                           ) : (
+                              <div className={`w-full transition-all duration-300 ${
+                                 layout === 'grid' 
+                                    ? `grid ${gridColsClass} ${gapSpacing}` 
+                                    : layout === 'carousel'
+                                       ? `flex overflow-x-auto pb-4 ${gapSpacing} snap-x snap-mandatory scrollbar-none`
+                                       : `flex flex-col ${gapSpacing} max-w-xl mx-auto`
+                              }`}>
+                                 {visibleItems.map((item: any) => (
+                                    <div 
+                                       key={item.id} 
+                                       className={`p-5 sm:p-6 transition-all duration-300 flex flex-col h-full border ${cardBgClass} ${activeRadius} ${activeShadow} ${
+                                          layout === 'carousel' ? 'min-w-[280px] sm:min-w-[320px] snap-start flex-shrink-0' : 'w-full'
+                                       } hover:-translate-y-1 hover:shadow-lg`}
+                                    >
+                                       {/* Star Rating & Date */}
+                                       <div className="flex justify-between items-start mb-3 gap-2">
+                                          {showRating && (
+                                             <div className="flex gap-1 text-amber-400 text-sm">
+                                                {[1,2,3,4,5].map(i => (
+                                                   <span key={i} className="text-amber-400">★</span>
+                                                ))}
+                                             </div>
+                                          )}
+                                          {showDate && (
+                                             <div className={`text-[11px] font-medium opacity-50 ${cardSubtextClass}`}>
+                                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Verified Proof'}
+                                             </div>
+                                          )}
                                        </div>
 
-                                       {item.verificationMethod && item.verificationMethod !== 'manual' && (
-                                          <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${badgeStyle} flex-shrink-0`}>
-                                             <CheckCircle2 size={11} />
-                                             {item.verificationMethod === 'telegram' ? 'Telegram' : 'LinkedIn'}
-                                          </span>
-                                       )}
+                                       {/* Review Text */}
+                                       <p className={`text-sm sm:text-base leading-relaxed mb-5 flex-1 break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap ${cardQuoteClass}`}>
+                                          "{item.text}"
+                                       </p>
+
+                                       {/* Reviewer Profile & Badges */}
+                                       <div className="flex items-center justify-between pt-4 border-t border-gray-500/10 mt-auto gap-2">
+                                          <div className="flex items-center gap-3 min-w-0">
+                                             {showAvatar && (
+                                                <img 
+                                                   src={item.avatarUrl} 
+                                                   className="w-9 h-9 rounded-full object-cover bg-gray-200 border border-gray-100 flex-shrink-0" 
+                                                   alt={item.clientName}
+                                                />
+                                             )}
+                                             <div className="min-w-0">
+                                                <p className={`text-xs sm:text-sm font-bold truncate ${cardTextClass}`}>
+                                                   {item.clientName}
+                                                </p>
+                                                {item.clientCompany && (
+                                                   <p className={`text-[11px] opacity-70 truncate ${cardSubtextClass}`}>
+                                                      {item.clientCompany}
+                                                   </p>
+                                                )}
+                                             </div>
+                                          </div>
+
+                                          {item.verificationMethod && item.verificationMethod !== 'manual' && (
+                                             <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${badgeStyle} flex-shrink-0`}>
+                                                <CheckCircle2 size={11} />
+                                                {item.verificationMethod === 'telegram' ? 'Telegram' : 'LinkedIn'}
+                                             </span>
+                                          )}
+                                       </div>
                                     </div>
-                                 </div>
-                              ))}
-                           </div>
+                                 ))}
+                              </div>
+                           )}
 
                            {/* Subtle watermark */}
                            <div className="text-center mt-6">

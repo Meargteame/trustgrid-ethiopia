@@ -425,20 +425,46 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
   if (submitted) {
     return (
       <div className="min-h-screen bg-white bg-grid flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-lg border border-gray-200 p-8 text-center animate-fade-in">
-          <div className="w-16 h-16 bg-[#D4F954]/20 border border-black/10 rounded-full flex items-center justify-center mx-auto mb-6 text-black">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-gray-200 p-8 text-center animate-fade-in space-y-6">
+          <div className="w-16 h-16 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center mx-auto text-emerald-600 shadow-sm">
             <CheckCircle2 className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-extrabold text-black mb-2">Thank You!</h2>
-          <p className="text-gray-600 mb-8 text-sm leading-relaxed">
-            Your verified review has been submitted to <span className="font-bold text-black">{profile.company_name || profile.full_name}</span>. Thank you for your feedback!
-          </p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="py-3 px-6 rounded-xl bg-gray-100 hover:bg-gray-200 text-black font-bold text-xs transition-colors"
-          >
-            Submit Another Response
-          </button>
+          <div>
+            <h2 className="text-2xl font-black text-black mb-1 tracking-tight">Review Verified & Submitted!</h2>
+            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+              Your verified review has been recorded for <span className="font-bold text-black">{profile.company_name || profile.full_name}</span>. Thank you for your feedback!
+            </p>
+          </div>
+
+          {/* Unlocked Reward Card */}
+          {config.incentive_message && (
+            <div className="p-5 rounded-2xl bg-[#FCE676]/20 border border-amber-300/80 text-left space-y-2 shadow-sm">
+              <div className="flex items-center gap-1.5 text-amber-900 font-black text-xs uppercase tracking-wider">
+                <Gift size={15} className="text-amber-700" />
+                <span>🎉 Reward Unlocked!</span>
+              </div>
+              <p className="text-xs sm:text-sm font-bold text-gray-900 leading-relaxed">
+                {config.incentive_message}
+              </p>
+            </div>
+          )}
+
+          <div className="pt-2 flex flex-col gap-2">
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-3 px-6 rounded-xl bg-gray-100 hover:bg-gray-200 text-black font-bold text-xs transition-colors"
+            >
+              Submit Another Response
+            </button>
+            <a 
+              href={`/wall/${profile.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-gray-500 hover:text-black transition-colors"
+            >
+              View Public Wall of Proof →
+            </a>
+          </div>
         </div>
       </div>
     );
