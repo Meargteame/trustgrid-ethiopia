@@ -46,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin }) => {
               onClick={onLogin}
               className="px-5 py-2.5 rounded-xl bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs hover:bg-[#222222] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0A0A0A] focus:ring-offset-2"
             >
-              Login with Telegram
+              Log In
             </button>
           </div>
 
@@ -93,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogin }) => {
                 onClick={() => { setIsOpen(false); onLogin(); }}
                 className="w-full py-3 rounded-xl bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs hover:bg-[#222222] transition-colors"
               >
-                Login with Telegram
+                Log In
               </button>
             </div>
           </div>
