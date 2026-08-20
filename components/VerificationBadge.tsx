@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Linkedin, User, Info, X, Clock, Mail } from 'lucide-react';
+import { Linkedin, Info, X, Clock, User } from 'lucide-react';
+import { TrustGridMark } from './TrustGridLogo';
 
 interface VerificationBadgeProps {
   method: 'manual' | 'email' | 'linkedin' | 'telegram';
@@ -18,20 +19,20 @@ export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ method, is
   const BadgeContent = () => {
     if (method === 'telegram') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg text-[10px] font-bold text-blue-700 shadow-sm cursor-pointer hover:bg-blue-100 transition-colors" onClick={toggleInfo}>
-          <CheckCircle2 size={12} className="text-blue-500" />
-          VERIFIED VIA TELEGRAM {telegramUsername ? `@${telegramUsername}` : ''}
-          <Info size={10} className="ml-1 opacity-70" />
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F4F4F5] border border-gray-200 rounded-lg text-[10px] font-bold text-[#0A0A0A] cursor-pointer hover:bg-gray-200 transition-colors" onClick={toggleInfo}>
+          <TrustGridMark size={13} />
+          <span>VERIFIED TELEGRAM {telegramUsername ? `@${telegramUsername}` : ''}</span>
+          <Info size={10} className="ml-0.5 opacity-60" />
         </span>
       );
     }
 
     if (method === 'linkedin') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0a66c2] border border-[#004182] rounded-lg text-[10px] font-bold text-white shadow-sm cursor-pointer hover:bg-[#004182] transition-colors" onClick={toggleInfo}>
-          <Linkedin size={12} className="fill-white" />
-          LINKEDIN CERTIFIED
-          <Info size={10} className="ml-1 opacity-70" />
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F4F4F5] border border-gray-200 rounded-lg text-[10px] font-bold text-[#0A0A0A] cursor-pointer hover:bg-gray-200 transition-colors" onClick={toggleInfo}>
+          <Linkedin size={12} className="text-[#0a66c2]" />
+          <span>LINKEDIN CERTIFIED</span>
+          <Info size={10} className="ml-0.5 opacity-60" />
         </span>
       );
     }
@@ -39,27 +40,27 @@ export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ method, is
     if (method === 'email') {
       if (!isVerified) {
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-100 border border-yellow-300 rounded-lg text-[10px] font-bold text-yellow-800 shadow-sm cursor-pointer hover:bg-yellow-200 transition-colors animate-pulse" onClick={toggleInfo}>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg text-[10px] font-bold text-amber-800 cursor-pointer hover:bg-amber-100 transition-colors" onClick={toggleInfo}>
             <Clock size={12} />
-            PENDING CONFIRMATION
-            <Info size={10} className="ml-1 opacity-70" />
+            <span>PENDING CONFIRMATION</span>
+            <Info size={10} className="ml-0.5 opacity-60" />
           </span>
         );
       }
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 border border-emerald-300 rounded-lg text-[10px] font-bold text-emerald-800 shadow-sm cursor-pointer hover:bg-emerald-200 transition-colors" onClick={toggleInfo}>
-          <CheckCircle2 size={12} />
-          CLIENT VERIFIED
-          <Info size={10} className="ml-1 opacity-70" />
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F4F4F5] border border-gray-200 rounded-lg text-[10px] font-bold text-[#0A0A0A] cursor-pointer hover:bg-gray-200 transition-colors" onClick={toggleInfo}>
+          <TrustGridMark size={13} />
+          <span>EMAIL VERIFIED</span>
+          <Info size={10} className="ml-0.5 opacity-60" />
         </span>
       );
     }
 
     // Manual / Default
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 border border-gray-300 rounded-lg text-[10px] font-bold text-gray-500 cursor-pointer hover:bg-gray-200 transition-colors" onClick={toggleInfo}>
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F4F4F5] border border-gray-200 rounded-lg text-[10px] font-bold text-[#6B7280] cursor-pointer hover:bg-gray-200 transition-colors" onClick={toggleInfo}>
         <User size={12} />
-        SELF-REPORTED
+        <span>SELF-REPORTED</span>
         <Info size={10} className="ml-1 opacity-70" />
       </span>
     );
@@ -71,9 +72,9 @@ export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ method, is
 
       {/* Verification Explanation Popup */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-64 bg-black text-white p-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(212,249,84,1)] z-50 animate-fade-in border border-[#D4F954]">
+        <div className="absolute top-full left-0 mt-2 w-64 bg-[#0A0A0A] text-white p-4 rounded-xl border border-gray-800 z-50 animate-fade-in">
           <div className="flex justify-between items-start mb-2">
-            <h4 className="font-bold text-[#D4F954] text-xs uppercase tracking-wider">Verification Source</h4>
+            <h4 className="font-bold text-[#D7FF3D] text-xs uppercase tracking-wider">Verification Source</h4>
             <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="text-gray-400 hover:text-white">
               <X size={14} />
             </button>
@@ -81,10 +82,10 @@ export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ method, is
 
           <p className="text-xs leading-relaxed text-gray-300">
             {method === 'telegram' && "This identity was verified via Telegram Login. The reviewer's Telegram account has been authenticated."}
-            {method === 'linkedin' && "This identity was cryptographically verified via LinkedIn OAuth. The employment history and profile are authentic."}
+            {method === 'linkedin' && "This identity was verified via LinkedIn. The employment history and profile are authentic."}
             {method === 'email' && !isVerified && "The client has been emailed but hasn't clicked the verification link yet."}
             {method === 'email' && isVerified && "Verified via email confirmation. The client clicked a secure link sent to their work email."}
-            {method === 'manual' && "This review was manually submitted by the user. TrustGrid checks for spam patterns but identity is self-reported."}
+            {method === 'manual' && "This review was manually submitted. TrustGrid checks for spam patterns but identity is self-reported."}
           </p>
         </div>
       )}

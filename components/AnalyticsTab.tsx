@@ -179,18 +179,18 @@ export const AnalyticsTab: React.FC = () => {
       {/* Header */}
       <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-           <h1 className="text-3xl font-extrabold text-black mb-1 flex items-center gap-2">
-              <BarChart2 size={28} /> Trust Analytics
+           <h1 className="text-3xl font-black text-[#0A0A0A] mb-1 flex items-center gap-2 tracking-tight">
+              <BarChart2 size={26} /> Trust Analytics
            </h1>
-           <p className="text-gray-500 text-sm">Real-time performance of your wall of proof and visitor conversions.</p>
+           <p className="text-[#6B7280] text-sm">Real-time performance of your wall of proof and visitor conversions.</p>
         </div>
         
-        <div className="bg-white rounded-xl p-1 border border-gray-200 shadow-sm flex text-xs font-bold">
+        <div className="bg-[#F4F4F5] rounded-xl p-1 border border-gray-200 flex text-xs font-bold">
            {['7d', '30d', '90d'].map((r) => (
               <button 
                  key={r}
                  onClick={() => setTimeRange(r as any)}
-                 className={`px-3 py-1.5 rounded-lg transition-all ${timeRange === r ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                 className={`px-3 py-1.5 rounded-lg transition-all ${timeRange === r ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200' : 'text-[#6B7280] hover:text-[#0A0A0A]'}`}
               >
                  Last {r}
               </button>
@@ -200,59 +200,59 @@ export const AnalyticsTab: React.FC = () => {
 
       {/* Hero Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-black text-white p-6 rounded-2xl shadow-md relative overflow-hidden group">
-           <div className="absolute top-0 right-0 p-3 opacity-20"><Zap size={48} /></div>
+        <div className="bg-[#0A0A0A] text-white p-6 rounded-2xl border border-gray-800 relative overflow-hidden group">
+           <div className="absolute top-0 right-0 p-3 opacity-10"><Zap size={48} /></div>
            <p className="text-xs font-bold text-gray-400 uppercase mb-2">Total Wall Views</p>
            <h3 className="text-3xl sm:text-4xl font-black mb-1">{loading ? '...' : totalViews.toLocaleString()}</h3>
-           <p className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
+           <p className="text-[11px] text-[#D7FF3D] font-bold flex items-center gap-1">
               <TrendingUp size={12} /> Live tracking
            </p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:border-gray-300 transition-colors">
+        <div className="bg-[#FFFFFF] p-6 rounded-2xl border border-gray-200">
            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><MousePointer size={14} /></div>
-              <p className="text-xs font-bold text-gray-500 uppercase">Conversion Rate</p>
+              <div className="p-1.5 bg-[#F4F4F5] text-[#0A0A0A] rounded-lg"><MousePointer size={14} /></div>
+              <p className="text-xs font-bold text-[#6B7280] uppercase">Conversion Rate</p>
            </div>
-           <h3 className="text-3xl font-extrabold mb-1">{loading ? '...' : `${conversionRate.toFixed(1)}%`}</h3>
-           <p className="text-xs text-emerald-600 font-medium">Views to Verified Proofs</p>
+           <h3 className="text-3xl font-black text-[#0A0A0A] mb-1">{loading ? '...' : `${conversionRate.toFixed(1)}%`}</h3>
+           <p className="text-xs text-[#6B7280] font-medium">Views to Verified Proofs</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:border-gray-300 transition-colors">
+        <div className="bg-[#FFFFFF] p-6 rounded-2xl border border-gray-200">
            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg"><Target size={14} /></div>
-              <p className="text-xs font-bold text-gray-500 uppercase">Verified Reviews</p>
+              <div className="p-1.5 bg-[#F4F4F5] text-[#0A0A0A] rounded-lg"><Target size={14} /></div>
+              <p className="text-xs font-bold text-[#6B7280] uppercase">Verified Reviews</p>
            </div>
-           <h3 className="text-3xl font-extrabold mb-1">{loading ? '...' : totalTestimonials}</h3>
-           <p className="text-xs text-gray-500">Total verified submissions</p>
+           <h3 className="text-3xl font-black text-[#0A0A0A] mb-1">{loading ? '...' : totalTestimonials}</h3>
+           <p className="text-xs text-[#6B7280]">Total verified submissions</p>
         </div>
 
-        <div className="bg-[#D4F954]/20 p-6 rounded-2xl border border-black/10 shadow-sm">
+        <div className="bg-[#F4F4F5] p-6 rounded-2xl border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
-               <div className="p-1.5 bg-[#D4F954] text-black rounded-lg border border-black/15"><ArrowUpRight size={14} /></div>
-               <p className="text-xs font-bold text-gray-800 uppercase">Est. Value Saved</p>
+               <div className="p-1.5 bg-[#FFFFFF] text-[#0A0A0A] rounded-lg border border-gray-200"><ArrowUpRight size={14} /></div>
+               <p className="text-xs font-bold text-[#0A0A0A] uppercase">Est. Value Saved</p>
             </div>
-            <h3 className="text-3xl font-extrabold mb-1 text-black">{loading ? '...' : `ETB ${(totalViews * 2.5).toFixed(0)}`}</h3>
-            <p className="text-xs text-gray-600 font-medium">Saved vs paid ads equivalent</p>
+            <h3 className="text-3xl font-black mb-1 text-[#0A0A0A]">{loading ? '...' : `ETB ${(totalViews * 2.5).toFixed(0)}`}</h3>
+            <p className="text-xs text-[#6B7280] font-medium">Saved vs paid ads equivalent</p>
          </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
          {/* Main Chart Section */}
-         <div className="lg:col-span-2 bg-white border border-gray-200 rounded-3xl p-6 sm:p-8 shadow-sm">
+         <div className="lg:col-span-2 bg-[#FFFFFF] border border-gray-200 rounded-2xl p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-3">
                <div>
-                  <h3 className="font-extrabold text-lg text-black">Engagement & Conversion Trends</h3>
-                  <p className="text-xs text-gray-400">Daily breakdown of visitors and review submissions</p>
+                  <h3 className="font-black text-lg text-[#0A0A0A]">Engagement & Conversion Trends</h3>
+                  <p className="text-xs text-[#6B7280]">Daily breakdown of visitors and review submissions</p>
                </div>
                <div className="flex gap-4 text-xs font-bold">
                   <div className="flex items-center gap-2">
-                     <span className="w-2.5 h-2.5 rounded-full bg-black"></span> 
-                     <span className="text-gray-700">Views</span>
+                     <span className="w-2.5 h-2.5 rounded-full bg-[#0A0A0A]"></span> 
+                     <span className="text-[#0A0A0A]">Views</span>
                   </div>
                   <div className="flex items-center gap-2">
-                     <span className="w-2.5 h-2.5 rounded-full bg-brand-lime border border-black/20"></span> 
-                     <span className="text-gray-700">Verified Proofs</span>
+                     <span className="w-2.5 h-2.5 rounded-full bg-[#D7FF3D] border border-black/20"></span> 
+                     <span className="text-[#0A0A0A]">Verified Proofs</span>
                   </div>
                </div>
             </div>
@@ -263,24 +263,24 @@ export const AnalyticsTab: React.FC = () => {
                   <div key={i} className="flex-1 flex flex-col justify-end items-center h-full group relative">
                      {/* Bars Container */}
                      <div className="w-full max-w-10 flex items-end justify-center h-full gap-1 relative">
-                        <div className="absolute -inset-x-2 inset-y-0 rounded-lg bg-gray-50 opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
+                        <div className="absolute -inset-x-2 inset-y-0 rounded-lg bg-[#F4F4F5] opacity-0 group-hover:opacity-100 transition-opacity -z-10"></div>
                         
                         {/* Views Bar */}
                         <div 
-                           className="w-1/2 bg-black rounded-t-md transition-all duration-300 group-hover:bg-gray-800"
+                           className="w-1/2 bg-[#0A0A0A] rounded-t-md transition-all duration-300 group-hover:bg-gray-800"
                            style={{ height: maxViews ? `${Math.max(4, (item.views / maxViews) * 100)}%` : '4%' }}
                         ></div>
                         {/* Conversions Bar */}
                         <div 
-                           className="w-1/2 bg-[#D4F954] border border-black/20 border-b-0 rounded-t-md transition-all duration-300"
+                           className="w-1/2 bg-[#D7FF3D] border border-black/20 border-b-0 rounded-t-md transition-all duration-300"
                            style={{ height: maxViews ? `${Math.max(4, (item.conversions / maxViews) * 100)}%` : '4%' }}
                         ></div>
                      </div>
-                     <span className="text-[10px] font-bold text-gray-400 mt-4 group-hover:text-black transition-colors">{item.day}</span>
+                     <span className="text-[10px] font-bold text-[#6B7280] mt-4 group-hover:text-[#0A0A0A] transition-colors">{item.day}</span>
                      
                      {/* Tooltip */}
-                     <div className="absolute top-0 opacity-0 group-hover:opacity-100 transition-all bg-black text-white text-[11px] px-3 py-1.5 rounded-xl shadow-xl -mt-10 pointer-events-none whitespace-nowrap z-10">
-                        <span className="font-bold">{item.views}</span> Views • <span className="font-bold text-brand-lime">{item.conversions}</span> Proofs
+                     <div className="absolute top-0 opacity-0 group-hover:opacity-100 transition-all bg-[#0A0A0A] text-white text-[11px] px-3 py-1.5 rounded-xl -mt-10 pointer-events-none whitespace-nowrap z-10">
+                        <span className="font-bold">{item.views}</span> Views • <span className="font-bold text-[#D7FF3D]">{item.conversions}</span> Proofs
                      </div>
                   </div>
                ))}
@@ -290,16 +290,16 @@ export const AnalyticsTab: React.FC = () => {
          {/* Sidebar Analytics */}
          <div className="space-y-6">
              {/* Live Top Referrers */}
-             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
+             <div className="bg-[#FFFFFF] p-6 rounded-2xl border border-gray-200">
                 <div className="flex items-center justify-between mb-4">
-                   <h4 className="font-extrabold text-sm text-black flex items-center gap-1.5">
-                      <Globe size={16} className="text-gray-500" /> Top Traffic Sources
+                   <h4 className="font-black text-sm text-[#0A0A0A] flex items-center gap-1.5">
+                      <Globe size={16} className="text-[#6B7280]" /> Top Traffic Sources
                    </h4>
-                   <span className="text-[10px] font-bold text-gray-400 uppercase">Live</span>
+                   <span className="text-[10px] font-bold text-[#6B7280] uppercase">Live</span>
                 </div>
 
                 {topReferrers.length === 0 ? (
-                   <div className="text-center py-6 text-gray-400 text-xs">
+                   <div className="text-center py-6 text-[#6B7280] text-xs">
                       <p>Traffic source data will appear here as visitors view your wall of proof.</p>
                    </div>
                 ) : (
@@ -307,12 +307,12 @@ export const AnalyticsTab: React.FC = () => {
                       {topReferrers.map((ref, idx) => (
                          <div key={idx} className="space-y-1">
                             <div className="flex justify-between text-xs font-bold">
-                               <span className="text-gray-800">{ref.source}</span>
-                               <span className="text-gray-500">{ref.count} views ({ref.percentage}%)</span>
+                               <span className="text-[#0A0A0A]">{ref.source}</span>
+                               <span className="text-[#6B7280]">{ref.count} views ({ref.percentage}%)</span>
                             </div>
-                            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                            <div className="w-full bg-[#F4F4F5] h-2 rounded-full overflow-hidden">
                                <div 
-                                  className="bg-black h-full rounded-full transition-all duration-500"
+                                  className="bg-[#0A0A0A] h-full rounded-full transition-all duration-500"
                                   style={{ width: `${ref.percentage}%` }}
                                ></div>
                             </div>
@@ -323,18 +323,18 @@ export const AnalyticsTab: React.FC = () => {
              </div>
 
              {/* Live Average Trust Score */}
-             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
-                <h4 className="font-extrabold text-sm mb-2 text-black flex items-center gap-1.5">
-                   <ShieldCheck size={16} className="text-emerald-600" /> Avg. Trust Score
+             <div className="bg-[#FFFFFF] p-6 rounded-2xl border border-gray-200">
+                <h4 className="font-black text-sm mb-2 text-[#0A0A0A] flex items-center gap-1.5">
+                   <ShieldCheck size={16} className="text-[#0A0A0A]" /> Avg. Trust Score
                 </h4>
                 <div className="flex items-center gap-4 mb-2">
-                   <span className="text-4xl font-black text-black">
+                   <span className="text-4xl font-black text-[#0A0A0A]">
                       {loading ? '...' : avgTrustScore > 0 ? avgTrustScore : '100'}
-                      <span className="text-sm font-bold text-gray-400">/100</span>
+                      <span className="text-sm font-bold text-[#6B7280]">/100</span>
                    </span>
                    <div className="flex text-amber-400 text-sm">★★★★★</div>
                 </div>
-                <p className="text-xs text-gray-500 leading-relaxed font-medium">
+                <p className="text-xs text-[#6B7280] leading-relaxed font-medium">
                    {totalTestimonials > 0 
                      ? `Computed across ${totalTestimonials} verified client submissions.`
                      : 'Score will calculate automatically from your verified customer ratings.'}

@@ -189,14 +189,14 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold text-black tracking-tight">Collection Form Studio</h2>
-          <p className="text-gray-500 text-sm">Customize how clients submit testimonials and video reviews.</p>
+          <h2 className="text-3xl font-black text-[#0A0A0A] tracking-tight">Collection Form Studio</h2>
+          <p className="text-[#6B7280] text-sm">Customize how clients submit testimonials and video reviews.</p>
         </div>
         
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 text-xs font-bold transition-all shadow-sm disabled:opacity-50"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#0A0A0A] text-[#FFFFFF] rounded-xl hover:bg-[#222222] text-xs font-bold transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {saving ? 'Saving...' : 'Save Changes'}
@@ -204,97 +204,97 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
       </div>
 
       {/* General Settings Section */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-6">
+      <section className="bg-[#FFFFFF] rounded-2xl border border-gray-200 p-6 space-y-6">
         <div className="flex items-center gap-2 border-b border-gray-100 pb-4">
-          <Settings className="w-5 h-5 text-gray-700" />
-          <h3 className="text-base font-extrabold text-black">Form Header & Rewards</h3>
+          <Settings className="w-5 h-5 text-[#0A0A0A]" />
+          <h3 className="text-base font-black text-[#0A0A0A]">Form Header & Rewards</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-700 uppercase">Page Title</label>
+            <label className="block text-xs font-bold text-[#6B7280] uppercase">Page Title</label>
             <input
               type="text"
               value={config.title}
               onChange={(e) => setConfig({ ...config, title: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
               placeholder="e.g. Share your experience"
             />
-            <p className="text-[11px] text-gray-400">Main heading displayed on the collection page.</p>
+            <p className="text-[11px] text-[#6B7280]">Main heading displayed on the collection page.</p>
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-700 uppercase">Subtitle / Instructions</label>
+            <label className="block text-xs font-bold text-[#6B7280] uppercase">Subtitle / Instructions</label>
             <input
               type="text"
               value={config.subtitle}
               onChange={(e) => setConfig({ ...config, subtitle: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
               placeholder="e.g. We'd love to hear your feedback."
             />
-            <p className="text-[11px] text-gray-400">A short description guiding your clients.</p>
+            <p className="text-[11px] text-[#6B7280]">A short description guiding your clients.</p>
           </div>
 
           <div className="space-y-1.5 md:col-span-2">
-            <label className="block text-xs font-bold text-gray-700 uppercase flex items-center gap-1.5">
+            <label className="block text-xs font-bold text-[#6B7280] uppercase flex items-center gap-1.5">
               <Gift size={13} className="text-amber-500" /> Incentive / Reward Banner (Optional)
             </label>
             <input
               type="text"
               value={config.incentive_message || ''}
               onChange={(e) => setConfig({ ...config, incentive_message: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
               placeholder="e.g. Leave a video review and receive a 10% discount on your next service!"
             />
-            <p className="text-[11px] text-gray-400">Highlighted reward box to boost customer participation.</p>
+            <p className="text-[11px] text-[#6B7280]">Highlighted reward box to boost customer participation.</p>
           </div>
         </div>
 
         {/* Feature Toggles */}
         <div className="pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:border-black transition-colors">
+            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:border-[#0A0A0A] transition-colors">
               <input
                 type="checkbox"
                 checked={config.allow_video}
                 onChange={(e) => setConfig({ ...config, allow_video: e.target.checked })}
-                className="w-4 h-4 text-black accent-black rounded cursor-pointer"
+                className="w-4 h-4 text-[#0A0A0A] accent-[#0A0A0A] rounded cursor-pointer"
               />
               <div>
-                <span className="text-xs font-bold text-black flex items-center gap-1.5">
+                <span className="text-xs font-bold text-[#0A0A0A] flex items-center gap-1.5">
                   <Video size={14} className="text-rose-500" /> Allow Video Reviews
                 </span>
-                <p className="text-[10px] text-gray-400">Enable in-browser video camera recorder</p>
+                <p className="text-[10px] text-[#6B7280]">Enable in-browser video camera recorder</p>
               </div>
             </label>
 
-            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:border-black transition-colors">
+            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:border-[#0A0A0A] transition-colors">
               <input
                 type="checkbox"
                 checked={config.allow_photo}
                 onChange={(e) => setConfig({ ...config, allow_photo: e.target.checked })}
-                className="w-4 h-4 text-black accent-black rounded cursor-pointer"
+                className="w-4 h-4 text-[#0A0A0A] accent-[#0A0A0A] rounded cursor-pointer"
               />
               <div>
-                <span className="text-xs font-bold text-black flex items-center gap-1.5">
+                <span className="text-xs font-bold text-[#0A0A0A] flex items-center gap-1.5">
                   <Camera size={14} className="text-blue-500" /> Allow Photo & Logo Uploads
                 </span>
-                <p className="text-[10px] text-gray-400">Permit custom headshot attachments</p>
+                <p className="text-[10px] text-[#6B7280]">Permit custom headshot attachments</p>
               </div>
             </label>
         </div>
       </section>
 
       {/* Questions Builder Section */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <section className="bg-[#FFFFFF] rounded-2xl border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
-            <Eye className="w-5 h-5 text-gray-700" />
-            <h3 className="text-base font-extrabold text-black">Form Questions</h3>
+            <Eye className="w-5 h-5 text-[#0A0A0A]" />
+            <h3 className="text-base font-black text-[#0A0A0A]">Form Questions</h3>
           </div>
           
           <button
             onClick={addQuestion}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-black text-white rounded-xl hover:bg-gray-800 transition-colors font-bold shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs bg-[#0A0A0A] text-[#FFFFFF] rounded-xl hover:bg-[#222222] transition-colors font-bold"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Question
@@ -303,14 +303,14 @@ export const FormBuilderTab: React.FC<FormBuilderTabProps> = ({ userId }) => {
 
         <div className="space-y-4">
           {config.questions.length === 0 ? (
-            <div className="text-center py-10 text-gray-400 border border-dashed border-gray-200 rounded-2xl">
+            <div className="text-center py-10 text-[#6B7280] border border-dashed border-gray-200 rounded-2xl">
               No questions configured. Click "Add Question" above.
             </div>
           ) : (
             config.questions.map((q, index) => (
               <div 
                 key={q.id} 
-                className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-gray-300 transition-all shadow-sm relative group"
+                className="bg-[#FFFFFF] border border-gray-200 rounded-2xl p-5 hover:border-gray-300 transition-all relative group"
               >
                 {/* Actions Top Bar */}
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">

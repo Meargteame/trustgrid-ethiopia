@@ -19,6 +19,7 @@ import { SocialShareModal } from './SocialShareModal';
 import { EmbedCodeModal } from './EmbedCodeModal';
 import { WidgetEmbedModal } from './WidgetEmbedModal';
 import { InviteMemberModal } from './InviteMemberModal';
+import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
 
 const INITIAL_TEAM: TeamMember[] = [];
 
@@ -827,31 +828,25 @@ create policy "User insert own profile" on profiles for insert with check (auth.
 
    const renderFeed = () => (
       <>
-         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-               <div className="flex items-center gap-3 mb-1">
-                 {/* Dashboard-specific Logo used as home/refresh, prevents jumping to landing page */}
-                 <div className="font-extrabold text-2xl tracking-tighter text-black cursor-pointer" onClick={() => setActiveTab('feed')}>
-                   TrustGrid.
-                 </div>
-                 <h1 className="text-3xl font-extrabold text-black">Dashboard</h1>
-               </div>
-               <p className="text-gray-500 text-sm">Manage your reputation and verified proofs.</p>
+               <h1 className="text-3xl font-black text-[#0A0A0A] tracking-tight mb-1">Dashboard</h1>
+               <p className="text-[#6B7280] text-sm">Manage your verified customer proofs and widgets.</p>
             </div>
             <div className="flex items-center gap-3">
-               <div className="flex bg-gray-100 p-1 rounded-xl">
+               <div className="flex bg-[#F4F4F5] p-1 rounded-xl border border-gray-200">
                   <button
                      onClick={() => setFeedTab('published')}
-                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'published' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
+                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'published' ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200' : 'text-[#6B7280] hover:text-[#0A0A0A]'}`}
                   >
                      <span>Published</span>
-                     <span className="text-[10px] opacity-70 bg-black/5 px-1.5 py-0.5 rounded-full">
+                     <span className="text-[10px] opacity-70 bg-black/5 px-1.5 py-0.5 rounded-full font-bold">
                         {testimonials.filter(t => t.status === 'verified' || t.status === 'approved' || t.status === 'published').length}
                      </span>
                   </button>
                   <button
                      onClick={() => setFeedTab('hidden')}
-                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'hidden' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
+                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'hidden' ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200' : 'text-[#6B7280] hover:text-[#0A0A0A]'}`}
                   >
                      <span>Hidden</span>
                      {testimonials.filter(t => t.status === 'hidden').length > 0 && (
@@ -862,17 +857,18 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   </button>
                   <button
                      onClick={() => setFeedTab('inbox')}
-                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'inbox' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
+                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'inbox' ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200' : 'text-[#6B7280] hover:text-[#0A0A0A]'}`}
                   >
                      <span>Inbox</span>
                      {testimonials.filter(t => t.status === 'pending' || t.status === 'pending_verification').length > 0 && (
-                        <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                        <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                            {testimonials.filter(t => t.status === 'pending' || t.status === 'pending_verification').length}
                         </span>
                      )}
                   </button>
                </div>
-               <Button onClick={() => {
+               <button 
+                  onClick={() => {
                      if (!profileData.username) {
                          showToast('Please set your Username in Settings first!', 'error');
                          setActiveTab('settings');
@@ -880,10 +876,13 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      }
                      const url = window.location.origin + '/collect/' + profileData.username;
                      navigator.clipboard.writeText(url);
-                      showToast('Collection link copied!', 'success');
-                  }} className="shadow-sm hover:shadow-md">
-                     <LinkIcon size={18} className="mr-2" /> Get Proofs
-                  </Button>
+                     showToast('Collection link copied!', 'success');
+                  }} 
+                  className="px-4 py-2.5 rounded-xl bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs hover:bg-[#222222] transition-colors flex items-center gap-2"
+               >
+                  <LinkIcon size={15} />
+                  <span>Get Proofs</span>
+               </button>
             </div>
          </header>
 
@@ -1246,12 +1245,13 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      {isSavingWidget ? <Loader2 size={16} className="animate-spin mr-2" /> : <Settings size={16} className="mr-2" />}
                      {isSavingWidget ? 'Saving...' : 'Save Preset'}
                   </Button>
-                  <Button 
+                  <button 
                      onClick={handleCopyEmbed} 
-                     className="flex-1 sm:flex-initial bg-black text-white hover:bg-gray-900 shadow-lg font-bold hover:scale-[1.02] active:scale-[0.98] transition-all"
+                     className="flex-1 sm:flex-initial bg-[#0A0A0A] text-[#FFFFFF] hover:bg-[#222222] font-bold text-xs px-5 py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
                   >
-                     <Code size={16} className="mr-2 text-brand-lime" /> Get Embed Code
-                  </Button>
+                     <Code size={15} className="text-[#D7FF3D]" />
+                     <span>Get Embed Code</span>
+                  </button>
                </div>
             </header>
 
@@ -1259,22 +1259,22 @@ create policy "User insert own profile" on profiles for insert with check (auth.
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                
                {/* LEFT PANE: Controls Sidebar */}
-               <div className="xl:col-span-4 bg-white border border-gray-200 rounded-3xl shadow-sm flex flex-col overflow-hidden">
+               <div className="xl:col-span-4 bg-[#FFFFFF] border border-gray-200 rounded-2xl flex flex-col overflow-hidden">
                   
                   {/* Category Tabs */}
-                  <div className="flex border-b border-gray-100 bg-gray-50/70 p-1.5">
+                  <div className="flex border-b border-gray-100 bg-[#F4F4F5] p-1.5">
                      {[
-                        { id: 'layout', icon: <LayoutGrid size={15} />, label: 'Layout' },
-                        { id: 'style', icon: <Palette size={15} />, label: 'Style & Theme' },
-                        { id: 'content', icon: <Settings size={15} />, label: 'Content' }
+                        { id: 'layout', icon: <LayoutGrid size={14} />, label: 'Layout' },
+                        { id: 'style', icon: <Palette size={14} />, label: 'Style & Theme' },
+                        { id: 'content', icon: <Settings size={14} />, label: 'Content' }
                      ].map((tab) => (
                         <button
                            key={tab.id}
                            onClick={() => setConfigTab(tab.id as any)}
-                           className={`flex-1 py-2.5 px-3 rounded-2xl flex items-center justify-center gap-1.5 text-xs font-extrabold transition-all ${
+                           className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
                               configTab === tab.id 
-                                 ? 'bg-white text-black shadow-sm border border-gray-200/60' 
-                                 : 'text-gray-400 hover:text-gray-700'
+                                 ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200' 
+                                 : 'text-[#6B7280] hover:text-[#0A0A0A]'
                            }`}
                         >
                            {tab.icon} {tab.label}
@@ -1283,30 +1283,30 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   </div>
 
                   {/* Tab Body */}
-                  <div className="p-6 space-y-6 max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
+                  <div className="p-6 space-y-6 max-h-[calc(100vh-280px)] overflow-y-auto">
                      
                      {/* TAB 1: LAYOUT */}
                      {configTab === 'layout' && (
                         <div className="space-y-6 animate-fade-in">
                            {/* Display Mode */}
                            <div className="space-y-2.5">
-                              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                              <label className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                                  Display Mode
                               </label>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                  {[
-                                    { id: 'grid', label: 'Grid Wall', icon: <LayoutGrid size={18} /> },
-                                    { id: 'carousel', label: 'Slider Row', icon: <Columns size={18} /> },
-                                    { id: 'feed', label: 'Single Feed', icon: <List size={18} /> },
-                                    { id: 'toast', label: 'Live Popup', icon: <Flame size={18} className="text-amber-500" /> }
+                                    { id: 'grid', label: 'Grid Wall', icon: <LayoutGrid size={16} /> },
+                                    { id: 'carousel', label: 'Slider Row', icon: <Columns size={16} /> },
+                                    { id: 'feed', label: 'Single Feed', icon: <List size={16} /> },
+                                    { id: 'toast', label: 'Live Popup', icon: <Flame size={16} className="text-amber-500" /> }
                                  ].map((opt) => (
                                     <button
                                        key={opt.id}
                                        onClick={() => setWidgetConfig({ ...widgetConfig, layout: opt.id as any })}
-                                       className={`p-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all ${
+                                       className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all ${
                                           widgetConfig.layout === opt.id 
-                                             ? 'border-black bg-black text-white shadow-md' 
-                                             : 'border-gray-100 hover:border-gray-300 text-gray-600 bg-gray-50/50'
+                                             ? 'border-[#0A0A0A] bg-[#0A0A0A] text-[#FFFFFF]' 
+                                             : 'border-gray-200 hover:border-gray-300 text-[#6B7280] bg-[#FFFFFF]'
                                        }`}
                                     >
                                        {opt.icon}
@@ -1987,60 +1987,63 @@ create policy "User insert own profile" on profiles for insert with check (auth.
 
 
          {/* Sidebar */}
-         <aside className="w-full md:w-80 bg-white border-r border-gray-200 p-6 flex flex-col fixed md:sticky top-0 h-auto md:h-screen z-20 overflow-y-auto">
-            <div className="flex items-center gap-1 mb-10 cursor-pointer" onClick={() => setActiveTab('feed')}>
-               <span className="font-extrabold text-2xl tracking-tighter text-black">
-                  TrustGrid.
-               </span>
+         <aside className="w-full md:w-80 bg-[#FFFFFF] border-r border-[#F4F4F5] p-6 flex flex-col fixed md:sticky top-0 h-auto md:h-screen z-20 overflow-y-auto font-sans">
+            <div className="flex items-center gap-1 mb-8 cursor-pointer" onClick={() => setActiveTab('feed')}>
+               <TrustGridLogo size="md" />
             </div>
 
             <div className="mb-8">
                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-full border-2 border-gray-100 bg-gray-200 overflow-hidden flex items-center justify-center font-bold text-gray-500">
+                  <div className="w-11 h-11 rounded-full border border-gray-200 bg-[#F4F4F5] overflow-hidden flex items-center justify-center font-bold text-xs text-[#0A0A0A] flex-shrink-0">
                      {profileData.logoUrl ? (
                          <img src={profileData.logoUrl} className="w-full h-full object-cover" /> 
                      ) : (
                          profileData.companyName ? profileData.companyName.charAt(0).toUpperCase() : 'U'
                      )}
                   </div>
-                  <div>
-                     <h3 className="font-bold text-sm truncate max-w-[150px]">{profileData.companyName || 'Your Name'}</h3>
-                     
+                  <div className="min-w-0">
+                     <h3 className="font-extrabold text-sm text-[#0A0A0A] truncate max-w-[150px]">{profileData.companyName || 'Your Brand'}</h3>
+                     <p className="text-[11px] text-[#6B7280] font-mono truncate">@{profileData.username || 'unclaimed'}</p>
                   </div>
                </div>
 
-               <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 group hover:border-black transition-colors">
+               <div className="space-y-3">
+                  <div className="p-3.5 bg-[#F4F4F5] rounded-2xl border border-gray-200">
                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-bold text-gray-500 uppercase">Your Public Wall</p>
+                        <p className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Your Public Wall</p>
                         <a 
                            href={`/wall/${profileData.username || ''}`}
                            target="_blank" 
                            rel="noopener noreferrer"
-                           className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                           className="text-xs font-bold text-[#0A0A0A] hover:underline flex items-center gap-1"
                            title="Open Public Wall"
                         >
-                           Visit <ExternalLink size={10} />
+                           Visit <ExternalLink size={11} />
                         </a>
                      </div>
-                     <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 mb-2">
-                        <LinkIcon size={14} className="text-gray-400" />
-                        <span className="text-xs truncate flex-1 text-gray-600 font-mono">
-                           trustgrid.leonslab.tech/wall/{profileData.username || 'your-handle'}
+                     <div className="flex items-center gap-2 bg-[#FFFFFF] p-2 rounded-xl border border-gray-200 mb-2">
+                        <LinkIcon size={13} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-[11px] truncate flex-1 text-[#0A0A0A] font-mono">
+                           trustgrid.leonslab.tech/wall/{profileData.username || 'handle'}
                         </span>
                      </div>
-                     <Button size="sm" fullWidth variant="secondary" onClick={() => {
-                        const url = window.location.origin + '/wall/' + (profileData.username || '');
-                        navigator.clipboard.writeText(url);
-                        showToast('Public Wall link copied to clipboard!', 'success');
-                     }} className="text-xs h-8">
-                        <Copy size={12} className="mr-2" /> Copy Wall Link
-                     </Button>
+                     <button 
+                        onClick={() => {
+                           const url = window.location.origin + '/wall/' + (profileData.username || '');
+                           navigator.clipboard.writeText(url);
+                           showToast('Public Wall link copied to clipboard!', 'success');
+                        }} 
+                        className="w-full py-2 rounded-xl bg-[#FFFFFF] hover:bg-gray-100 border border-gray-200 text-xs font-bold text-[#0A0A0A] transition-colors flex items-center justify-center gap-1.5"
+                     >
+                        <Copy size={12} />
+                        <span>Copy Wall Link</span>
+                     </button>
                   </div>
 
-                  {/* Feature: Auto-Magic Collection Link */}
-                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 group hover:border-gray-300 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => {
-                        // Logic to copy or open
+                  {/* Auto Collection Link */}
+                  <div 
+                     className="p-3.5 bg-[#F4F4F5] rounded-2xl border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
+                     onClick={() => {
                         if (profileData.username) {
                            const url = window.location.origin + '/collect/' + profileData.username;
                            navigator.clipboard.writeText(url);
@@ -2049,53 +2052,57 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                         } else {
                            showToast('Please set a username in Settings first', 'error');
                         }
-                  }}>
-                     <p className="text-xs font-bold text-gray-600 mb-1 uppercase flex items-center gap-2">
-                        <Send size={12} /> Share Collection Form
+                     }}
+                  >
+                     <p className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <Send size={11} className="text-[#0088cc]" /> Share Collection Form
                      </p>
-                     <p className="text-xs text-black font-bold flex items-center gap-1">
-                        Copy link to send to clients <ExternalLink size={10} />
+                     <p className="text-xs text-[#0A0A0A] font-bold flex items-center gap-1">
+                        Copy client review link <ExternalLink size={11} />
                      </p>
                   </div>
                </div>
             </div>
 
-            <nav className="space-y-1 flex-1">
+            <nav className="space-y-1.5 flex-1">
                <button
                   onClick={() => setActiveTab('feed')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'feed' ? 'bg-black text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'feed' ? 'bg-[#F4F4F5] text-[#0A0A0A] border-l-4 border-[#D7FF3D]' : 'text-[#6B7280] hover:text-[#0A0A0A] hover:bg-[#F4F4F5]'}`}
                >
-                  <LayoutGrid size={18} /> Proof Feed
+                  <LayoutGrid size={16} /> Proof Feed
                </button>
                <button
                   onClick={() => setActiveTab('collection')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'collection' ? 'bg-black text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'collection' ? 'bg-[#F4F4F5] text-[#0A0A0A] border-l-4 border-[#D7FF3D]' : 'text-[#6B7280] hover:text-[#0A0A0A] hover:bg-[#F4F4F5]'}`}
                >
-                  <Send size={18} /> Collection Form
+                  <Send size={16} /> Collection Form
                </button>
                <button
                   onClick={() => setActiveTab('analytics')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'analytics' ? 'bg-black text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'analytics' ? 'bg-[#F4F4F5] text-[#0A0A0A] border-l-4 border-[#D7FF3D]' : 'text-[#6B7280] hover:text-[#0A0A0A] hover:bg-[#F4F4F5]'}`}
                >
-                  <BarChart3 size={18} /> Analytics
+                  <BarChart3 size={16} /> Analytics
                </button>
                <button
                   onClick={() => setActiveTab('widgets')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'widgets' ? 'bg-black text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'widgets' ? 'bg-[#F4F4F5] text-[#0A0A0A] border-l-4 border-[#D7FF3D]' : 'text-[#6B7280] hover:text-[#0A0A0A] hover:bg-[#F4F4F5]'}`}
                >
-                  <Layout size={18} /> Widget Lab
+                  <Layout size={16} /> Widget Lab
                </button>
                <button
                   onClick={() => setActiveTab('settings')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'settings' ? 'bg-black text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'settings' ? 'bg-[#F4F4F5] text-[#0A0A0A] border-l-4 border-[#D7FF3D]' : 'text-[#6B7280] hover:text-[#0A0A0A] hover:bg-[#F4F4F5]'}`}
                >
-                  <Settings size={18} /> Settings
+                  <Settings size={16} /> Settings
                </button>
             </nav>
 
-            <Button variant="ghost" onClick={onLogout} className="mt-auto justify-start px-4 text-gray-500 hover:text-gray-800 hover:bg-gray-100">
-               <LogOut size={18} className="mr-2" /> Log Out
-            </Button>
+            <button 
+               onClick={onLogout} 
+               className="mt-auto flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[#6B7280] hover:text-[#0A0A0A] hover:bg-[#F4F4F5] transition-colors"
+            >
+               <LogOut size={16} /> Log Out
+            </button>
          </aside>
 
          {/* Main Content Area */}

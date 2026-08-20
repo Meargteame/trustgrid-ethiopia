@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { TrustGridLogo } from './TrustGridLogo';
 
 interface AuthPageProps {
   onLogin: () => void;
@@ -46,46 +47,50 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white bg-grid flex flex-col font-sans">
+    <div className="min-h-screen bg-[#FFFFFF] flex flex-col font-sans">
       
-      {/* Simple Header */}
-      <div className="p-6">
+      {/* Header */}
+      <div className="p-6 border-b border-[#F4F4F5] flex items-center justify-between">
         <button 
           onClick={onBack} 
-          className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-black transition-colors"
+          className="flex items-center gap-2 text-xs font-bold text-[#6B7280] hover:text-[#0A0A0A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0A0A0A] rounded-lg px-2 py-1"
         >
-          <ArrowLeft size={18} /> Back to Home
+          <ArrowLeft size={16} /> Back to Home
         </button>
+        <TrustGridLogo size="sm" />
       </div>
 
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-extrabold text-black mb-2 tracking-tight">
-              Welcome back
+            <h1 className="text-3xl font-black text-[#0A0A0A] mb-2 tracking-tight">
+              Sign In to TrustGrid
             </h1>
-            <p className="text-gray-500 text-sm">
-              Log in to manage your verified proofs.
+            <p className="text-[#6B7280] text-sm">
+              Authenticate via Telegram to manage your Wall of Proof.
             </p>
           </div>
 
-          <div className="bg-white border-2 border-black rounded-[2rem] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden flex flex-col items-center">
+          <div className="bg-[#FFFFFF] border border-gray-200 rounded-2xl p-8 flex flex-col items-center">
             
             {errorMsg && (
-              <div className="p-3 mb-6 w-full bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2">
-                <AlertCircle size={16} />
-                {errorMsg}
+              <div className="p-3 mb-6 w-full bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2">
+                <AlertCircle size={15} />
+                <span>{errorMsg}</span>
               </div>
             )}
 
             <div className="my-4" ref={telegramWrapperRef}></div>
 
+            <p className="text-[11px] text-[#6B7280] text-center mt-6">
+              Instant login via Telegram official authentication. No password required.
+            </p>
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-xs text-gray-400">
-              By clicking continue, you agree to our <a href="#" className="underline">Terms of Service</a> and <a href="#" className="underline">Privacy Policy</a>.
+            <p className="text-[11px] text-[#6B7280]">
+              By continuing, you agree to the <a href="#" className="text-[#0A0A0A] font-semibold underline">Terms of Service</a> and <a href="#" className="text-[#0A0A0A] font-semibold underline">Privacy Policy</a>.
             </p>
           </div>
         </div>

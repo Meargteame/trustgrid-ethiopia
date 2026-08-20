@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, XCircle, Shield, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Toast } from './Toast';
+import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
 
 interface VerificationPageProps {
   token: string;
@@ -66,11 +67,13 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => 
 
   if (status === 'error') {
      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-           <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full">
-              <XCircle size={48} className="text-red-500 mx-auto mb-4" />
-              <h1 className="text-xl font-bold mb-2">Invalid Link</h1>
-              <p className="text-gray-500">This verification link is invalid or has expired.</p>
+        <div className="min-h-screen bg-[#FFFFFF] flex flex-col items-center justify-center p-6 font-sans">
+           <div className="bg-[#FFFFFF] p-8 rounded-2xl border border-gray-200 text-center max-w-md w-full">
+              <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto mb-4">
+                 <XCircle size={24} />
+              </div>
+              <h1 className="text-xl font-black text-[#0A0A0A] mb-2">Invalid Verification Link</h1>
+              <p className="text-xs text-[#6B7280]">This verification link is invalid or has expired.</p>
            </div>
         </div>
      );
@@ -78,13 +81,18 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => 
 
   if (status === 'success') {
      return (
-        <div className="min-h-screen bg-[#D4F954] flex items-center justify-center p-4">
-           <div className="bg-white p-8 rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-2 border-black text-center max-w-md w-full animate-slide-up">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                 <CheckCircle2 size={32} className="text-green-600" />
+        <div className="min-h-screen bg-[#FFFFFF] flex flex-col items-center justify-center p-6 font-sans">
+           <div className="bg-[#FFFFFF] p-8 rounded-2xl border border-gray-200 text-center max-w-md w-full">
+              <div className="w-14 h-14 bg-[#F4F4F5] border border-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                 <TrustGridMark size={28} />
               </div>
-              <h1 className="text-2xl font-black mb-2">Verified!</h1>
-              <p className="text-gray-600 mb-6">Thank you for confirming your review. It is now marked as <span className="font-bold text-black">Verified Proof</span> — confirmed by the original author and visible on the public trust wall.</p>
+              <h1 className="text-2xl font-black text-[#0A0A0A] mb-2">Review Verified!</h1>
+              <p className="text-xs text-[#6B7280] leading-relaxed mb-6">
+                Thank you for confirming your feedback. It is now marked as <strong className="text-[#0A0A0A]">Cryptographically Verified Proof</strong> and published to the business trust wall.
+              </p>
+              <div className="flex justify-center">
+                 <TrustGridLogo size="sm" />
+              </div>
            </div>
         </div>
      );
@@ -92,21 +100,23 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => 
 
   if (status === 'already_verified') {
      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-           <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full">
-              <Shield size={48} className="text-blue-500 mx-auto mb-4" />
-              <h1 className="text-xl font-bold mb-2">Already Verified</h1>
-              <p className="text-gray-500">You have already confirmed this testimonial. Thank you!</p>
+        <div className="min-h-screen bg-[#FFFFFF] flex flex-col items-center justify-center p-6 font-sans">
+           <div className="bg-[#FFFFFF] p-8 rounded-2xl border border-gray-200 text-center max-w-md w-full">
+              <div className="w-12 h-12 bg-[#F4F4F5] border border-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4">
+                 <CheckCircle2 size={24} className="text-[#0A0A0A]" />
+              </div>
+              <h1 className="text-xl font-black text-[#0A0A0A] mb-2">Already Verified</h1>
+              <p className="text-xs text-[#6B7280]">You have already confirmed this testimonial. Thank you!</p>
            </div>
         </div>
      );
   }
 
   // Loaded Data View
-  if (!data) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (!data) return <div className="min-h-screen bg-[#FFFFFF] flex items-center justify-center"><Loader2 className="animate-spin text-[#0A0A0A]" /></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-[#FFFFFF] flex flex-col items-center justify-center p-6 font-sans relative">
         {toast && (
           <Toast
             message={toast.message}
@@ -114,59 +124,48 @@ export const VerificationPage: React.FC<VerificationPageProps> = ({ token }) => 
             onClose={() => setToast(null)}
           />
         )}
-        <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 max-w-lg w-full">
+        <div className="bg-[#FFFFFF] p-8 rounded-2xl border border-gray-200 max-w-lg w-full">
            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-[#D4F954]/20 text-black rounded-full flex items-center justify-center mx-auto mb-4 border border-[#D4F954]">
-                 <Shield size={32} />
+              <div className="w-12 h-12 bg-[#F4F4F5] border border-gray-200 rounded-xl flex items-center justify-center mx-auto mb-4">
+                 <TrustGridMark size={22} />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Verify Testimonial</h1>
-              <p className="text-gray-500 text-sm">Did you write this review?</p>
+              <h1 className="text-2xl font-black text-[#0A0A0A]">Verify Testimonial</h1>
+              <p className="text-xs text-[#6B7280] mt-1">Please confirm you wrote this review for {data.profiles?.company_name || 'the business'}.</p>
            </div>
 
            <div className="space-y-6">
-              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">
-                 Review Details
-              </h2>
-
-              <div className="bg-gray-50 p-6 rounded-2xl border-l-4 border-gray-300 mb-8 italic text-gray-700 relative">
-                 <QuoteIcon className="absolute top-4 left-4 text-gray-200 w-8 h-8 -z-10" />
-                 "{data.text}"
-                 <div className="mt-4 flex items-center gap-3 not-italic">
-                    {data.avatar_url && <img src={data.avatar_url} className="w-8 h-8 rounded-full" />}
+              <div className="bg-[#F4F4F5] p-5 rounded-xl border border-gray-200 text-xs text-[#0A0A0A] leading-relaxed">
+                 <p className="italic mb-4 font-medium">"{data.text}"</p>
+                 <div className="flex items-center gap-2.5 pt-3 border-t border-gray-200">
+                    {data.avatar_url && <img src={data.avatar_url} className="w-7 h-7 rounded-full object-cover border border-gray-200" />}
                     <div>
-                        <p className="text-sm font-bold">{data.name}</p>
-                        <p className="text-xs text-gray-500">{data.company}</p>
+                        <p className="text-xs font-bold text-[#0A0A0A]">{data.name}</p>
+                        <p className="text-[11px] text-[#6B7280]">{data.company || 'Verified Client'}</p>
                     </div>
                  </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                  <button 
                     onClick={() => setToast({ message: "Please contact the user directly to request removal.", type: 'info' })}
-                    className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-bold hover:bg-gray-50 transition-colors text-gray-500"
+                    className="flex-1 py-3 rounded-xl border border-gray-200 font-bold hover:bg-[#F4F4F5] transition-colors text-xs text-[#6B7280]"
                  >
-                    No, Report
+                    Report / Reject
                  </button>
                  <button 
                     onClick={handleVerify}
-                    className="flex-1 py-3 rounded-xl bg-black text-white font-bold shadow-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-3 rounded-xl bg-[#0A0A0A] text-[#FFFFFF] font-bold hover:bg-[#222222] transition-colors flex items-center justify-center gap-2 text-xs"
                  >
-                    <Shield size={18} />
-                    Yes, Verify It
+                    <TrustGridMark size={14} />
+                    <span>Yes, Confirm Proof</span>
                  </button>
               </div>
 
-              <p className="text-center text-xs text-gray-400 mt-6">
-                 By verifying, you confirm this testimonial is authentic.
-              </p>
+              <div className="text-center mt-6">
+                 <TrustGridLogo size="sm" />
+              </div>
            </div>
         </div>
      </div>
   );
 };
-
-const QuoteIcon = ({ className }: { className?: string }) => (
-    <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.01697 21L5.01697 18C5.01697 16.8954 5.9124 16 7.01697 16H10.017C10.5693 16 11.017 15.5523 11.017 15V9C11.017 8.44772 10.5693 8 10.017 8H6.01697C5.46468 8 5.01697 8.44772 5.01697 9V11C5.01697 11.5523 4.56925 12 4.01697 12H3.01697V5H13.017V15C13.017 18.3137 10.3307 21 7.01697 21H5.01697Z" />
-    </svg>
-);

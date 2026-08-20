@@ -7,6 +7,7 @@ import {
   ArrowRight, Heart, Award, Copy, Globe
 } from 'lucide-react';
 import { Toast } from './Toast';
+import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
 
 interface PublicWallProps {
   companyHandle: string;
@@ -201,18 +202,16 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200">
+      <header className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#F4F4F5]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 group">
-            <span className="font-extrabold text-2xl tracking-tighter text-black">
-              TrustGrid.
-            </span>
+          <a href="/" className="flex items-center gap-2">
+            <TrustGridLogo size="md" />
           </a>
 
           <div className="flex items-center gap-3">
             <button
               onClick={handleCopyShare}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-gray-50 text-black border border-gray-200 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+              className="px-3.5 py-2 rounded-xl bg-[#FFFFFF] hover:bg-gray-100 text-[#0A0A0A] border border-gray-200 text-xs font-bold transition-all flex items-center gap-1.5"
               title="Share Wall"
             >
               <Share2 size={13} />
@@ -220,9 +219,9 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
             </button>
             <a
               href={`/collect/${companyHandle}`}
-              className="px-4 py-2 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 rounded-xl bg-[#0A0A0A] hover:bg-[#222222] text-[#FFFFFF] font-bold text-xs transition-all flex items-center gap-1.5"
             >
-              <Sparkles size={13} className="text-yellow-400" />
+              <Sparkles size={13} className="text-[#D7FF3D]" />
               Leave Review
             </a>
           </div>
@@ -389,32 +388,32 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
             {filteredTestimonials.map((item) => (
               <div
                 key={item.id}
-                className="rounded-2xl bg-white border border-gray-200 p-6 flex flex-col justify-between hover:shadow-md hover:border-gray-300 transition-all duration-200 shadow-sm group relative"
+                className="rounded-2xl bg-[#F4F4F5] border border-gray-200 p-6 flex flex-col justify-between hover:border-gray-300 transition-all duration-200 group relative"
               >
                 <div>
                   {/* Top Header: Stars + Date + Verified Badge */}
                   <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <div className="flex gap-0.5 text-amber-500">
                         {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} size={14} className="fill-amber-400 text-amber-500" />
+                          <Star key={s} size={13} className="fill-amber-400 text-amber-500" />
                         ))}
                       </div>
                       {item.verificationMethod === 'telegram' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 ml-2">
-                          <CheckCircle2 size={11} className="stroke-[3]" />
-                          Telegram
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200">
+                          <TrustGridMark size={12} />
+                          <span>Telegram Verified</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 ml-2">
-                          <CheckCircle2 size={11} className="stroke-[3]" />
-                          Verified
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200">
+                          <TrustGridMark size={12} />
+                          <span>Verified</span>
                         </span>
                       )}
                     </div>
 
                     {item.createdAt && (
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                         {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                     )}
@@ -422,7 +421,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
                   {/* Video Player (if attached) */}
                   {item.videoUrl && (
-                    <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative border border-gray-200 shadow-sm">
+                    <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative border border-gray-200">
                       <video
                         src={item.videoUrl}
                         controls
@@ -434,30 +433,30 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
                   {/* Quote Body */}
                   <div className="mb-6">
-                    <Quote size={18} className="text-gray-300 mb-2" />
-                    <p className="text-sm sm:text-base leading-relaxed text-gray-900 font-medium break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap">
+                    <Quote size={16} className="text-gray-400 mb-2" />
+                    <p className="text-sm sm:text-base leading-relaxed text-[#0A0A0A] font-medium break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap">
                       "{item.text}"
                     </p>
                   </div>
                 </div>
 
                 {/* Reviewer Profile Card */}
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-100 mt-auto">
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-200 mt-auto">
                   <img
-                    src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}&background=FCE676&color=111111`}
+                    src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}&background=F4F4F5&color=0A0A0A`}
                     alt={item.clientName}
-                    className="w-10 h-10 rounded-full object-cover bg-gray-100 border border-gray-200 shadow-sm flex-shrink-0"
+                    className="w-10 h-10 rounded-full object-cover bg-[#FFFFFF] border border-gray-200 flex-shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-extrabold text-sm text-black truncate leading-tight flex items-center gap-1.5">
+                    <h4 className="font-extrabold text-sm text-[#0A0A0A] truncate leading-tight flex items-center gap-1.5">
                       {item.clientName}
                     </h4>
                     {item.clientCompany ? (
-                      <p className="text-xs text-gray-500 font-medium truncate mt-0.5">{item.clientCompany}</p>
+                      <p className="text-xs text-[#6B7280] font-medium truncate mt-0.5">{item.clientCompany}</p>
                     ) : item.reviewerTelegramUsername ? (
-                      <p className="text-xs text-blue-600 font-medium truncate mt-0.5">@{item.reviewerTelegramUsername}</p>
+                      <p className="text-xs text-[#0A0A0A] font-mono truncate mt-0.5">@{item.reviewerTelegramUsername}</p>
                     ) : (
-                      <p className="text-xs text-gray-400 font-medium mt-0.5">Verified Client</p>
+                      <p className="text-xs text-[#6B7280] font-medium mt-0.5">Verified Reviewer</p>
                     )}
                   </div>
                 </div>
@@ -469,28 +468,28 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
       {/* Floating Bottom CTA Bar */}
       <aside className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 max-w-xl w-[92%] sm:w-auto">
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200 px-5 py-2.5 rounded-full shadow-lg flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-gray-800 font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-            Verified by <strong className="font-extrabold text-black">TrustGrid</strong>
+        <div className="bg-[#FFFFFF] border border-gray-200 px-5 py-2.5 rounded-2xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-xs text-[#0A0A0A] font-bold">
+            <TrustGridMark size={14} />
+            <span>Verified by <strong>TrustGrid</strong></span>
           </div>
           <a
             href={`/collect/${companyHandle}`}
-            className="px-4 py-1.5 rounded-full bg-black hover:bg-gray-800 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+            className="px-4 py-1.5 rounded-xl bg-[#0A0A0A] hover:bg-[#222222] text-[#FFFFFF] font-bold text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap"
           >
-            Leave Review
+            <span>Leave Review</span>
             <ArrowRight size={13} />
           </a>
         </div>
       </aside>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 bg-white py-8 text-center text-xs font-medium text-gray-400 mt-auto">
+      <footer className="border-t border-[#F4F4F5] bg-[#FFFFFF] py-8 text-center text-xs font-medium text-[#6B7280] mt-auto">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <TrustGridLogo size="sm" />
+        </div>
         <p>
-          Protected & Verified by{' '}
-          <a href="/" className="text-black font-bold hover:underline">
-            TrustGrid
-          </a>
+          Cryptographically Verified Social Proof Platform
         </p>
       </footer>
     </div>

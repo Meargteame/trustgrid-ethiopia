@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Toast } from './Toast';
+import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
 
 // --- Types ---
 
@@ -501,7 +502,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                  {brandTitle}
                  <CheckCircle2 size={13} className="text-emerald-600 inline" />
                </h1>
-               <p className="text-[11px] text-gray-500 font-medium">Verified Reviews Collection</p>
+               <p className="text-[11px] text-[#6B7280] font-medium">Verified Reviews Collection</p>
              </div>
            </div>
            
@@ -509,10 +510,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
              href="/" 
              target="_blank" 
              rel="noopener noreferrer" 
-             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-bold text-gray-700 transition-colors shadow-sm"
+             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F4F4F5] hover:bg-gray-200 border border-gray-200 text-xs font-bold text-[#0A0A0A] transition-colors"
            >
-             <ShieldCheck size={13} className="text-emerald-600" />
-             <span>TrustGrid</span>
+             <TrustGridMark size={14} />
+             <span>TrustGrid Verified</span>
            </a>
         </div>
       </header>
@@ -520,7 +521,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
       <div className="max-w-2xl mx-auto px-4 pt-10">
         {/* Title Header */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-black mb-2 tracking-tight">{config.title}</h2>
+          <h2 className="text-3xl sm:text-4xl font-black text-[#0A0A0A] mb-2 tracking-tight">{config.title}</h2>
           <p className="text-sm text-gray-600 font-medium max-w-md mx-auto">{config.subtitle}</p>
         </div>
 
@@ -779,30 +780,30 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
           {/* Submission and Telegram Verification */}
           <div className="pt-2">
             {!telegramUser ? (
-               <div className="bg-blue-50/60 rounded-2xl p-6 sm:p-8 border border-blue-100 flex flex-col items-center text-center shadow-sm">
-                  <div className="w-12 h-12 bg-blue-500 text-white rounded-xl flex items-center justify-center mb-3 shadow-md shadow-blue-500/20">
-                     <MessageCircle size={24} />
+               <div className="bg-[#F4F4F5] rounded-2xl p-6 sm:p-8 border border-gray-200 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-[#0A0A0A] text-white rounded-xl flex items-center justify-center mb-3">
+                     <MessageCircle size={22} className="text-[#D7FF3D]" />
                   </div>
-                  <h3 className="font-extrabold text-base text-blue-950 mb-1">Verify with Telegram to Submit</h3>
-                  <p className="text-xs text-blue-800/80 max-w-sm mb-5 font-medium leading-relaxed">
-                    We use Telegram verification to authenticate genuine customers and eliminate fake reviews.
+                  <h3 className="font-extrabold text-base text-[#0A0A0A] mb-1">Verify with Telegram to Submit</h3>
+                  <p className="text-xs text-[#6B7280] max-w-sm mb-5 font-medium leading-relaxed">
+                    We authenticate reviews through Telegram identity to ensure 100% authentic customer feedback.
                   </p>
                   <div ref={telegramWrapperRef} className="min-h-[44px]"></div>
                </div>
             ) : (
                <div className="space-y-4">
                  {/* Verified Telegram Banner */}
-                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                 <div className="p-4 bg-[#F4F4F5] border border-gray-200 rounded-2xl flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                     <div className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold">
-                       <ShieldCheck size={18} />
+                     <div className="w-9 h-9 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center font-bold">
+                       <TrustGridMark size={16} />
                      </div>
                      <div>
-                       <p className="text-xs font-bold text-emerald-950">Verified as @{telegramUser.username || telegramUser.first_name}</p>
-                       <p className="text-[11px] text-emerald-700 font-medium">Cryptographic Proof Active</p>
+                       <p className="text-xs font-bold text-[#0A0A0A]">Verified as @{telegramUser.username || telegramUser.first_name}</p>
+                       <p className="text-[11px] text-[#6B7280] font-medium">Telegram Identity Confirmed</p>
                      </div>
                    </div>
-                   <span className="text-[11px] font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+                   <span className="text-[11px] font-bold text-[#0A0A0A] bg-[#FFFFFF] border border-gray-200 px-2.5 py-1 rounded-full flex items-center gap-1">
                      <Check size={12} /> Ready
                    </span>
                  </div>
@@ -810,7 +811,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                  <button
                    type="submit"
                    disabled={isSubmitting}
-                   className="w-full py-4 rounded-xl bg-black text-white font-extrabold shadow-md hover:bg-gray-800 transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                   className="w-full py-4 rounded-xl bg-[#0A0A0A] text-[#FFFFFF] font-bold hover:bg-[#222222] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                  >
                    {isSubmitting ? (
                      <>
@@ -819,7 +820,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                      </>
                    ) : (
                      <>
-                       Submit Verified Review
+                       <span>Submit Verified Review</span>
                        <Send className="w-4 h-4" />
                      </>
                    )}
@@ -827,9 +828,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
                </div>
             )}
 
-            <div className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-400 mt-6 font-medium">
-               <ShieldCheck size={14} className="text-gray-400" />
-               <span>Secured and verified by <strong>TrustGrid</strong></span>
+            <div className="flex items-center justify-center gap-2 text-center text-xs text-[#6B7280] mt-6 font-medium">
+               <TrustGridMark size={14} />
+               <span>Secured and verified by <strong className="text-[#0A0A0A]">TrustGrid</strong></span>
             </div>
           </div>
         </form>

@@ -246,15 +246,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
           
           <div className="grid gap-6">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Accent Color</label>
+              <label className="block text-xs font-bold text-[#6B7280] uppercase mb-2">Accent Color</label>
               <div className="flex items-center gap-4">
                   <div className="flex gap-2">
-                    {['#D4F954', '#3B82F6', '#A855F7', '#EF4444', '#10B981', '#111111'].map((color) => (
+                    {['#D7FF3D', '#3B82F6', '#A855F7', '#EF4444', '#10B981', '#0A0A0A'].map((color) => (
                       <button
                         type="button"
                         key={color}
                         onClick={() => handleChange('primaryColor', color)}
-                        className={`w-8 h-8 rounded-full border border-gray-200 transition-all ${formData.primaryColor === color ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'}`}
+                        className={`w-8 h-8 rounded-full border border-gray-200 transition-all ${formData.primaryColor === color ? 'ring-2 ring-offset-2 ring-[#0A0A0A] scale-110' : 'hover:scale-105'}`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
