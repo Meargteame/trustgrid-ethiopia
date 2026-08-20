@@ -196,7 +196,7 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
 
           <div className="mt-5 flex items-center gap-1.5 text-[10px] text-gray-400 font-bold tracking-wider uppercase">
             <Shield size={11} className="text-gray-400" />
-            Verified with <span className="text-black font-extrabold">TrustGrid.PRO</span>
+            Verified with <span className="text-black font-extrabold">TrustGrid</span>
           </div>
         </div>
       </div>

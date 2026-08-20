@@ -204,7 +204,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 group">
             <span className="font-extrabold text-2xl tracking-tighter text-black">
-              TrustGrid<span className="text-brand-lime bg-black px-1.5 py-0.5 rounded text-sm ml-1">.PRO</span>
+              TrustGrid.
             </span>
           </a>
 
@@ -230,10 +230,10 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
       {/* Hero Section */}
       <section className="pt-12 pb-10 px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
           
           {/* Avatar */}
-          <div className="relative inline-block mb-5">
+          <div className="relative mb-5">
             {profile.avatar_url ? (
               <img
                 src={profile.avatar_url}
@@ -251,11 +251,6 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
             >
               <CheckCircle2 size={18} className="stroke-[3]" />
             </div>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4F954]/40 border border-black/10 text-black text-xs font-bold tracking-wide uppercase mb-3">
-            <Shield size={12} />
-            Verified Wall of Proof
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-black mb-3">
@@ -458,7 +453,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
         <div className="bg-white/95 backdrop-blur-md border border-gray-200 px-5 py-2.5 rounded-full shadow-lg flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-gray-800 font-bold">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-            Verified by <strong className="font-extrabold text-black">TrustGrid.PRO</strong>
+            Verified by <strong className="font-extrabold text-black">TrustGrid</strong>
           </div>
           <a
             href={`/collect/${companyHandle}`}
@@ -475,7 +470,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
         <p>
           Protected & Verified by{' '}
           <a href="/" className="text-black font-bold hover:underline">
-            TrustGrid.PRO
+            TrustGrid
           </a>
         </p>
       </footer>

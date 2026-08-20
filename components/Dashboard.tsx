@@ -665,16 +665,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    });
 
    const getCardStyle = (t: TestimonialData) => {
-      let base = "";
       switch (t.cardStyle) {
-         case 'lime': base = 'bg-brand-lime border-black'; break;
-         case 'dark': base = 'bg-black border-black text-white'; break;
-         default: base = 'bg-white border-black'; break;
+         case 'lime': return 'bg-[#D4F954]/20 border-black/20 text-black';
+         case 'dark': return 'bg-gray-950 border-gray-800 text-white';
+         default: return 'bg-white border-gray-200 text-black';
       }
-      if (t.verificationMethod === 'linkedin') {
-         base += " shadow-[0_0_15px_rgba(252,230,118,0.6)] border-brand-yellow ring-1 ring-brand-yellow";
-      }
-      return base;
    };
 
    // --- Renderers ---
@@ -1736,7 +1731,6 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                <span className="font-extrabold text-2xl tracking-tighter text-black">
                   TrustGrid.
                </span>
-               <span className="font-black text-2xl tracking-tighter text-brand-lime bg-black px-1 rounded transform -rotate-2">PRO</span>
             </div>
 
             <div className="mb-8">
@@ -1771,7 +1765,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 mb-2">
                         <LinkIcon size={14} className="text-gray-400" />
                         <span className="text-xs truncate flex-1 text-gray-600 font-mono">
-                           trustgrid.pro/wall/{profileData.username || 'your-handle'}
+                           trustgrid.leonslab.tech/wall/{profileData.username || 'your-handle'}
                         </span>
                      </div>
                      <Button size="sm" fullWidth variant="secondary" onClick={() => {

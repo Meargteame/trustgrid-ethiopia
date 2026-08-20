@@ -73,7 +73,7 @@ export const Hero: React.FC<HeroProps> = ({ onLogin }) => {
                    </p>
 
                    <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-200 flex items-center justify-between">
-                      <span className="text-xs font-mono text-gray-500 truncate mr-2">trustgrid.pro/your-handle</span>
+                      <span className="text-xs font-mono text-gray-500 truncate mr-2">trustgrid.leonslab.tech/your-handle</span>
                       <Button size="sm" className="!py-1 !px-3 !text-xs !border-0 bg-brand-lime" onClick={onLogin}>Login with Telegram</Button>
                    </div>
                 </div>

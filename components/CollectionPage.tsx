@@ -471,26 +471,27 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
              <div>
                <h1 className="font-extrabold text-sm text-black leading-tight flex items-center gap-1.5">
                  {brandTitle}
-                 <CheckCircle2 size={13} className="text-green-600 inline" />
+                 <CheckCircle2 size={13} className="text-emerald-600 inline" />
                </h1>
                <p className="text-[11px] text-gray-500 font-medium">Verified Reviews Collection</p>
              </div>
            </div>
            
-           <div className="flex items-center gap-2">
-             <span className="text-xs font-bold text-gray-400">Powered by</span>
-             <span className="font-extrabold text-xs text-black">TrustGrid<span className="text-brand-lime bg-black px-1 py-0.5 rounded text-[10px] ml-0.5">.PRO</span></span>
-           </div>
+           <a 
+             href="/" 
+             target="_blank" 
+             rel="noopener noreferrer" 
+             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-bold text-gray-700 transition-colors shadow-sm"
+           >
+             <ShieldCheck size={13} className="text-emerald-600" />
+             <span>TrustGrid</span>
+           </a>
         </div>
       </header>
 
       <div className="max-w-2xl mx-auto px-4 pt-10">
         {/* Title Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4F954]/30 border border-black/10 text-black text-xs font-bold uppercase tracking-wider mb-3">
-            <Sparkles size={12} />
-            Verified Customer Feedback
-          </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-black mb-2 tracking-tight">{config.title}</h2>
           <p className="text-sm text-gray-600 font-medium max-w-md mx-auto">{config.subtitle}</p>
         </div>
@@ -800,7 +801,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ targetUsername, 
 
             <div className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-400 mt-6 font-medium">
                <ShieldCheck size={14} className="text-gray-400" />
-               <span>Secured and verified by <strong>TrustGrid.PRO</strong></span>
+               <span>Secured and verified by <strong>TrustGrid</strong></span>
             </div>
           </div>
         </form>

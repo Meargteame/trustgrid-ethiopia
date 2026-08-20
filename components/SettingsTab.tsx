@@ -209,7 +209,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onProfileUpdate }) => 
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Public Handle (slug)</label>
                 <div className="flex items-center">
                    <span className="text-gray-400 text-xs font-bold bg-gray-50 border border-r-0 border-gray-200 px-3.5 py-3 rounded-l-xl">
-                      trustgrid.pro/wall/
+                      trustgrid.leonslab.tech/wall/
                    </span>
                    <input
                       type="text"
