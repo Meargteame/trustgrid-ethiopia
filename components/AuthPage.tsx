@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, AlertCircle, ShieldCheck, Zap, Lock, Sparkles, CheckCircle2, Mail, KeyRound, Loader2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, ShieldCheck, Zap, Lock, Sparkles, CheckCircle2, Mail, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
 
@@ -12,11 +12,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
   const telegramWrapperRef = useRef<HTMLDivElement>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
+  
+  const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [activeMode, setActiveMode] = useState<'telegram' | 'email'>('email');
+  const [activeMode, setActiveMode] = useState<'password' | 'otp' | 'telegram'>('password');
+  const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
     // Add the callback to window so the Telegram widget script can call it
@@ -54,6 +57,59 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
     }
   }, []);
 
+  // 1. Password Login / Signup
+  const handlePasswordAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+
+      if (isSignUp) {
+        // Sign Up with Password
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: password,
+          options: {
+            data: {
+              company_name: cleanEmail.split('@')[0]
+            }
+          }
+        });
+        if (error) throw error;
+        if (data?.session) {
+          onLogin();
+        } else {
+          setErrorMsg('Account created! If email confirmation is required, please check your inbox.');
+        }
+      } else {
+        // Sign In with Password
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: password
+        });
+        if (error) throw error;
+        if (data?.session) {
+          onLogin();
+        }
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Authentication failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Magic Link / OTP request
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
@@ -63,7 +119,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
     }
 
     try {
-      setEmailLoading(true);
+      setLoading(true);
       setErrorMsg(null);
       
       const { error } = await supabase.auth.signInWithOtp({
@@ -78,16 +134,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to send login link. Please try again.');
     } finally {
-      setEmailLoading(false);
+      setLoading(false);
     }
   };
 
+  // 3. Verify OTP Code
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpCode || !email) return;
 
     try {
-      setOtpLoading(true);
+      setLoading(true);
       setErrorMsg(null);
 
       const { data, error } = await supabase.auth.verifyOtp({
@@ -106,7 +163,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
     } catch (err: any) {
       setErrorMsg(err.message || 'Invalid or expired verification code.');
     } finally {
-      setOtpLoading(false);
+      setLoading(false);
     }
   };
 
@@ -207,34 +264,105 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
               </div>
             )}
 
-            {/* Mode Switcher */}
+            {/* 3-Mode Switcher */}
             <div className="flex bg-[#F4F4F5] p-1 rounded-xl border border-gray-200">
               <button
                 type="button"
-                onClick={() => { setActiveMode('email'); setErrorMsg(null); }}
+                onClick={() => { setActiveMode('password'); setErrorMsg(null); }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                  activeMode === 'email'
-                    ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
+                  activeMode === 'password'
+                    ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200 shadow-sm'
                     : 'text-[#6B7280] hover:text-[#0A0A0A]'
                 }`}
               >
-                Email Login
+                Password
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveMode('otp'); setErrorMsg(null); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                  activeMode === 'otp'
+                    ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200 shadow-sm'
+                    : 'text-[#6B7280] hover:text-[#0A0A0A]'
+                }`}
+              >
+                Magic Link
               </button>
               <button
                 type="button"
                 onClick={() => { setActiveMode('telegram'); setErrorMsg(null); }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                   activeMode === 'telegram'
-                    ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
+                    ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200 shadow-sm'
                     : 'text-[#6B7280] hover:text-[#0A0A0A]'
                 }`}
               >
-                Telegram Login
+                Telegram
               </button>
             </div>
 
-            {/* EMAIL LOGIN MODE */}
-            {activeMode === 'email' && (
+            {/* MODE 1: PASSWORD LOGIN / SIGN UP */}
+            {activeMode === 'password' && (
+              <form onSubmit={handlePasswordAuth} className="space-y-4 animate-fade-in">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-[#6B7280] uppercase">Email Address</label>
+                  <div className="relative">
+                    <Mail size={15} className="absolute left-3.5 top-3.5 text-[#6B7280]" />
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.com or you@gmail.com"
+                      className="w-full pl-10 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-[#6B7280] uppercase">Password</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsSignUp(!isSignUp)}
+                      className="text-[11px] font-bold text-[#0A0A0A] hover:underline"
+                    >
+                      {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock size={15} className="absolute left-3.5 top-3.5 text-[#6B7280]" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-10 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-[#6B7280] hover:text-[#0A0A0A]"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? <Loader2 size={14} className="animate-spin" /> : null}
+                  <span>{loading ? 'Authenticating...' : (isSignUp ? 'Create Account & Sign In' : 'Sign In with Password')}</span>
+                </button>
+              </form>
+            )}
+
+            {/* MODE 2: MAGIC LINK / OTP */}
+            {activeMode === 'otp' && (
               <div className="space-y-4 animate-fade-in">
                 {emailSent ? (
                   <div className="space-y-4">
@@ -245,7 +373,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                       </p>
                     </div>
 
-                    {/* Enter Code Option */}
                     <form onSubmit={handleVerifyOtp} className="space-y-3">
                       <div className="space-y-1">
                         <label className="block text-xs font-bold text-[#6B7280] uppercase">
@@ -267,11 +394,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
 
                       <button
                         type="submit"
-                        disabled={otpLoading || !otpCode}
+                        disabled={loading || !otpCode}
                         className="w-full py-2.5 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                       >
-                        {otpLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-                        <span>{otpLoading ? 'Verifying...' : 'Verify & Sign In'}</span>
+                        {loading ? <Loader2 size={14} className="animate-spin" /> : null}
+                        <span>{loading ? 'Verifying...' : 'Verify & Sign In'}</span>
                       </button>
 
                       <button
@@ -294,7 +421,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="you@gmail.com or you@company.com"
+                          placeholder="you@company.com or you@gmail.com"
                           className="w-full pl-10 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0A0A0A] outline-none transition-all"
                         />
                       </div>
@@ -305,18 +432,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onBack }) => {
 
                     <button
                       type="submit"
-                      disabled={emailLoading}
+                      disabled={loading}
                       className="w-full py-3 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {emailLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-                      <span>{emailLoading ? 'Sending Login Link...' : 'Send Magic Login Link'}</span>
+                      {loading ? <Loader2 size={14} className="animate-spin" /> : null}
+                      <span>{loading ? 'Sending Login Link...' : 'Send Magic Login Link'}</span>
                     </button>
                   </form>
                 )}
               </div>
             )}
 
-            {/* TELEGRAM LOGIN MODE */}
+            {/* MODE 3: TELEGRAM LOGIN */}
             {activeMode === 'telegram' && (
               <div className="space-y-4 animate-fade-in text-center">
                 <p className="text-xs text-[#6B7280]">
