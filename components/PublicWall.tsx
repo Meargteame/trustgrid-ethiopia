@@ -4,7 +4,7 @@ import { TestimonialData, WidgetConfig } from '../types';
 import { 
   CheckCircle2, Star, Quote, Search, Share2, Play, 
   Shield, Sparkles, Filter, Video, MessageSquare, ExternalLink,
-  ArrowRight, Heart, Award, Copy, Globe
+  ArrowRight, Globe
 } from 'lucide-react';
 import { Toast } from './Toast';
 import { TrustGridLogo, TrustGridMark } from './TrustGridLogo';
@@ -105,7 +105,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
             clientCompany: t.company,
             text: t.text,
             videoUrl: t.video_url,
-            avatarUrl: t.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name || 'Client')}&background=FCE676&color=111111`,
+            avatarUrl: t.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name || 'Client')}&background=F4F4F5&color=0A0A0A`,
             cardStyle: t.card_style,
             verificationMethod: t.reviewer_telegram_id ? 'telegram' : (t.is_verified ? 'linkedin' : 'manual'),
             reviewerTelegramUsername: t.reviewer_telegram_username,
@@ -156,9 +156,9 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white bg-grid flex flex-col items-center justify-center gap-3 text-black font-sans">
-        <div className="w-12 h-12 rounded-full border-3 border-gray-200 border-t-black animate-spin"></div>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+      <div className="min-h-screen bg-[#FFFFFF] flex flex-col items-center justify-center gap-3 text-[#0A0A0A] font-sans">
+        <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-[#0A0A0A] animate-spin"></div>
+        <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider">
           Loading Wall of Proof...
         </p>
       </div>
@@ -167,20 +167,20 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-white bg-grid flex flex-col items-center justify-center p-6 text-center text-black font-sans">
-        <div className="max-w-md w-full p-8 rounded-3xl bg-white border border-gray-200 shadow-md">
-          <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-200 text-black flex items-center justify-center mx-auto mb-4">
-            <Shield size={28} />
+      <div className="min-h-screen bg-[#FFFFFF] flex flex-col items-center justify-center p-6 text-center text-[#0A0A0A] font-sans">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-[#FFFFFF] border border-gray-200">
+          <div className="w-12 h-12 rounded-xl bg-[#F4F4F5] border border-gray-200 text-[#0A0A0A] flex items-center justify-center mx-auto mb-4">
+            <TrustGridMark size={24} />
           </div>
-          <h1 className="text-2xl font-extrabold mb-2 tracking-tight">Wall Not Found</h1>
-          <p className="text-gray-500 text-sm mb-6 font-medium">
-            The requested public wall for "<span className="text-black font-bold font-mono">{companyHandle}</span>" does not exist or has been relocated.
+          <h1 className="text-2xl font-black mb-2 tracking-tight">Wall Not Found</h1>
+          <p className="text-[#6B7280] text-xs mb-6 leading-relaxed">
+            The requested public wall for "<strong className="text-[#0A0A0A] font-mono">{companyHandle}</strong>" does not exist or has not been configured yet.
           </p>
           <a
             href="/"
-            className="w-full py-3 px-4 rounded-xl font-bold bg-black text-white hover:bg-gray-800 transition-all inline-block text-sm shadow-sm"
+            className="w-full py-2.5 px-4 rounded-xl font-bold bg-[#0A0A0A] text-[#FFFFFF] hover:bg-[#222222] transition-colors inline-block text-xs"
           >
-            Go to Homepage
+            Return to Homepage
           </a>
         </div>
       </div>
@@ -192,7 +192,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
   const telegramCount = testimonials.filter(t => t.verificationMethod === 'telegram').length;
 
   return (
-    <div className="min-h-screen bg-white bg-grid text-black font-sans antialiased flex flex-col relative">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#0A0A0A] font-sans antialiased flex flex-col relative">
       {toast && (
         <Toast
           message={toast.message}
@@ -201,9 +201,9 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
         />
       )}
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#F4F4F5]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      {/* Top Navbar */}
+      <header className="sticky top-0 z-40 bg-[#FFFFFF]/90 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <TrustGridLogo size="md" />
           </a>
@@ -211,31 +211,30 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={handleCopyShare}
-              className="px-3.5 py-2 rounded-xl bg-[#FFFFFF] hover:bg-gray-100 text-[#0A0A0A] border border-gray-200 text-xs font-bold transition-all flex items-center gap-1.5"
-              title="Share Wall"
+              className="px-3 py-2 rounded-xl bg-[#FFFFFF] hover:bg-gray-50 text-[#0A0A0A] border border-gray-200 text-xs font-bold transition-colors flex items-center gap-1.5"
             >
               <Share2 size={13} />
               <span className="hidden sm:inline">Share Wall</span>
             </button>
             <a
               href={`/collect/${companyHandle}`}
-              className="px-4 py-2 rounded-xl bg-[#0A0A0A] hover:bg-[#222222] text-[#FFFFFF] font-bold text-xs transition-all flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-[#0A0A0A] hover:bg-[#222222] text-[#FFFFFF] font-bold text-xs transition-colors flex items-center gap-1.5"
             >
               <Sparkles size={13} className="text-[#D7FF3D]" />
-              Leave Review
+              <span>Leave Review</span>
             </a>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="pt-12 pb-10 px-4 sm:px-6 lg:px-8 relative">
+      <section className="pt-12 pb-8 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
           
-          {/* Real Company Logo / Avatar */}
-          <div className="relative mb-5">
+          {/* Company Brand Logo */}
+          <div className="mb-4">
             {profile.logo_url || profile.avatar_url ? (
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-white border-2 border-gray-200 shadow-md p-2 flex items-center justify-center overflow-hidden">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#FFFFFF] border border-gray-200 p-2 flex items-center justify-center overflow-hidden">
                 <img
                   src={profile.logo_url || profile.avatar_url}
                   alt={brandTitle}
@@ -243,63 +242,63 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                 />
               </div>
             ) : (
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-[#FCE676] text-black border-2 border-gray-200 shadow-md flex items-center justify-center text-3xl sm:text-4xl font-black">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#F4F4F5] text-[#0A0A0A] border border-gray-200 flex items-center justify-center text-3xl font-black">
                 {brandTitle.charAt(0).toUpperCase()}
               </div>
             )}
-            <div 
-              className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-sm" 
-              title="100% Cryptographically Verified Business"
-            >
-              <CheckCircle2 size={18} className="stroke-[3]" />
-            </div>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-black mb-2 flex items-center justify-center gap-2">
-            <span>{brandTitle}</span>
+          {/* Verification Badge Pill */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F4F4F5] border border-gray-200 text-[11px] font-bold text-[#0A0A0A] mb-3">
+            <TrustGridMark size={13} />
+            <span>VERIFIED BUSINESS WALL</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[#0A0A0A] mb-2">
+            {brandTitle}
           </h1>
 
-          {/* Official Website Link (if configured) */}
+          {/* Official Website Link */}
           {profile.website && (
-            <div className="mb-4">
+            <div className="mb-3">
               <a 
                 href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 hover:text-black transition-all shadow-sm group"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#FFFFFF] hover:bg-gray-50 border border-gray-200 text-xs font-semibold text-[#6B7280] hover:text-[#0A0A0A] transition-colors"
               >
-                <Globe size={13} className="text-gray-400 group-hover:text-black transition-colors" />
+                <Globe size={12} />
                 <span>{profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
-                <ExternalLink size={11} className="text-gray-400 group-hover:text-black transition-colors" />
+                <ExternalLink size={10} />
               </a>
             </div>
           )}
 
-          <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-8 font-medium leading-relaxed">
-            See what verified clients are saying. Every review is authentic with cryptographic identity verification.
+          <p className="text-xs sm:text-sm text-[#6B7280] max-w-xl mx-auto mb-8 font-medium leading-relaxed">
+            Real customer feedback verified via Telegram attestation. Every review represents genuine consumer experience.
           </p>
 
-          {/* Social Proof Stats Bar */}
-          <div className="grid grid-cols-3 max-w-xl mx-auto bg-white rounded-2xl border border-gray-200 p-4 divide-x divide-gray-100 shadow-sm">
+          {/* Social Proof Stats Ribbon */}
+          <div className="grid grid-cols-3 max-w-lg w-full mx-auto bg-[#F4F4F5] rounded-2xl border border-gray-200 p-3 divide-x divide-gray-200">
             <div className="px-3 text-center">
-              <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
+              <div className="flex items-center justify-center gap-0.5 text-amber-500 mb-0.5">
                 {[1, 2, 3, 4, 5].map(s => (
-                  <Star key={s} size={14} className="fill-amber-400 text-amber-500" />
+                  <Star key={s} size={12} className="fill-amber-400 text-amber-500" />
                 ))}
               </div>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">5.0 Star Rating</p>
+              <p className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">5.0 Star Rating</p>
             </div>
             
             <div className="px-3 text-center">
-              <div className="text-xl font-extrabold text-black">{testimonials.length}</div>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Total Proofs</p>
+              <div className="text-lg font-black text-[#0A0A0A]">{testimonials.length}</div>
+              <p className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Total Proofs</p>
             </div>
 
             <div className="px-3 text-center">
-              <div className="text-xl font-extrabold text-emerald-600 flex items-center justify-center gap-1">
-                <CheckCircle2 size={18} /> 100%
+              <div className="text-lg font-black text-[#0A0A0A] flex items-center justify-center gap-1">
+                <TrustGridMark size={14} /> 100%
               </div>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Verified Proof</p>
+              <p className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Verified Proof</p>
             </div>
           </div>
 
@@ -307,57 +306,57 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       </section>
 
       {/* Filter and Search Controls */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 w-full">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-6 w-full">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#FFFFFF] p-2 rounded-2xl border border-gray-200">
           
-          {/* Filter Pills */}
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          {/* Segmented Filter Pills */}
+          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto p-1 bg-[#F4F4F5] rounded-xl border border-gray-200">
             <button
               onClick={() => setFilterType('all')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                 filterType === 'all'
-                  ? 'bg-black text-white border-black shadow-sm'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                  ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
+                  : 'text-[#6B7280] hover:text-[#0A0A0A]'
               }`}
             >
               <MessageSquare size={13} />
-              All Reviews ({testimonials.length})
+              <span>All Proofs ({testimonials.length})</span>
             </button>
 
             <button
               onClick={() => setFilterType('video')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                 filterType === 'video'
-                  ? 'bg-black text-white border-black shadow-sm'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                  ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
+                  : 'text-[#6B7280] hover:text-[#0A0A0A]'
               }`}
             >
               <Video size={13} />
-              Video Proofs ({videoCount})
+              <span>Video ({videoCount})</span>
             </button>
 
             <button
               onClick={() => setFilterType('telegram')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                 filterType === 'telegram'
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                  ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
+                  : 'text-[#6B7280] hover:text-[#0A0A0A]'
               }`}
             >
-              <Shield size={13} />
-              Telegram Verified ({telegramCount})
+              <TrustGridMark size={13} />
+              <span>Telegram ({telegramCount})</span>
             </button>
           </div>
 
           {/* Search Input */}
           <div className="relative w-full sm:w-64">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B7280]" />
             <input
               type="text"
-              placeholder="Search proofs..."
+              placeholder="Search customer reviews..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs text-black placeholder-gray-400 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+              className="w-full pl-9 pr-3 py-1.5 bg-[#FFFFFF] border border-gray-200 rounded-xl text-xs text-[#0A0A0A] placeholder-gray-400 font-medium focus:outline-none focus:border-[#0A0A0A] transition-colors"
             />
           </div>
 
@@ -365,63 +364,56 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       </section>
 
       {/* Main Reviews Grid */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28 flex-1 w-full">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-28 flex-1 w-full">
         {filteredTestimonials.length === 0 ? (
-          <div className="py-20 px-6 rounded-3xl bg-white border border-dashed border-gray-300 text-center max-w-lg mx-auto shadow-sm">
-            <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-200 text-black flex items-center justify-center mx-auto mb-4">
-              <Sparkles size={24} />
+          <div className="py-16 px-6 rounded-2xl bg-[#F4F4F5] border border-gray-200 text-center max-w-lg mx-auto">
+            <div className="w-12 h-12 rounded-xl bg-[#FFFFFF] border border-gray-200 text-[#0A0A0A] flex items-center justify-center mx-auto mb-3">
+              <TrustGridMark size={20} />
             </div>
-            <h3 className="text-xl font-extrabold text-black mb-2">No Reviews Found</h3>
-            <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto font-medium leading-relaxed">
+            <h3 className="text-lg font-black text-[#0A0A0A] mb-1">No Reviews Found</h3>
+            <p className="text-xs text-[#6B7280] mb-6 max-w-sm mx-auto leading-relaxed">
               {searchQuery ? "No reviews match your search query." : `Be the first customer to share your verified experience with ${brandTitle}!`}
             </p>
             <a
               href={`/collect/${companyHandle}`}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs transition-all shadow-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A0A0A] hover:bg-[#222222] text-[#FFFFFF] font-bold text-xs transition-colors"
             >
-              <Sparkles size={14} className="text-yellow-400" />
-              Leave a Verified Review
+              <Sparkles size={13} className="text-[#D7FF3D]" />
+              <span>Leave a Verified Review</span>
             </a>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredTestimonials.map((item) => (
               <div
                 key={item.id}
-                className="rounded-2xl bg-[#F4F4F5] border border-gray-200 p-6 flex flex-col justify-between hover:border-gray-300 transition-all duration-200 group relative"
+                className="rounded-2xl bg-[#FFFFFF] border border-gray-200 p-5 flex flex-col justify-between hover:border-gray-300 transition-colors duration-150 relative"
               >
                 <div>
                   {/* Top Header: Stars + Date + Verified Badge */}
-                  <div className="flex items-center justify-between gap-2 mb-4">
+                  <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <div className="flex gap-0.5 text-amber-500">
                         {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} size={13} className="fill-amber-400 text-amber-500" />
+                          <Star key={s} size={12} className="fill-amber-400 text-amber-500" />
                         ))}
                       </div>
-                      {item.verificationMethod === 'telegram' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200">
-                          <TrustGridMark size={12} />
-                          <span>Telegram Verified</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200">
-                          <TrustGridMark size={12} />
-                          <span>Verified</span>
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F4F4F5] text-[#0A0A0A] border border-gray-200">
+                        <TrustGridMark size={11} />
+                        <span>VERIFIED</span>
+                      </span>
                     </div>
 
                     {item.createdAt && (
-                      <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
-                        {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      <span className="text-[10px] font-medium text-[#6B7280]">
+                        {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </span>
                     )}
                   </div>
 
                   {/* Video Player (if attached) */}
                   {item.videoUrl && (
-                    <div className="mb-4 rounded-xl overflow-hidden bg-black aspect-video relative border border-gray-200">
+                    <div className="mb-3 rounded-xl overflow-hidden bg-black aspect-video relative border border-gray-200">
                       <video
                         src={item.videoUrl}
                         controls
@@ -432,31 +424,30 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                   )}
 
                   {/* Quote Body */}
-                  <div className="mb-6">
-                    <Quote size={16} className="text-gray-400 mb-2" />
-                    <p className="text-sm sm:text-base leading-relaxed text-[#0A0A0A] font-medium break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap">
-                      "{item.text}"
+                  <div className="mb-5">
+                    <p className="text-xs sm:text-sm leading-relaxed text-[#0A0A0A] font-medium break-words whitespace-pre-wrap">
+                      "{item.text.replace(/What did you like most about working with us\?\s*Answer:\s*/gi, '').trim()}"
                     </p>
                   </div>
                 </div>
 
-                {/* Reviewer Profile Card */}
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-200 mt-auto">
+                {/* Reviewer Profile */}
+                <div className="flex items-center gap-2.5 pt-3 border-t border-gray-100 mt-auto">
                   <img
                     src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.clientName)}&background=F4F4F5&color=0A0A0A`}
                     alt={item.clientName}
-                    className="w-10 h-10 rounded-full object-cover bg-[#FFFFFF] border border-gray-200 flex-shrink-0"
+                    className="w-8 h-8 rounded-full object-cover bg-[#F4F4F5] border border-gray-200 flex-shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-extrabold text-sm text-[#0A0A0A] truncate leading-tight flex items-center gap-1.5">
+                    <h4 className="font-bold text-xs text-[#0A0A0A] truncate leading-tight">
                       {item.clientName}
                     </h4>
                     {item.clientCompany ? (
-                      <p className="text-xs text-[#6B7280] font-medium truncate mt-0.5">{item.clientCompany}</p>
+                      <p className="text-[10px] text-[#6B7280] truncate mt-0.5">{item.clientCompany}</p>
                     ) : item.reviewerTelegramUsername ? (
-                      <p className="text-xs text-[#0A0A0A] font-mono truncate mt-0.5">@{item.reviewerTelegramUsername}</p>
+                      <p className="text-[10px] text-[#0A0A0A] font-mono truncate mt-0.5">@{item.reviewerTelegramUsername}</p>
                     ) : (
-                      <p className="text-xs text-[#6B7280] font-medium mt-0.5">Verified Reviewer</p>
+                      <p className="text-[10px] text-[#6B7280] mt-0.5">Verified Client</p>
                     )}
                   </div>
                 </div>
@@ -467,28 +458,28 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
       </main>
 
       {/* Floating Bottom CTA Bar */}
-      <aside className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 max-w-xl w-[92%] sm:w-auto">
-        <div className="bg-[#FFFFFF] border border-gray-200 px-5 py-2.5 rounded-2xl flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-[#0A0A0A] font-bold">
-            <TrustGridMark size={14} />
+      <aside className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto">
+        <div className="bg-[#FFFFFF] border border-gray-200 px-4 py-2 rounded-2xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-1.5 text-xs text-[#0A0A0A] font-bold">
+            <TrustGridMark size={13} />
             <span>Verified by <strong>TrustGrid</strong></span>
           </div>
           <a
             href={`/collect/${companyHandle}`}
-            className="px-4 py-1.5 rounded-xl bg-[#0A0A0A] hover:bg-[#222222] text-[#FFFFFF] font-bold text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-xl bg-[#0A0A0A] hover:bg-[#222222] text-[#FFFFFF] font-bold text-xs transition-colors flex items-center gap-1.5 whitespace-nowrap"
           >
             <span>Leave Review</span>
-            <ArrowRight size={13} />
+            <ArrowRight size={12} />
           </a>
         </div>
       </aside>
 
       {/* Footer */}
-      <footer className="border-t border-[#F4F4F5] bg-[#FFFFFF] py-8 text-center text-xs font-medium text-[#6B7280] mt-auto">
-        <div className="flex items-center justify-center gap-2 mb-2">
+      <footer className="border-t border-gray-200 bg-[#FFFFFF] py-6 text-center text-xs font-medium text-[#6B7280] mt-auto">
+        <div className="flex items-center justify-center gap-2 mb-1.5">
           <TrustGridLogo size="sm" />
         </div>
-        <p>
+        <p className="text-[11px] text-[#6B7280]">
           Cryptographically Verified Social Proof Platform
         </p>
       </footer>
