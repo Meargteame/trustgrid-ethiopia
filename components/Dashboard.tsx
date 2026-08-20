@@ -1207,7 +1207,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                <div>
                   <div className="flex items-center gap-2 mb-1">
                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-black text-white">
-                        Studio 2.0
+                        Embed Lab
                      </span>
                      <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
                         Widget Studio

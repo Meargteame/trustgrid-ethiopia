@@ -3,7 +3,7 @@ import { ShieldCheck, LayoutGrid, Sparkles, Send, Video, BarChart2 } from 'lucid
 
 export const Features: React.FC = () => {
   return (
-    <section id="features" className="py-24 bg-white border-t border-gray-100">
+    <section id="features" className="py-24 bg-white border-t border-gray-100 scroll-mt-20">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         
         <div className="text-center max-w-2xl mx-auto mb-20">
@@ -60,7 +60,7 @@ export const Features: React.FC = () => {
               <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform">
                 <Sparkles size={24} className="text-[#D4F954]" />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-black">Widget Studio 2.0</h3>
+              <h3 className="text-xl font-bold mb-2 text-black">Embeddable Live Widgets</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Customize responsive masonry grids, carousels, or single card embeds. Copy and paste into WordPress, Webflow, React, or any HTML website in seconds.
               </p>
