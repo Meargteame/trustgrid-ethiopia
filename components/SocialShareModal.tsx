@@ -3,8 +3,8 @@ import { X, Share2, Instagram, Linkedin, Download, CheckCircle2, Star, ShieldChe
 import { toPng } from 'html-to-image';
 import download from 'downloadjs';
 import { TestimonialData } from '../types';
-import { Button } from './Button';
 import { Toast } from './Toast';
+import { TrustGridMark, TrustGridLogo } from './TrustGridLogo';
 
 interface SocialShareModalProps {
   testimonial: TestimonialData;
@@ -43,7 +43,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-sans animate-fade-in">
       {toast && (
         <Toast
           message={toast.message}
@@ -52,45 +52,36 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial,
         />
       )}
       
-      <div className="bg-white rounded-3xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden shadow-2xl border border-gray-200">
+      <div className="bg-[#FFFFFF] rounded-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden border border-gray-200">
         
         {/* Preview Area (Canvas) */}
-        <div className="flex-1 bg-gray-100 p-6 sm:p-10 flex flex-col items-center justify-center relative bg-grid min-h-[460px]">
-           <div className="absolute top-4 left-4 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+        <div className="flex-1 bg-[#F4F4F5] p-6 sm:p-10 flex flex-col items-center justify-center relative min-h-[460px]">
+           <div className="absolute top-4 left-4 text-[11px] font-bold text-[#6B7280] uppercase tracking-wider bg-[#FFFFFF] px-3 py-1 rounded-full border border-gray-200">
               Preview: {platform === 'instagram' ? 'Instagram Square (1080×1080)' : 'LinkedIn Landscape (1200×630)'}
            </div>
 
            {/* The Exportable Social Card */}
            <div 
              ref={cardRef}
-             className={`transition-all duration-300 relative shadow-2xl rounded-2xl overflow-hidden p-8 flex flex-col justify-between ${
+             className={`transition-all duration-300 relative rounded-2xl overflow-hidden p-8 flex flex-col justify-between ${
                platform === 'instagram' 
                  ? 'w-[340px] h-[340px] sm:w-[400px] sm:h-[400px]' 
                  : 'w-[340px] h-[240px] sm:w-[480px] sm:h-[300px]'
              } ${
                cardTheme === 'dark' 
-                 ? 'bg-gray-950 text-white' 
+                 ? 'bg-[#0A0A0A] text-white border border-gray-800' 
                  : cardTheme === 'lime' 
-                   ? 'bg-[#D4F954] text-black' 
-                   : 'bg-white text-black border border-gray-200'
+                   ? 'bg-[#D7FF3D] text-[#0A0A0A]' 
+                   : 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
              }`}
-             style={
-               cardTheme === 'dark' 
-                 ? { backgroundImage: 'radial-gradient(circle at top right, #222 0%, #030712 100%)' } 
-                 : undefined
-             }
            >
               {/* Header: Brand watermark & Verification status */}
               <div className="flex justify-between items-start z-10">
                  <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${
-                       cardTheme === 'dark' ? 'bg-[#D4F954] text-black' : cardTheme === 'lime' ? 'bg-black text-white' : 'bg-black text-white'
-                    }`}>
-                       T.
-                    </div>
+                    <TrustGridMark size={24} />
                     <div>
-                       <span className="font-extrabold text-sm tracking-tight block leading-none">TrustGrid</span>
-                       <span className={`text-[10px] font-bold ${cardTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Verified Social Proof</span>
+                       <span className="font-black text-sm tracking-tight block leading-none">TrustGrid</span>
+                       <span className={`text-[10px] font-bold ${cardTheme === 'dark' ? 'text-gray-400' : 'text-[#6B7280]'}`}>Verified Social Proof</span>
                     </div>
                  </div>
                  
@@ -194,42 +185,42 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial,
 
                  {/* Card Theme Selector */}
                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Visual Theme</label>
+                    <label className="block text-xs font-bold text-[#6B7280] uppercase mb-2">Visual Theme</label>
                     <div className="grid grid-cols-3 gap-2">
                        <button
                           onClick={() => setCardTheme('dark')}
                           className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 text-[11px] font-bold transition-all ${
-                             cardTheme === 'dark' ? 'border-black ring-2 ring-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'
+                             cardTheme === 'dark' ? 'border-[#0A0A0A] bg-[#F4F4F5] text-[#0A0A0A]' : 'border-gray-200 hover:border-gray-300 text-[#6B7280]'
                           }`}
                        >
-                          <div className="w-full h-5 rounded-md bg-gray-950 border border-gray-800"></div>
+                          <div className="w-full h-5 rounded-md bg-[#0A0A0A] border border-gray-800"></div>
                           <span>Dark</span>
                        </button>
                        <button
                           onClick={() => setCardTheme('light')}
                           className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 text-[11px] font-bold transition-all ${
-                             cardTheme === 'light' ? 'border-black ring-2 ring-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'
+                             cardTheme === 'light' ? 'border-[#0A0A0A] bg-[#F4F4F5] text-[#0A0A0A]' : 'border-gray-200 hover:border-gray-300 text-[#6B7280]'
                           }`}
                        >
-                          <div className="w-full h-5 rounded-md bg-white border border-gray-200"></div>
+                          <div className="w-full h-5 rounded-md bg-[#FFFFFF] border border-gray-200"></div>
                           <span>Light</span>
                        </button>
                        <button
                           onClick={() => setCardTheme('lime')}
                           className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 text-[11px] font-bold transition-all ${
-                             cardTheme === 'lime' ? 'border-black ring-2 ring-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'
+                             cardTheme === 'lime' ? 'border-[#0A0A0A] bg-[#F4F4F5] text-[#0A0A0A]' : 'border-gray-200 hover:border-gray-300 text-[#6B7280]'
                           }`}
                        >
-                          <div className="w-full h-5 rounded-md bg-[#D4F954] border border-black/20"></div>
+                          <div className="w-full h-5 rounded-md bg-[#D7FF3D] border border-black/20"></div>
                           <span>Accent</span>
                        </button>
                     </div>
                  </div>
 
                  {/* Pro Tip */}
-                 <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200">
-                    <p className="text-xs font-bold text-black mb-1">💡 Story & Post Tip</p>
-                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                 <div className="p-3.5 bg-[#F4F4F5] rounded-xl border border-gray-200">
+                    <p className="text-xs font-bold text-[#0A0A0A] mb-1">💡 Story & Post Tip</p>
+                    <p className="text-[11px] text-[#6B7280] leading-relaxed">
                        Sharing verified proofs on Instagram Stories & LinkedIn feeds builds immediate organic credibility.
                     </p>
                  </div>
@@ -238,18 +229,17 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ testimonial,
 
            {/* Export Action Button */}
            <div className="pt-6">
-              <Button 
+              <button 
                  onClick={handleDownload} 
-                 fullWidth 
                  disabled={generating}
-                 className="shadow-sm font-bold"
+                 className="w-full py-3 bg-[#0A0A0A] text-[#FFFFFF] font-bold text-xs rounded-xl hover:bg-[#222222] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                  {generating ? (
-                    <><Loader2 size={16} className="animate-spin mr-2" /> Generating PNG...</>
+                    <><Loader2 size={16} className="animate-spin" /> Generating PNG...</>
                  ) : (
-                    <><Download size={16} className="mr-2" /> Download High-Res PNG</>
+                    <><Download size={16} /> Download High-Res PNG</>
                  )}
-              </Button>
+              </button>
            </div>
         </div>
 

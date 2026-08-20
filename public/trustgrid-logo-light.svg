@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 36" fill="none" class="w-auto h-8">
-  <!-- TrustGrid Wordmark -->
-  <text x="0" y="27" font-family="'Plus Jakarta Sans', -apple-system, sans-serif" font-weight="900" font-size="28" fill="#0A0A0A" letter-spacing="-0.04em">TrustGrid</text>
-  <!-- Signature Lime Grid+Checkmark Period -->
-  <rect x="132" y="14" width="15" height="15" rx="3.5" fill="#D7FF3D" stroke="#0A0A0A" stroke-width="1.5"/>
-  <!-- 2x2 Grid Dots/Lines -->
-  <circle cx="136.5" cy="18.5" r="1" fill="#0A0A0A" />
-  <circle cx="142.5" cy="18.5" r="1" fill="#0A0A0A" />
-  <circle cx="136.5" cy="24.5" r="1" fill="#0A0A0A" />
-  <circle cx="142.5" cy="24.5" r="1" fill="#0A0A0A" />
-  <!-- Checkmark cutting across -->
-  <path d="M135 21.5 L138.5 25 L145 16.5" stroke="#0A0A0A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 50" width="240" height="50">
+  <text x="0" y="37" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="36" letter-spacing="-1.5" fill="#0A0A0A">TrustGrid</text>
+  
+  <!-- Signature Mark Icon as the Period -->
+  <g transform="translate(162, 10)">
+    <rect x="0" y="0" width="30" height="30" rx="8.5" fill="#D7FF3D" />
+    <rect x="7" y="7" width="6.8" height="6.8" rx="2" fill="#0A0A0A" />
+    <rect x="16.2" y="7" width="6.8" height="6.8" rx="2" fill="#0A0A0A" />
+    <rect x="7" y="16.2" width="6.8" height="6.8" rx="2" fill="#0A0A0A" />
+    <rect x="16.2" y="16.2" width="6.8" height="6.8" rx="2" fill="#0A0A0A" />
+    <path d="M9.5 15.5 L13.5 19.5 L24.5 9" fill="none" stroke="#0A0A0A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
 </svg>

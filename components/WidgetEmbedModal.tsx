@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Copy, CheckCircle2, Code2, Globe, Sparkles, Terminal } from 'lucide-react';
+import { X, Copy, CheckCircle2, Code2, Globe } from 'lucide-react';
+import { TrustGridMark } from './TrustGridLogo';
 
 interface WidgetEmbedModalProps {
   username: string;
@@ -69,141 +70,133 @@ export const WidgetEmbedModal: React.FC<WidgetEmbedModalProps> = ({ username, co
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl border border-gray-100 w-full max-w-2xl flex flex-col shadow-2xl overflow-hidden animate-slide-up">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 font-sans animate-fade-in">
+      <div className="bg-[#FFFFFF] rounded-2xl border border-gray-200 w-full max-w-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-gray-50/70">
+        <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-[#F4F4F5]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-md">
-              <Code2 size={20} />
+            <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-white flex items-center justify-center">
+              <Code2 size={18} />
             </div>
             <div>
-              <h3 className="font-extrabold text-lg text-gray-900 leading-tight">Publish Your Widget</h3>
-              <p className="text-xs text-gray-500 font-medium">Embed on your website or share direct link</p>
+              <h3 className="font-black text-base text-[#0A0A0A] leading-tight">Publish Your Widget</h3>
+              <p className="text-xs text-[#6B7280]">Embed on your website or share direct link</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-700"
+            className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors text-[#6B7280] hover:text-[#0A0A0A]"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Modal Body */}
         <div className="p-6 sm:p-8 space-y-6">
           {/* Format Selector */}
-          <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200/60">
+          <div className="flex bg-[#F4F4F5] p-1 rounded-xl border border-gray-200">
             <button
               onClick={() => setEmbedTab('iframe')}
-              className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                 embedTab === 'iframe'
-                  ? 'bg-white text-black shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
+                  ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
+                  : 'text-[#6B7280] hover:text-[#0A0A0A]'
               }`}
             >
-              <Terminal size={14} /> HTML / iFrame Embed
+              <Code2 size={14} /> HTML Embed Code
             </button>
             <button
               onClick={() => setEmbedTab('link')}
-              className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                 embedTab === 'link'
-                  ? 'bg-white text-black shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
+                  ? 'bg-[#FFFFFF] text-[#0A0A0A] border border-gray-200'
+                  : 'text-[#6B7280] hover:text-[#0A0A0A]'
               }`}
             >
-              <Globe size={14} /> Direct Public Link
+              <Globe size={14} /> Direct Widget URL
             </button>
           </div>
 
-          {embedTab === 'iframe' ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  Embed Code (Webflow, WordPress, Shopify, React)
+          {/* IFRAME CODE TAB */}
+          {embedTab === 'iframe' && (
+            <div className="space-y-3 animate-fade-in">
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
+                  Copy & Paste Snippet
                 </span>
-                <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                  Auto-updates in real time
-                </span>
+                <span className="text-[11px] text-[#6B7280]">Works with Shopify, WordPress, Webflow, React</span>
               </div>
 
-              <div className="bg-gray-950 rounded-2xl p-5 relative group border border-gray-800 shadow-inner">
-                <pre className="text-gray-200 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all leading-relaxed max-h-44">
+              <div className="relative bg-[#0A0A0A] rounded-xl p-4 border border-gray-800">
+                <pre className="text-gray-300 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all pr-24 max-h-48 leading-relaxed">
                   {iframeSnippet}
                 </pre>
                 <button
                   onClick={() => handleCopy(iframeSnippet, 'iframe')}
-                  className="absolute top-4 right-4 bg-white hover:bg-gray-100 text-black px-4 py-2 rounded-xl transition-all shadow-md flex items-center gap-2 font-bold text-xs hover:scale-105 active:scale-95"
+                  className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
                 >
                   {copiedType === 'iframe' ? (
                     <>
-                      <CheckCircle2 size={15} className="text-emerald-600" />
-                      <span className="text-emerald-700">Copied!</span>
+                      <CheckCircle2 size={13} className="text-[#D7FF3D]" />
+                      <span className="text-[#D7FF3D]">Copied!</span>
                     </>
                   ) : (
                     <>
-                      <Copy size={15} />
-                      <span>Copy Code</span>
+                      <Copy size={13} />
+                      <span>Copy HTML</span>
                     </>
                   )}
                 </button>
-              </div>
-
-              {/* Instructions */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs">
-                  <p className="font-bold text-gray-800 mb-1">WordPress / Elementor</p>
-                  <p className="text-gray-500 text-[11px]">Add an "HTML" or "Shortcode" block and paste the code.</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs">
-                  <p className="font-bold text-gray-800 mb-1">Webflow / Framer</p>
-                  <p className="text-gray-500 text-[11px]">Add an "Embed" component to your section and paste.</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs">
-                  <p className="font-bold text-gray-800 mb-1">React / Next.js</p>
-                  <p className="text-gray-500 text-[11px]">Paste directly inside any JSX return block or div container.</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                Direct Wall of Proof URL
-              </span>
-
-              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-2xl border border-gray-200">
-                <input 
-                  type="text" 
-                  readOnly 
-                  value={wallUrl} 
-                  className="bg-transparent border-0 flex-1 px-3 text-xs font-mono text-gray-700 outline-none"
-                />
-                <button
-                  onClick={() => handleCopy(wallUrl, 'link')}
-                  className="bg-black hover:bg-gray-800 text-white px-4 py-2.5 rounded-xl transition-colors font-bold text-xs flex items-center gap-2 flex-shrink-0 shadow-sm"
-                >
-                  {copiedType === 'link' ? (
-                    <>
-                      <CheckCircle2 size={14} className="text-emerald-400" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} />
-                      <span>Copy Link</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="p-4 bg-emerald-50 border border-emerald-200/60 rounded-2xl flex items-start gap-3">
-                <Sparkles size={18} className="text-emerald-700 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-emerald-900 leading-relaxed font-medium">
-                  Share this public proof link in your Telegram Channel, Instagram Bio, or Proposal PDFs to let prospective clients browse all your verified proofs!
-                </p>
               </div>
             </div>
           )}
+
+          {/* DIRECT LINK TAB */}
+          {embedTab === 'link' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider block">
+                  Standalone Widget URL
+                </label>
+                <div className="flex items-center gap-2 bg-[#F4F4F5] border border-gray-200 rounded-xl p-2 pl-4">
+                  <span className="text-xs font-mono text-[#0A0A0A] truncate flex-1">{embedUrl}</span>
+                  <button
+                    onClick={() => handleCopy(embedUrl, 'link')}
+                    className="px-3 py-1.5 bg-[#0A0A0A] hover:bg-[#222222] text-[#FFFFFF] rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 flex-shrink-0"
+                  >
+                    {copiedType === 'link' ? <CheckCircle2 size={13} className="text-[#D7FF3D]" /> : <Copy size={13} />}
+                    <span>{copiedType === 'link' ? 'Copied' : 'Copy Link'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider block">
+                  Public Wall of Proof URL
+                </label>
+                <div className="flex items-center gap-2 bg-[#F4F4F5] border border-gray-200 rounded-xl p-2 pl-4">
+                  <span className="text-xs font-mono text-[#0A0A0A] truncate flex-1">{wallUrl}</span>
+                  <a
+                    href={wallUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 bg-[#FFFFFF] border border-gray-200 hover:bg-gray-100 text-[#0A0A0A] rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 flex-shrink-0"
+                  >
+                    <Globe size={13} />
+                    <span>Open Wall</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer Info */}
+          <div className="p-4 bg-[#F4F4F5] border border-gray-200 rounded-xl flex items-start gap-3">
+            <TrustGridMark size={18} />
+            <div className="text-xs text-[#6B7280]">
+              <strong className="text-[#0A0A0A] font-bold">Auto-Syncing:</strong> Any new verified review approved on your dashboard instantly updates this widget in real time with zero code modifications.
+            </div>
+          </div>
         </div>
       </div>
     </div>
