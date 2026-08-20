@@ -416,7 +416,7 @@ export const PublicWall: React.FC<PublicWallProps> = ({ companyHandle }) => {
                   {/* Quote Body */}
                   <div className="mb-6">
                     <Quote size={18} className="text-gray-300 mb-2" />
-                    <p className="text-sm sm:text-base leading-relaxed text-gray-900 font-medium break-words whitespace-pre-wrap">
+                    <p className="text-sm sm:text-base leading-relaxed text-gray-900 font-medium break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap">
                       "{item.text}"
                     </p>
                   </div>

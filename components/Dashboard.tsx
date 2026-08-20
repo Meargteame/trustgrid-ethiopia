@@ -1037,7 +1037,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                         )}
 
                         {/* Text Content */}
-                        <p className={`text-sm leading-relaxed mb-6 font-medium break-words whitespace-pre-wrap ${t.cardStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${/[\u1200-\u137F]/.test(t.text) ? 'font-ethiopic' : ''}`}>
+                        <p className={`text-sm leading-relaxed mb-6 font-medium break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap ${t.cardStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${/[\u1200-\u137F]/.test(t.text) ? 'font-ethiopic' : ''}`}>
                            "{t.text}"
                         </p>
 
@@ -1655,7 +1655,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                     </div>
 
                                     {/* Review Text */}
-                                    <p className={`text-sm sm:text-base leading-relaxed mb-5 flex-1 break-words whitespace-pre-wrap ${cardQuoteClass}`}>
+                                    <p className={`text-sm sm:text-base leading-relaxed mb-5 flex-1 break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap ${cardQuoteClass}`}>
                                        "{item.text}"
                                     </p>
 

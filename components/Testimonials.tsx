@@ -53,23 +53,35 @@ export const Testimonials: React.FC = () => {
         {loading ? (
            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-gray-400" /></div>
         ) : reviews.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className={`grid gap-6 ${
+            reviews.length === 1 
+              ? 'max-w-lg' 
+              : reviews.length === 2 
+                ? 'grid-cols-1 md:grid-cols-2 max-w-3xl' 
+                : reviews.length === 3 
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+                  : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+          }`}>
             {reviews.map((review) => (
-              <div key={review.id} className="border border-gray-200 p-6 rounded-2xl hover:shadow-lg transition-shadow bg-white flex flex-col">
-                <div className="flex gap-1 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} className="fill-brand-lime text-brand-lime" />
-                  ))}
+              <div key={review.id} className="border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all bg-white flex flex-col justify-between overflow-hidden">
+                <div>
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <h4 className="font-bold text-sm mb-2 text-black">{review.company || 'Verified Client'}</h4>
+                  <p className="text-xs text-gray-600 mb-6 leading-relaxed flex-1 break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap">
+                    "{review.text}"
+                  </p>
                 </div>
-                <h4 className="font-bold text-sm mb-2">{review.company || 'Verified Client'}</h4>
-                <p className="text-xs text-gray-500 mb-6 leading-relaxed flex-1">
-                  "{review.text}"
-                </p>
                 <div className="flex items-center gap-3 mt-auto pt-4 border-t border-gray-100">
-                  <img src={review.avatar_url || `https://ui-avatars.com/api/?name=${review.name}`} alt={review.name} className="w-8 h-8 rounded-full object-cover bg-gray-100" />
-                  <div>
-                     <p className="text-xs font-bold text-black">{review.name}</p>
-                     <p className="text-[10px] text-gray-400">Verified Client</p>
+                  <img src={review.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.name)}`} alt={review.name} className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200" />
+                  <div className="min-w-0 flex-1">
+                     <p className="text-xs font-bold text-black truncate">{review.name}</p>
+                     <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                        <span>Verified Proof</span>
+                     </p>
                   </div>
                 </div>
               </div>

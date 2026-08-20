@@ -273,7 +273,7 @@ export const WidgetEmbed: React.FC<WidgetEmbedProps> = ({ companyHandle }) => {
             {/* Testimonial Quote Text */}
             <div className="mb-5 flex-1 relative">
               <Quote size={18} className="text-gray-300 mb-2 opacity-60" />
-              <p className={`text-sm sm:text-base leading-relaxed font-medium break-words whitespace-pre-wrap ${quoteColor}`}>
+              <p className={`text-sm sm:text-base leading-relaxed font-medium break-words break-all [overflow-wrap:anywhere] whitespace-pre-wrap ${quoteColor}`}>
                 "{item.text}"
               </p>
             </div>
