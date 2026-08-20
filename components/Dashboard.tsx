@@ -5,7 +5,8 @@ import {
    CheckCircle2, Clock, Send, Link as LinkIcon,
    Image as ImageIcon, X, Palette, User, Mail, Shield,
    Trash2, LogOut, Check, Loader2, RefreshCw, BarChart3, ExternalLink,
-   Share2, Users, Monitor, Layout, Maximize2, Columns, List, MessageSquare, Linkedin
+   Share2, Users, Monitor, Layout, Maximize2, Columns, List, MessageSquare, Linkedin,
+   Eye, EyeOff
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { TestimonialData, TeamMember, WidgetTheme, WidgetLayout } from '../types';
@@ -33,7 +34,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
    const [activeTab, setActiveTab] = useState<'feed' | 'analytics' | 'widgets' | 'collection' | 'settings'>('feed');
-   const [feedTab, setFeedTab] = useState<'inbox' | 'published'>('published');
+   const [feedTab, setFeedTab] = useState<'published' | 'hidden' | 'inbox'>('published');
    const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
    const [setupRequired, setSetupRequired] = useState(false);
    const [isSavingWidget, setIsSavingWidget] = useState(false);
@@ -479,10 +480,51 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
          console.error(err);
          showToast('Failed to verify proof', 'error');
          if (err.message?.includes('policies')) setSetupRequired(true);
+      if (!window.confirm("Are you sure you want to permanently delete this testimonial? This action cannot be undone.")) return;
+       
+      try {
+          const { error } = await supabase
+              .from('testimonials')
+              .delete()
+              .eq('id', id);
+
+          if (error) throw error;
+
+          // Remove from list
+          setTestimonials(testimonials.filter(t => t.id !== id));
+          showToast('Testimonial permanently deleted.', 'success');
+      } catch (err: any) {
+          console.error("Delete failed:", err);
+          showToast('Failed to delete testimonial', 'error');
       }
    };
 
+   const handleToggleVisibility = async (id: string) => {
+      const target = testimonials.find(t => t.id === id);
+      if (!target) return;
 
+      const newStatus = target.status === 'hidden' ? 'verified' : 'hidden';
+
+      // Optimistic Update
+      setTestimonials(testimonials.map(t => 
+         t.id === id ? { ...t, status: newStatus } : t
+      ));
+
+      try {
+         const { error } = await supabase
+            .from('testimonials')
+            .update({ status: newStatus })
+            .eq('id', id);
+
+         if (error) throw error;
+         showToast(newStatus === 'hidden' ? 'Review hidden from public wall & widgets.' : 'Review published to public wall & widgets!', 'success');
+      } catch (err: any) {
+         console.error("Toggle visibility failed:", err);
+         showToast('Failed to update review visibility', 'error');
+         // Revert
+         fetchTestimonials();
+      }
+   };
 
    const handleReject = async (id: string) => {
       if (!window.confirm("Are you sure you want to reject and delete this testimonial? This cannot be undone.")) return;
@@ -661,7 +703,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, onOpenCollection
       if (feedTab === 'inbox') {
          return t.status === 'pending' || t.status === 'pending_verification';
       }
-      return t.status === 'verified';
+      if (feedTab === 'hidden') {
+         return t.status === 'hidden';
+      }
+      return t.status === 'verified' || t.status === 'approved' || t.status === 'published';
    });
 
    const getCardStyle = (t: TestimonialData) => {
@@ -797,17 +842,31 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                <div className="flex bg-gray-100 p-1 rounded-xl">
                   <button
                      onClick={() => setFeedTab('published')}
-                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${feedTab === 'published' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
+                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'published' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
                   >
-                     Published
+                     <span>Published</span>
+                     <span className="text-[10px] opacity-70 bg-black/5 px-1.5 py-0.5 rounded-full">
+                        {testimonials.filter(t => t.status === 'verified' || t.status === 'approved' || t.status === 'published').length}
+                     </span>
+                  </button>
+                  <button
+                     onClick={() => setFeedTab('hidden')}
+                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'hidden' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
+                  >
+                     <span>Hidden</span>
+                     {testimonials.filter(t => t.status === 'hidden').length > 0 && (
+                        <span className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                           {testimonials.filter(t => t.status === 'hidden').length}
+                        </span>
+                     )}
                   </button>
                   <button
                      onClick={() => setFeedTab('inbox')}
-                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${feedTab === 'inbox' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
+                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${feedTab === 'inbox' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
                   >
-                     Inbox (Pending)
+                     <span>Inbox</span>
                      {testimonials.filter(t => t.status === 'pending' || t.status === 'pending_verification').length > 0 && (
-                        <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">
+                        <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                            {testimonials.filter(t => t.status === 'pending' || t.status === 'pending_verification').length}
                         </span>
                      )}
@@ -864,22 +923,26 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                     </div>
                </div>
             ) : (
-               <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                  <Shield className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-bold text-gray-900">
-                     {feedTab === 'inbox' ? 'No pending proofs' : 'No published proofs'}
-                  </h3>
-                  <p className="text-gray-500 text-sm mb-4">
-                     {feedTab === 'inbox' ? 'All caught up! Check your published proofs.' : 'Approve pending proofs to see them here.'}
-                  </p>
-                  <Button 
-                     variant="outline" 
-                     onClick={() => setFeedTab(feedTab === 'inbox' ? 'published' : 'inbox')}
-                  >
-                     Switch to {feedTab === 'inbox' ? 'Published' : 'Inbox'}
-                  </Button>
-               </div>
-            )
+                <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                   <Shield className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                   <h3 className="text-lg font-bold text-gray-900">
+                      {feedTab === 'inbox' ? 'No pending proofs' : feedTab === 'hidden' ? 'No hidden proofs' : 'No published proofs'}
+                   </h3>
+                   <p className="text-gray-500 text-sm mb-4">
+                      {feedTab === 'inbox' 
+                         ? 'All caught up! Check your published proofs.' 
+                         : feedTab === 'hidden' 
+                            ? 'You have not hidden any verified reviews.' 
+                            : 'Approve pending proofs or collect new reviews to see them here.'}
+                   </p>
+                   <Button 
+                      variant="outline" 
+                      onClick={() => setFeedTab(feedTab === 'published' ? 'inbox' : 'published')}
+                   >
+                      Switch to {feedTab === 'published' ? 'Inbox' : 'Published'}
+                   </Button>
+                </div>
+             )
          ) : (
             <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
 
@@ -891,7 +954,14 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      <div>
                         {/* Top Header: Badge + Actions */}
                         <div className="flex items-center justify-between gap-2 mb-4">
-                           <VerificationBadge method={t.verificationMethod} />
+                           <div className="flex items-center gap-1.5 flex-wrap">
+                              <VerificationBadge method={t.verificationMethod} />
+                              {t.status === 'hidden' && (
+                                 <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                    <EyeOff size={10} /> Hidden
+                                 </span>
+                              )}
+                           </div>
                            
                            <div className="flex items-center gap-1">
                               {/* PENDING ACTIONS */}
@@ -913,8 +983,21 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                     </button>
                                  </>
                               ) : (
-                                 /* VERIFIED ACTIONS */
+                                 /* VERIFIED & HIDDEN ACTIONS */
                                  <>
+                                    <button
+                                       onClick={() => handleToggleVisibility(t.id)}
+                                       className={`p-1.5 rounded-lg transition-colors ${
+                                          t.status === 'hidden' 
+                                             ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' 
+                                             : t.cardStyle === 'dark' 
+                                                ? 'text-gray-400 hover:bg-gray-800 hover:text-white' 
+                                                : 'text-gray-400 hover:text-black hover:bg-gray-100'
+                                       }`}
+                                       title={t.status === 'hidden' ? 'Publish to Public Wall & Widgets' : 'Hide from Public Wall & Widgets'}
+                                    >
+                                       {t.status === 'hidden' ? <EyeOff size={15} /> : <Eye size={15} />}
+                                    </button>
                                     <button
                                        onClick={() => handleCustomizeStyle(t.id)}
                                        className={`p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-400 hover:text-black'}`}
@@ -939,7 +1022,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                     <button
                                        onClick={() => handleDelete(t.id)}
                                        className={`p-1.5 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors ${t.cardStyle === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-400'}`}
-                                       title="Delete"
+                                       title="Permanently Delete"
                                     >
                                        <Trash2 size={15} />
                                     </button>
@@ -1548,7 +1631,6 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                                  <h2 className={`text-2xl sm:text-3xl font-black tracking-tight mb-2 ${previewBg === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                                     {headerTitle}
                                  </h2>
-                                 <div className="w-12 h-1 bg-brand-lime mx-auto rounded-full" />
                               </div>
                            )}
 
@@ -1624,7 +1706,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                            {/* Subtle watermark */}
                            <div className="text-center mt-6">
                               <span className="text-[11px] font-medium text-gray-400 inline-flex items-center gap-1">
-                                 Verified by <strong className={previewBg === 'dark' ? 'text-white' : 'text-black'}>TrustGrid.et</strong>
+                                 Verified by <strong className={previewBg === 'dark' ? 'text-white' : 'text-black'}>TrustGrid</strong>
                               </span>
                            </div>
 
@@ -1767,7 +1849,7 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                   </div>
 
                   {/* Feature: Auto-Magic Collection Link */}
-                  <div className="p-4 bg-brand-lime/10 rounded-xl border border-brand-lime group hover:bg-brand-lime/20 transition-colors cursor-pointer" onClick={() => {
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 group hover:border-gray-300 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => {
                         // Logic to copy or open
                         if (profileData.username) {
                            const url = window.location.origin + '/collect/' + profileData.username;
