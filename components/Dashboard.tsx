@@ -826,10 +826,10 @@ create policy "User insert own profile" on profiles for insert with check (auth.
                      }
                      const url = window.location.origin + '/collect/' + profileData.username;
                      navigator.clipboard.writeText(url);
-                     showToast('Collection link copied!', 'success');
-                 }} className="shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <LinkIcon size={18} className="mr-2" /> Get Proofs
-                 </Button>
+                      showToast('Collection link copied!', 'success');
+                  }} className="shadow-sm hover:shadow-md">
+                     <LinkIcon size={18} className="mr-2" /> Get Proofs
+                  </Button>
             </div>
          </header>
 
@@ -1716,13 +1716,13 @@ create policy "User insert own profile" on profiles for insert with check (auth.
            {/* Onboarding Modal */}
            {!loadingProfile && !profileData.username && activeTab !== 'settings' && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-                 <div className="bg-white rounded-[2rem] border-2 border-black w-full max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex flex-col p-8 text-center">
-                    <div className="w-16 h-16 bg-[#D4F954]/20 text-black rounded-full flex items-center justify-center mx-auto mb-6">
-                        <User size={32} />
+                 <div className="bg-white rounded-3xl border border-gray-200 w-full max-w-md shadow-2xl overflow-hidden flex flex-col p-8 text-center">
+                    <div className="w-16 h-16 bg-[#D4F954]/30 border border-black/10 text-black rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <User size={28} />
                     </div>
-                    <h2 className="text-2xl font-extrabold mb-2">Welcome to TrustGrid!</h2>
-                    <p className="text-gray-600 mb-6">Before you can start collecting verified testimonials, you need to claim your unique username.</p>
-                    <Button onClick={() => setActiveTab('settings')} className="w-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 hover:translate-x-1 transition-all">
+                    <h2 className="text-2xl font-extrabold mb-2 text-black">Welcome to TrustGrid!</h2>
+                    <p className="text-gray-500 text-sm mb-6 leading-relaxed">Before you can start collecting verified testimonials, you need to claim your unique public username.</p>
+                    <Button onClick={() => setActiveTab('settings')} className="w-full shadow-sm hover:bg-gray-800 transition-all font-bold">
                         Set Username Now
                     </Button>
                  </div>

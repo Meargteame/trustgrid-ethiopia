@@ -23,7 +23,7 @@ export const EmbedCodeModal: React.FC<EmbedCodeModalProps> = ({ testimonialId, o
   title="Verified Review"
 ></iframe>
 <div style="font-size:10px; color:#666; text-align:center; margin-top:4px;">
-  Verified by <a href="https://trustgrid.et" target="_blank" style="color:#000; font-weight:bold; text-decoration:none;">TrustGrid.et</a>
+  Verified by <a href="https://trustgrid.pro" target="_blank" style="color:#000; font-weight:bold; text-decoration:none;">TrustGrid.PRO</a>
 </div>
   `.trim();
 
